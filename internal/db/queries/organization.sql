@@ -1,5 +1,5 @@
 -- name: CreateOrganization :one
-INSERT INTO organizatins (name ,slug)
+INSERT INTO organizations (name ,slug)
 VALUES($1 , $2)
 RETURNING *;
 
