@@ -5,6 +5,6 @@ RETURNING *;
 
 
 -- name: GetOrganizationBySlug: one
-SELECT * FROM organizatinS
+SELECT * FROM organizatins
 WHERE slug= $1;
 
