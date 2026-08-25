@@ -28,3 +28,22 @@ type Config struct {
 
 	NATSURL string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
 }
+
+func Load() (*Config, error) {
+	cfg := &Config{}
+	err := env.Parse(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("Config: couldnt parse config")
+
+	}
+
+	if cfg.DatabaseURL == "" {
+		cfg.DatabaseURL = fmt.Sprintf(
+			"postgres://%s:%s@%s:%s/%s?sslmode=%s",
+			cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBSSLMode,
+		)
+	}
+
+	return cfg, nil
+
+}
