@@ -7,7 +7,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-
+const (
+	TokenTypeAccess  = "access"
+	TokenTypeRefresh = "refresh"
+)
 type TokenManager struct {
 	secret     []byte
 	accessTTL  time.Duration
@@ -16,6 +19,6 @@ type TokenManager struct {
 
 type Claims struct {
 	UserID    uuid.UUID `json:"user_id"`
-	TokenType string    `json:"token_type"` // "access" | "refresh"
+	TokenType string    `json:"token_type"`
 	jwt.RegisteredClaims
 }
