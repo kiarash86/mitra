@@ -12,3 +12,8 @@ WHERE id = $1;
 SELECT * FROM teams 
 WHERE organization_id = $1;
 
+
+-- name: SoftDeleteTeam :exec
+UPDATE teams
+SET deleted_at = now()
+WHERE id = $1;
