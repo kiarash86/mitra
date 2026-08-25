@@ -24,4 +24,4 @@ RETURNING *;
 -- name: SoftDeleteUser :exec
 UPDATE users
 SET deleted_at = now()
-where id= $1;
+where id= $1
