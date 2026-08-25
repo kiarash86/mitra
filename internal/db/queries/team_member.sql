@@ -15,3 +15,8 @@ FROM team_members tm
 JOIN users u ON u.id = tm.user_id
 WHERE tm.team_id = $1;
  
+ 
+-- name: RemoveTeamMember :exec
+DELETE FROM team_members
+WHERE team_id = $1 AND user_id = $2;
+ 
