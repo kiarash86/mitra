@@ -47,3 +47,7 @@ func (tm *TokenManager) generate(userID uuid.UUID, tokenType string, ttl time.Du
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(tm.secret)
 }
+
+func (tm *TokenManager) GenerateRefreshToken(userID uuid.UUID, tokenType string, ttl time.Duration) (string, error) {
+	return tm.generate(userID, TokenTypeRefresh, ttl)
+}
