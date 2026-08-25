@@ -21,7 +21,7 @@ WHERE id = $1
 RETURNING *;
  
 
--- name: SoftDeleteUser : one 
+-- name: SoftDeleteUser : exec 
 UPDATE users
 SET deleted_at = now()
 where id= $1;
