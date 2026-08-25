@@ -5,6 +5,6 @@ RETURNING *;
 
 
 -- name: GetOrganizationBySlug :one
-SELECT * FROM organizatins
+SELECT * FROM organizations
 WHERE slug= $1;
 
