@@ -22,3 +22,12 @@ type Claims struct {
 	TokenType string    `json:"token_type"`
 	jwt.RegisteredClaims
 }
+
+
+func NewTokenManager(secret string , accessTTL time.Duration , refreshTTL time.Duration) *TokenManager {
+	return &TokenManager{
+		secret: []byte(secret),
+		accessTTL: accessTTL,
+		refreshTTL: refreshTTL,
+	}
+}
