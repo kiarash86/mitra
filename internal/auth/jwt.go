@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"time"
 	"uuid"
 
@@ -52,8 +53,22 @@ func (tm *TokenManager) GenerateRefreshToken(userID uuid.UUID, tokenType string,
 	return tm.generate(userID, TokenTypeRefresh, ttl)
 }
 
-
 func (tm *TokenManager) GenerateAccessToken(userID uuid.UUID, tokenType string, ttl time.Duration) (string, error) {
 	return tm.generate(userID, TokenTypeAccess, ttl)
 
+}
+
+func (tm *TokenManager) Parse(tokenS string) (*Claims, error) {
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenS, claims, func(t *jwt.Token) (interface{}, error) {
+		_, ok := t.Method.(*jwt.SigningMethodHMAC)
+		if ok {
+			return tm.secret, nil
+		}
+		return nil, errors.New("JWT: invalid or expired token")
+	})
+	if err != nil || !token.Valid {
+		return nil, errors.New("JWT: invalid or expired token")
+	}
+	return claims, nil
 }
