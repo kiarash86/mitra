@@ -13,3 +13,10 @@ WHERE email=$1 ;
 SELECT * FROM  users 
 WHERE id=$1 ;
 
+
+-- name: UpdateUserProfile :one
+UPDATE users
+SET full_name = $2, updated_at = now()
+WHERE id = $1
+RETURNING *;
+ 
