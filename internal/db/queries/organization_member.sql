@@ -7,3 +7,11 @@ RETURNING *;
 SELECT role FROM organization_members 
 WHERE organization_id = $1 AND  user_id = $2;
 
+
+-- name: ListOrganizationMembers :many
+SELECT om.*, u.email, u.full_name
+FROM organization_members om
+JOIN users u ON u.id = om.user_id
+WHERE om.organization_id = $1;
+ 
+
