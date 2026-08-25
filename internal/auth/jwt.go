@@ -51,3 +51,9 @@ func (tm *TokenManager) generate(userID uuid.UUID, tokenType string, ttl time.Du
 func (tm *TokenManager) GenerateRefreshToken(userID uuid.UUID, tokenType string, ttl time.Duration) (string, error) {
 	return tm.generate(userID, TokenTypeRefresh, ttl)
 }
+
+
+func (tm *TokenManager) GenerateAccessToken(userID uuid.UUID, tokenType string, ttl time.Duration) (string, error) {
+	return tm.generate(userID, TokenTypeAccess, ttl)
+
+}
