@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mitra-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mitra
+      POSTGRES_PASSWORD: mitra
+      POSTGRES_DB: mitra
+    ports:
+      - "5432:5432"
+    volumes:
+      - mitra_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mitra -d mitra"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mitra-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - mitra_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mitra_postgres_data:
+  mitra_redis_data:
