@@ -1,6 +1,11 @@
 package auth
 
-import "time"
+import (
+	"time"
+	"uuid"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 
 type TokenManager struct {
@@ -9,3 +14,8 @@ type TokenManager struct {
 	refreshTTL time.Duration
 }
 
+type Claims struct {
+	UserID    uuid.UUID `json:"user_id"`
+	TokenType string    `json:"token_type"` // "access" | "refresh"
+	jwt.RegisteredClaims
+}
