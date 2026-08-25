@@ -73,17 +73,28 @@ func (tm *TokenManager) Parse(tokenS string) (*Claims, error) {
 	return claims, nil
 }
 
-
-
 func (tm *TokenManager) ParseAccessToken(tokenS string) (*Claims, error) {
-	claims , err := tm.Parse(tokenS)
+	claims, err := tm.Parse(tokenS)
 	if err != nil {
 		return nil, err
 	}
 
 	if claims.TokenType == TokenTypeRefresh {
-		return  nil , errors.New("JWT: not correct type of token")
+		return nil, errors.New("JWT: not correct type of token")
 	}
 
-	return claims , nil
+	return claims, nil
+}
+
+func (tm *TokenManager) ParseRefreshToken(tokenS string) (*Claims, error) {
+	claims, err := tm.Parse(tokenS)
+	if err != nil {
+		return nil, err
+	}
+
+	if claims.TokenType == TokenTypeAccess {
+		return nil, errors.New("JWT: not correct type of token")
+	}
+
+	return claims, nil
 }
