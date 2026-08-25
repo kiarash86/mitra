@@ -20,3 +20,8 @@ SET full_name = $2, updated_at = now()
 WHERE id = $1
 RETURNING *;
  
+
+-- name: SoftDeleteUser : one 
+UPDATE users
+SET deleted_at = now()
+where id= $1;
