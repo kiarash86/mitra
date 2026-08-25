@@ -1,1 +1,30 @@
 package config
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/caarlos0/env/v11"
+)
+
+type Config struct {
+	AppEnv      string `env:"APP_ENV" envDefault:"development"`
+	AppPort     string `env:"APP_PORT" envDefault:"8080"`
+	DatabaseURL string `env:"DATABASE_URL"`
+	DBHost      string `env:"DB_HOST" envDefault:"localhost"`
+	DBPort      string `env:"DB_PORT" envDefault:"5432"`
+	DBUser      string `env:"DB_USER" envDefault:"mitra"`
+	DBPassword  string `env:"DB_PASSWORD" envDefault:"mitra"`
+	DBName      string `env:"DB_NAME" envDefault:"mitra"`
+	DBSSLMode   string `env:"DB_SSLMODE" envDefault:"disable"`
+
+	RedisHost     string `env:"REDIS_HOST" envDefault:"localhost"`
+	RedisPort     string `env:"REDIS_PORT" envDefault:"6379"`
+	RedisPassword string `env:"REDIS_PASSWORD"`
+
+	JWTSecret          string        `env:"JWT_SECRET,required"`
+	JWTAccessTokenTTL  time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
+	JWTRefreshTokenTTL time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"720h"`
+
+	NATSURL string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
+}
