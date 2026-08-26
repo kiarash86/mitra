@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	AppEnv      string `env:"APP_ENV" envDefault:"development"`
-	AppPort     string `env:"APP_PORT" envDefault:"8080"`
+	AppEnv  string `env:"APP_ENV" envDefault:"development"`
+	AppPort string `env:"APP_PORT" envDefault:"8080"`
+
 	DatabaseURL string `env:"DATABASE_URL"`
 	DBHost      string `env:"DB_HOST" envDefault:"localhost"`
 	DBPort      string `env:"DB_PORT" envDefault:"5432"`
@@ -18,23 +19,15 @@ type Config struct {
 	DBName      string `env:"DB_NAME" envDefault:"mitra"`
 	DBSSLMode   string `env:"DB_SSLMODE" envDefault:"disable"`
 
-	RedisHost     string `env:"REDIS_HOST" envDefault:"localhost"`
-	RedisPort     string `env:"REDIS_PORT" envDefault:"6379"`
-	RedisPassword string `env:"REDIS_PASSWORD"`
-
 	JWTSecret          string        `env:"JWT_SECRET,required"`
 	JWTAccessTokenTTL  time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
 	JWTRefreshTokenTTL time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"720h"`
-
-	NATSURL string `env:"NATS_URL" envDefault:"nats://localhost:4222"`
 }
 
 func Load() (*Config, error) {
 	cfg := &Config{}
-	err := env.Parse(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("Config: couldnt parse config")
-
+	if err := env.Parse(cfg); err != nil {
+		return nil, fmt.Errorf("config: failed to parse environment: %w", err)
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -45,5 +38,4 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
-
 }
