@@ -27,6 +27,12 @@ type userResponse struct {
 	Email    string `json:"email"`
 }
 
+type authResponse struct {
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	User         userResponse `json:"user"`
+}
+
 func NewAuthHandler(queries *sqlc.Queries, tokens *auth.TokenManager) *AuthHandler {
 	return &AuthHandler{
 		queries: queries,
