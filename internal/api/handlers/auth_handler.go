@@ -81,6 +81,27 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	ah.respondWithTokens(c, http.StatusCreated, user.ID, user.FullName, user.Email)
+}
 
-		ah.respondWithTokens(c, http.StatusCreated, user.ID, user.FullName, user.Email)
+func (ah *AuthHandler) Login(c *gin.Context) {
+	var req registerRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+	user, err = ah.queries.GetUserByEmail(c, req.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid pass or email"})
+		return
+	}
+
+	if !auth.CheckPassword(user.PasswordHash, req.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email or password"})
+		return
+	}
+
+	ah.respondWithTokens(c, http.StatusOK, user.ID, user.FullName, user.Email)
+
 }
