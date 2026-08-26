@@ -3,9 +3,9 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"uuid"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/kiarash86/mitra/internal/auth"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
@@ -56,7 +56,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	}
 	_, err = ah.queries.GetUserByEmail(c, req.Email)
 	if err == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "user with this email is already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": "user with this email already exists"})
 		return
 	}
 
@@ -86,13 +86,13 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 }
 
 func (ah *AuthHandler) Login(c *gin.Context) {
-	var req registerRequest
+	var req loginRequest
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
-	user, err = ah.queries.GetUserByEmail(c, req.Email)
+	user, err := ah.queries.GetUserByEmail(c, req.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid pass or email"})
 		return
