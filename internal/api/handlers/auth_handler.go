@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"uuid"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -104,4 +105,28 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 
 	ah.respondWithTokens(c, http.StatusOK, user.ID, user.FullName, user.Email)
 
+}
+
+func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.UUID, fullName, email string) {
+	accessToken, err := h.tokens.GenerateAccessToken(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue access token"})
+		return
+	}
+
+	refreshToken, err := h.tokens.GenerateRefreshToken(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue refresh token"})
+		return
+	}
+
+	c.JSON(status, authResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User: userResponse{
+			ID:       userID.String(),
+			FullName: fullName,
+			Email:    email,
+		},
+	})
 }
