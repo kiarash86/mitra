@@ -3,9 +3,9 @@ package auth
 import (
 	"errors"
 	"time"
-	"uuid"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 const (
@@ -49,13 +49,12 @@ func (tm *TokenManager) generate(userID uuid.UUID, tokenType string, ttl time.Du
 	return token.SignedString(tm.secret)
 }
 
-func (tm *TokenManager) GenerateRefreshToken(userID uuid.UUID, tokenType string, ttl time.Duration) (string, error) {
-	return tm.generate(userID, TokenTypeRefresh, ttl)
+func (tm *TokenManager) GenerateRefreshToken(userID uuid.UUID) (string, error) {
+	return tm.generate(userID, TokenTypeRefresh, tm.refreshTTL)
 }
 
-func (tm *TokenManager) GenerateAccessToken(userID uuid.UUID, tokenType string, ttl time.Duration) (string, error) {
-	return tm.generate(userID, TokenTypeAccess, ttl)
-
+func (tm *TokenManager) GenerateAccessToken(userID uuid.UUID) (string, error) {
+	return tm.generate(userID, TokenTypeAccess, tm.accessTTL)
 }
 
 func (tm *TokenManager) Parse(tokenS string) (*Claims, error) {
@@ -79,7 +78,7 @@ func (tm *TokenManager) ParseAccessToken(tokenS string) (*Claims, error) {
 		return nil, err
 	}
 
-	if claims.TokenType == TokenTypeRefresh {
+	if claims.TokenType != TokenTypeAccess {
 		return nil, errors.New("JWT: not correct type of token")
 	}
 
@@ -92,7 +91,7 @@ func (tm *TokenManager) ParseRefreshToken(tokenS string) (*Claims, error) {
 		return nil, err
 	}
 
-	if claims.TokenType == TokenTypeAccess {
+	if claims.TokenType != TokenTypeRefresh {
 		return nil, errors.New("JWT: not correct type of token")
 	}
 
