@@ -19,7 +19,7 @@ func RequireAuth(tokens *auth.TokenManager) gin.HandlerFunc {
 			return
 		}
 		slice := strings.SplitN(header, " ", 2)
-		if len(slice) != 2 || strings.EqualFold(slice[0], "Bearer") {
+		if len(slice) != 2 || !strings.EqualFold(slice[0], "Bearer") {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 			return
 		}
@@ -31,7 +31,7 @@ func RequireAuth(tokens *auth.TokenManager) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("user_id", claims.UserID)
+		ctx.Set(ContextUserIDKey, claims.UserID)
 
 	}
 }
