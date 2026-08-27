@@ -51,4 +51,7 @@ func main() {
 		log.Fatalf("something is wrong with this AppEnv: %s", cfg.AppEnv)
 	}
 
+	router := gin.New()
+	router.Use(gin.Logger() , gin.Recovery())
+	
 }
