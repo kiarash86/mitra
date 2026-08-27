@@ -78,4 +78,13 @@ func main() {
 	authGroup.POST("/login", authHandler.Login)
 	authGroup.POST("/register", authHandler.Register)
 
+
+
+	srv := &http.Server{
+		Addr: ":" + cfg.AppPort,
+		Handler: router,
+	}
+
+	
+
 }
