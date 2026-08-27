@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kiarash86/mitra/internal/config"
 	"golang.org/x/text/cases"
+		sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
+
 )
 
 func main() {
@@ -63,5 +65,8 @@ func main() {
 		}
 			ctx.JSON(http.StatusOK , gin.H{"status" : "ok"})
 		
-	})ب
+	})
+
+
+	queries := sqlc.New(pool)
 }
