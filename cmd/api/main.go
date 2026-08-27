@@ -9,9 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kiarash86/mitra/internal/auth"
+	"github.com/kiarash86/mitra/internal/api/handlers"
 	"github.com/kiarash86/mitra/internal/config"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
-	"golang.org/x/text/cases"
 )
 
 func main() {
@@ -55,20 +55,22 @@ func main() {
 	}
 
 	router := gin.New()
-	router.Use(gin.Logger() , gin.Recovery())
+	router.Use(gin.Logger(), gin.Recovery())
 
-	router.GET("/health" , func(ctx *gin.Context) {
-		err= pool.Ping(ctx.Request.Context())
+	router.GET("/health", func(ctx *gin.Context) {
+		err = pool.Ping(ctx.Request.Context())
 		if err != nil {
-			ctx.JSON(http.StatusServiceUnavailable , gin.H{"status" : "down" , "error" : err.Error()})
+			ctx.JSON(http.StatusServiceUnavailable, gin.H{"status": "down", "error": err.Error()})
 			return
 		}
-			ctx.JSON(http.StatusOK , gin.H{"status" : "ok"})
-		
+		ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
+
 	})
 
-
 	queries := sqlc.New(pool)
-	tokens := auth.NewTokenManager(cfg.JWTSecret ,cfg.JWTAccessTokenTTL , cfg.JWTRefreshTokenTTL)
+	tokens := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTAccessTokenTTL, cfg.JWTRefreshTokenTTL)
+
+	authHandler := handlers.NewAuthHandler(queries , tokens)
 	
+
 }
