@@ -78,13 +78,19 @@ func main() {
 	authGroup.POST("/login", authHandler.Login)
 	authGroup.POST("/register", authHandler.Register)
 
-
-
 	srv := &http.Server{
-		Addr: ":" + cfg.AppPort,
+		Addr:    ":" + cfg.AppPort,
 		Handler: router,
 	}
 
-	
+	go func() {
+		log.Printf("api is listening! on port %v  and on mode: %v", cfg.AppPort, cfg.AppEnv)
+
+		err = srv.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("something went wrong : %v", err)
+
+		}
+	}()
 
 }
