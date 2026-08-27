@@ -5,8 +5,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kiarash86/mitra/internal/config"
+	"golang.org/x/text/cases"
 )
 
 func main() {
@@ -34,5 +36,19 @@ func main() {
 
 	}
 	log.Println("connected to db seccesfully")
+
+	switch cfg.AppEnv {
+	case "production":
+		gin.SetMode(gin.ReleaseMode)
+
+	case "development":
+		gin.SetMode(gin.DebugMode)
+
+	case "test":
+		gin.SetMode(gin.TestMode)
+
+	default:
+		log.Fatalf("something is wrong with this AppEnv: %s", cfg.AppEnv)
+	}
 
 }
