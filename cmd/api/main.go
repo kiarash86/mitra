@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kiarash86/mitra/internal/config"
@@ -24,5 +25,14 @@ func main() {
 
 	}
 	defer pool.Close()
-	
+
+	ping, pingCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer pingCancel()
+	err = pool.Ping(ping)
+	if err != nil {
+		log.Fatalf("couldnt ping db : %v", err)
+
+	}
+	log.Println("connected to db seccesfully")
+
 }
