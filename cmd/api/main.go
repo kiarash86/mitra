@@ -8,10 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kiarash86/mitra/internal/auth"
 	"github.com/kiarash86/mitra/internal/config"
+	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
 	"golang.org/x/text/cases"
-		sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
-
 )
 
 func main() {
@@ -69,4 +69,6 @@ func main() {
 
 
 	queries := sqlc.New(pool)
+	tokens := auth.NewTokenManager(cfg.JWTSecret ,cfg.JWTAccessTokenTTL , cfg.JWTRefreshTokenTTL)
+	
 }
