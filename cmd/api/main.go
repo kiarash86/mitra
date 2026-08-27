@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -53,5 +54,14 @@ func main() {
 
 	router := gin.New()
 	router.Use(gin.Logger() , gin.Recovery())
-	
+
+	router.GET("/health" , func(ctx *gin.Context) {
+		err= pool.Ping(ctx.Request.Context())
+		if err != nil {
+			ctx.JSON(http.StatusServiceUnavailable , gin.H{"status" : "down" , "error" : err.Error()})
+			return
+		}
+			ctx.JSON(http.StatusOK , gin.H{"status" : "ok"})
+		
+	})ب
 }
