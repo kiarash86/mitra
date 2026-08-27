@@ -75,5 +75,7 @@ func main() {
 	api := router.Group("/api/v1")
 	authGroup := api.Group("/auth")
 
+	authGroup.POST("/login", authHandler.Login)
+	authGroup.POST("/register", authHandler.Register)
 
 }
