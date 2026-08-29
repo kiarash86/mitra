@@ -11,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/kiarash86/mitra/internal/api/handlers"
 	"github.com/kiarash86/mitra/internal/auth"
 	"github.com/kiarash86/mitra/internal/config"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
@@ -73,7 +72,7 @@ func main() {
 	queries := sqlc.New(pool)
 	tokens := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTAccessTokenTTL, cfg.JWTRefreshTokenTTL)
 
-	authHandler := handlers.NewAuthHandler(queries, tokens)
+	authHandler := auth.NewAuthHandler(queries, tokens)
 
 	api := router.Group("/api/v1")
 	authGroup := api.Group("/auth")
