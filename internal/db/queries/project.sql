@@ -20,3 +20,9 @@ RETURNING *;
 SELECT * FROM projects 
 WHERE organization_id = $1 
 ORDER BY created_at DESC;
+
+
+-- name: SoftDeleteProject :exec
+UPDATE projects
+SET deleted_at = now()
+WHERE id = $1;
