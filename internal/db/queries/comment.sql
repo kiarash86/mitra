@@ -15,3 +15,10 @@ FROM comments c
 JOIN users u ON u.id = c.author_id
 WHERE c.task_id= $1
 ORDER BY c.created_at ASC;
+
+
+-- name: UpdateComment
+UPDATE comments
+SET body = $2 , updated_at = now()
+WHERE id = $1
+RETURNING *;
