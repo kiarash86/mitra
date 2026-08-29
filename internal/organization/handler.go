@@ -12,7 +12,7 @@ func NewHandler(queries *sqlc.Queries) *Handler {
 	}
 }
 
-type CreateOrganizationRequest struct {
+type createOrganizationRequest struct {
 	Name string `json:"name" binding:"required,min=2,max=255"`
 	Slug string `json:"slug" binding:"required,min=2,max=255"`
 }
