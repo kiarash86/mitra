@@ -13,3 +13,9 @@ WHERE id = $1;
 SELECT * FROM task
 WHERE project_id = $1 
 ORDER BY created_at DESC;
+
+
+-- name: ListTasksAssignedToUser :many
+SELECT * FROM tasks
+WHERE assigned_to_user_id = $1 
+ORDER BY due_date ASC NULLS LAST;
