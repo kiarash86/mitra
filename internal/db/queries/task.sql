@@ -7,3 +7,9 @@ RETURNING *;
 -- name: GetTaskByID :one
 SELECT * FROM task 
 WHERE id = $1;
+
+
+-- name: ListTasksByProject :many
+SELECT * FROM task
+WHERE project_id = $1 
+ORDER BY created_at DESC;
