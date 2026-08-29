@@ -14,5 +14,5 @@ CREATE TABLE
         created_by UUID NOT NULL REFERENCES users (id) ON DELETE RESTRICT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now (),
-        deleted_at TIMESTAMPTZ,
+        deleted_at TIMESTAMPTZ
     );
