@@ -50,4 +50,5 @@ WHERE id= $1;
 -- name: AssignTaskToUser :one
 UPDATE tasks
 SET assigned_to_team_id = NULL, assigned_to_user_id = $2, updated_at = now()
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;
