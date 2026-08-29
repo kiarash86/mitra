@@ -1,7 +1,6 @@
 package organization
 
 import (
-	"context"
 	"time"
 
 	"github.com/gin-gonic/gin"
