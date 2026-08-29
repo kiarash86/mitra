@@ -19,3 +19,9 @@ ORDER BY created_at DESC;
 SELECT * FROM tasks
 WHERE assigned_to_user_id = $1 
 ORDER BY due_date ASC NULLS LAST;
+
+
+-- name: ListTasksAssignedToTeam :many
+SELECT * FROM tasks
+WHERE assigned_to_team_id = $1 
+ORDER BY due_date ASC NULLS LAST;
