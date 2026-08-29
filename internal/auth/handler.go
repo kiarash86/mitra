@@ -1,4 +1,4 @@
-package handlers
+package auth
 
 import (
 	"errors"
@@ -7,13 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/kiarash86/mitra/internal/auth"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
 )
 
 type AuthHandler struct {
 	queries *sqlc.Queries
-	tokens  *auth.TokenManager
+	tokens  *TokenManager
 }
 
 type registerRequest struct {
@@ -39,7 +38,7 @@ type authResponse struct {
 	User         userResponse `json:"user"`
 }
 
-func NewAuthHandler(queries *sqlc.Queries, tokens *auth.TokenManager) *AuthHandler {
+func NewAuthHandler(queries *sqlc.Queries, tokens *TokenManager) *AuthHandler {
 	return &AuthHandler{
 		queries: queries,
 		tokens:  tokens,
@@ -65,7 +64,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	pass, err := auth.HashPassword(req.Password)
+	pass, err := HashPassword(req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong with hashing"})
 		return
@@ -98,7 +97,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	if !auth.CheckPassword(user.PasswordHash, req.Password) {
+	if !CheckPassword(user.PasswordHash, req.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email or password"})
 		return
 	}
