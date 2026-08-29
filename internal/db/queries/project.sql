@@ -14,3 +14,9 @@ UPDATE projects
 SET name = $2 , description = $3 , updated_at = now()
 WHERE id = $1
 RETURNING *;
+
+
+-- name: ListProjectsByOrganization :many
+SELECT * FROM projects 
+WHERE organization_id = $1 
+ORDER BY created_at DESC;
