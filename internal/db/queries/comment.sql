@@ -17,7 +17,7 @@ WHERE c.task_id= $1
 ORDER BY c.created_at ASC;
 
 
--- name: UpdateComment
+-- name: UpdateComment :one
 UPDATE comments
 SET body = $2 , updated_at = now()
 WHERE id = $1
