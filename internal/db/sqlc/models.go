@@ -11,6 +11,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Comment struct {
+	ID        uuid.UUID          `json:"id"`
+	TaskID    uuid.UUID          `json:"task_id"`
+	AuthorID  uuid.UUID          `json:"author_id"`
+	Body      string             `json:"body"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
 type Organization struct {
 	ID        uuid.UUID          `json:"id"`
 	Name      string             `json:"name"`
@@ -26,6 +36,40 @@ type OrganizationMember struct {
 	UserID         uuid.UUID `json:"user_id"`
 	Role           string    `json:"role"`
 	CreatedAt      time.Time `json:"created_at"`
+}
+
+type Project struct {
+	ID             uuid.UUID          `json:"id"`
+	OrganizationID uuid.UUID          `json:"organization_id"`
+	Name           string             `json:"name"`
+	Description    pgtype.Text        `json:"description"`
+	CreatedAt      time.Time          `json:"created_at"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type ProjectMember struct {
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type Task struct {
+	ID               uuid.UUID          `json:"id"`
+	ProjectID        uuid.UUID          `json:"project_id"`
+	Title            string             `json:"title"`
+	Description      pgtype.Text        `json:"description"`
+	Status           string             `json:"status"`
+	Priority         string             `json:"priority"`
+	AssignedToUserID pgtype.UUID        `json:"assigned_to_user_id"`
+	AssignedToTeamID pgtype.UUID        `json:"assigned_to_team_id"`
+	DueDate          pgtype.Timestamptz `json:"due_date"`
+	CreatedBy        uuid.UUID          `json:"created_by"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type Team struct {
