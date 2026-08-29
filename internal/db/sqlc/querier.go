@@ -8,27 +8,53 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	AddOrganizationMember(ctx context.Context, arg AddOrganizationMemberParams) (OrganizationMember, error)
+	AddProjectMember(ctx context.Context, arg AddProjectMemberParams) (ProjectMember, error)
 	AddTeamMember(ctx context.Context, arg AddTeamMemberParams) (TeamMember, error)
+	AssignTaskToTeam(ctx context.Context, arg AssignTaskToTeamParams) (Task, error)
+	AssignTaskToUser(ctx context.Context, arg AssignTaskToUserParams) (Task, error)
+	CreateComment(ctx context.Context, arg CreateCommentParams) (Comment, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
+	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
+	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	GetCommentByID(ctx context.Context, id uuid.UUID) (Comment, error)
 	GetOrganizationBySlug(ctx context.Context, slug string) (Organization, error)
 	GetOrganizationMemberRole(ctx context.Context, arg GetOrganizationMemberRoleParams) (string, error)
+	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
+	GetProjectMemberRole(ctx context.Context, arg GetProjectMemberRoleParams) (string, error)
+	GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error)
 	GetTeamByID(ctx context.Context, id uuid.UUID) (Team, error)
 	GetTeamMemberRole(ctx context.Context, arg GetTeamMemberRoleParams) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
+	ListCommentsByTask(ctx context.Context, taskID uuid.UUID) ([]ListCommentsByTaskRow, error)
 	ListOrganizationMembers(ctx context.Context, organizationID uuid.UUID) ([]ListOrganizationMembersRow, error)
+	ListProjectMembers(ctx context.Context, projectID uuid.UUID) ([]ListProjectMembersRow, error)
+	ListProjectsByOrganization(ctx context.Context, organizationID uuid.UUID) ([]Project, error)
+	ListTasksAssignedToTeam(ctx context.Context, assignedToTeamID pgtype.UUID) ([]Task, error)
+	ListTasksAssignedToUser(ctx context.Context, assignedToUserID pgtype.UUID) ([]Task, error)
+	ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]Task, error)
 	ListTeamMembers(ctx context.Context, teamID uuid.UUID) ([]ListTeamMembersRow, error)
 	ListTeamsByOrganization(ctx context.Context, organizationID uuid.UUID) ([]Team, error)
 	RemoveOrganizationMember(ctx context.Context, arg RemoveOrganizationMemberParams) error
+	RemoveProjectMember(ctx context.Context, arg RemoveProjectMemberParams) error
 	RemoveTeamMember(ctx context.Context, arg RemoveTeamMemberParams) error
+	SoftDeleteComment(ctx context.Context, id uuid.UUID) error
+	SoftDeleteProject(ctx context.Context, id uuid.UUID) error
+	SoftDeleteTask(ctx context.Context, id uuid.UUID) error
 	SoftDeleteTeam(ctx context.Context, id uuid.UUID) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
+	UnassignTask(ctx context.Context, id uuid.UUID) (Task, error)
+	UpdateComment(ctx context.Context, arg UpdateCommentParams) (Comment, error)
+	UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error)
+	UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error)
+	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (Task, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 }
 
