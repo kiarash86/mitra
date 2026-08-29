@@ -22,3 +22,9 @@ UPDATE comments
 SET body = $2 , updated_at = now()
 WHERE id = $1
 RETURNING *;
+
+
+-- name: SoftDeleteComment :exec 
+UPDATE comments
+SET deleted_at = now()
+WHERE id = $1;
