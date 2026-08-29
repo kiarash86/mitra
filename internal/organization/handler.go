@@ -28,3 +28,11 @@ type organizationResponse struct {
 	Role      string    `json:"role,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type organizationMemberResponse struct {
+	UserID    string    `json:"user_id"`
+	FullName  string    `json:"full_name"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+}
