@@ -5,12 +5,12 @@ RETURNING *;
 
 
 -- name: GetTaskByID :one
-SELECT * FROM task 
+SELECT * FROM tasks
 WHERE id = $1;
 
 
 -- name: ListTasksByProject :many
-SELECT * FROM task
+SELECT * FROM tasks
 WHERE project_id = $1 
 ORDER BY created_at DESC;
 
