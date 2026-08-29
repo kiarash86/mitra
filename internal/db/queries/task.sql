@@ -39,3 +39,9 @@ UPDATE tasks
 SET status = $2 , updated_at = now()
 WEHRE id= $1
 RETURNING *;
+
+
+-- name: SoftDeleteTask :exec
+UPDATE tasks
+SET deleted_at = now() 
+WHERE id= $1;I
