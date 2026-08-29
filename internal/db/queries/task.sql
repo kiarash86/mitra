@@ -59,3 +59,10 @@ UPDATE tasks
 SET assigned_to_team_id = $2, assigned_to_user_id = NULL, updated_at = now()
 WHERE id = $1
 RETURNING *;
+
+
+-- name: UnassignTask :one
+UPDATE tasks
+SET assigned_to_team_id = NULL, assigned_to_user_id = NULL, updated_at = now()
+WHERE id = $1
+RETURNING *;
