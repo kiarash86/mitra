@@ -1,8 +1,10 @@
 package organization
 
 import (
+	"context"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
 
@@ -35,4 +37,20 @@ type organizationMemberResponse struct {
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+func (h *Handler) Create(c *gin.Context) {
+	//TODO : CREATE NEW ORGANIZATION
+}
+
+func (h *Handler) GetBySlug(c *gin.Context) {
+	//TODO : GET BY BACKED NAME NOT FRONT ONE
+}
+
+func (h *Handler) ListMembers(c *gin.Context) {
+	//TODO : LISTING ALL EMPLOYEES
+}
+
+func (h *Handler) RemoveMember(c *gin.Context) {
+	//TODO : DELETE MEMBERS OF ORGANIZATION
 }
