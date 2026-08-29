@@ -25,3 +25,10 @@ ORDER BY due_date ASC NULLS LAST;
 SELECT * FROM tasks
 WHERE assigned_to_team_id = $1 
 ORDER BY due_date ASC NULLS LAST;
+
+
+-- name: UpdateTask :one
+UPDATE tasks
+SET title = $2, description = $3, priority = $4, due_date = $5, updated_at = now()
+WHERE id = $1
+RETURNING *;
