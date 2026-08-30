@@ -92,6 +92,13 @@ func (h *Handler) Create(c *gin.Context) {
 
 	//TODO : DELETE ORG IF COULDNT ADD OWNER OR NO? : FUTURE
 
+	c.JSON(http.StatusCreated, organizationResponse{
+		ID:        org.ID.String(),
+		Name:      org.Name,
+		Slug:      org.Slug,
+		Role:      "owner",
+		CreatedAt: org.CreatedAt,
+	})
 }
 
 func (h *Handler) GetBySlug(c *gin.Context) {
