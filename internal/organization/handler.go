@@ -159,7 +159,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 
 	userID, ok := middleware.CurrentUserID(c.Request.Context())
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error", "unauthorized id or something like that"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
 	}
 
 }
