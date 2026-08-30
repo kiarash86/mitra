@@ -155,11 +155,13 @@ func (h *Handler) ListMembers(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of id"})
+		return
 	}
 
 	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
+		return
 	}
 
 	role, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
@@ -168,12 +170,14 @@ func (h *Handler) ListMembers(c *gin.Context) {
 	})
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization or you dont have permission"})
+		return
 	}
 
 	list, err := h.queries.ListOrganizationMembers(c.Request.Context(), id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list members of this organization"})
+		return
 	}
 	members := make([]organizationMemberResponse, 0, len(list))
 	for _, l := range list {
