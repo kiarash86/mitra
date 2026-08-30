@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/team"
 )
 
 // teams (
@@ -103,6 +104,17 @@ func (h *Handler) Create(c *gin.Context) {
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create team"})
+		return
+	}
+
+	_, err = h.queries.AddTeamMember(c.Request.Context(), sqlc.AddTeamMemberParams{
+		TeamID: team.ID,
+
+		UserID: userID,
+		Role:   "lead"})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "team created but couldnt add you to team"})
 		return
 	}
 
