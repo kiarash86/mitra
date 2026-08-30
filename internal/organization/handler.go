@@ -51,24 +51,29 @@ func (h *Handler) Create(c *gin.Context) {
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	if !slugPattern.MatchString(req.Slug) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
+		return
 	}
 
 	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
+		return
 	}
 
 	_, err = h.queries.GetOrganizationBySlug(c, req.Slug)
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "an organizaiton with this slug is already settled"})
+		return
 	}
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this slug"})
+		return
 	}
 
 	org, err := h.queries.CreateOrganization(c.Request.Context(), sqlc.CreateOrganizationParams{
@@ -78,6 +83,7 @@ func (h *Handler) Create(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create organization"})
+		return
 	}
 
 	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
@@ -88,6 +94,7 @@ func (h *Handler) Create(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "organization created but couldnt add you as owner"})
+		return
 	}
 
 	//TODO : DELETE ORG IF COULDNT ADD OWNER OR NO? : FUTURE
