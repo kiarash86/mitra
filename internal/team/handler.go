@@ -44,3 +44,11 @@ type teamResponse struct {
 	OrganizationID string    `json:"organization_id"`
 	CreatedAt      time.Time `json:"created_at"`
 }
+
+type teamMemberResponse struct {
+	UserID    string    `json:"user_id"`
+	FullName  string    `json:"full_name"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+}
