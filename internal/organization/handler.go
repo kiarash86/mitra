@@ -164,7 +164,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
-	role, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+	_, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: id,
 		UserID:         uuid.UUID(userID),
 	})
