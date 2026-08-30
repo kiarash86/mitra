@@ -201,10 +201,15 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-
 	userID, err := uuid.Parse(c.Param("user_id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of user_id"})
+		return
+	}
+
+	user, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
 		return
 	}
 
