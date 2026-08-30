@@ -121,7 +121,14 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "something went wrong with user authorization"})
 	}
 
-	
+	role, err := h.queries.GetOrganizationMemberRole(c, sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: org.ID,
+		UserID:         uuid.UUID(userID),
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "in the process we have a problem"})
+	}
 
 }
 
