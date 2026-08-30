@@ -2,15 +2,14 @@ package organization
 
 import (
 	"errors"
-	"net/http"
-	"regexp"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
+	"net/http"
+	"regexp"
+	"time"
 )
 
 var slugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
