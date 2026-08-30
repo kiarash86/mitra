@@ -1,6 +1,10 @@
 package team
 
-import "github.com/kiarash86/mitra/internal/db/sqlc"
+import (
+	"time"
+
+	"github.com/kiarash86/mitra/internal/db/sqlc"
+)
 
 // teams (
 //     id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
@@ -22,4 +26,11 @@ func NewHandler(queries *sqlc.Queries) *Handler {
 
 type createTeamRequest struct {
 	Name string `json:"name" binding:"required,min=2,max=255"`
+}
+
+type teamResponse struct {
+	ID             string    `json:"id"`
+	Name           string    `json:"name"`
+	OrganizationID string    `json:"organization_id"`
+	CreatedAt      time.Time `json:"created_at"`
 }
