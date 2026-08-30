@@ -1,6 +1,6 @@
 package team
 
-import ()
+import "github.com/kiarash86/mitra/internal/db/sqlc"
 
 // teams (
 //     id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
@@ -9,3 +9,8 @@ import ()
 //     created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
 //     updated_at TIMESTAMPTZ NOT NULL DEFAULT now (),
 //     deleted_at TIMESTAMPTZ
+
+
+type Handler struct {
+	queries *sqlc.Queries
+}
