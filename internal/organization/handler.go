@@ -104,6 +104,10 @@ func (h *Handler) Create(c *gin.Context) {
 func (h *Handler) GetBySlug(c *gin.Context) {
 	slug := c.Param("slug")
 
+	if !slugPattern.MatchString(slug) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
+	}
+
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
