@@ -10,7 +10,12 @@ import "github.com/kiarash86/mitra/internal/db/sqlc"
 //     updated_at TIMESTAMPTZ NOT NULL DEFAULT now (),
 //     deleted_at TIMESTAMPTZ
 
-
 type Handler struct {
 	queries *sqlc.Queries
+}
+
+func NewHandler(queries *sqlc.Queries) *Handler {
+	return &Handler{
+		queries: queries,
+	}
 }
