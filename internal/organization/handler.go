@@ -150,7 +150,7 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		CreatedAt: org.CreatedAt,
 	})
 }
-
+	
 func (h *Handler) ListMembers(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
