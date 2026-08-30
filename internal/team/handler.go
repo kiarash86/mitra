@@ -118,6 +118,12 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusCreated, teamResponse{
+		ID:             team.ID.String(),
+		Name:           team.Name,
+		OrganizationID: team.OrganizationID.String(),
+		CreatedAt:      team.CreatedAt,
+	})
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
