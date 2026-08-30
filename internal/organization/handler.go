@@ -102,7 +102,8 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) GetBySlug(c *gin.Context) {
-	//TODO : GET BY BACKED NAME NOT FRONT ONE
+	slug := c.Param("slug")
+
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
