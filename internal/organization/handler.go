@@ -62,6 +62,16 @@ func (h *Handler) Create(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 	}
 
+	_, err = h.queries.GetOrganizationBySlug(c, req.Slug)
+	if err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "an organizaiton with this slug is already settled"})
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this slug"})
+	}
+
+	
 	
 }
 
