@@ -140,6 +140,16 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 		return
 	}
 
+	_, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: organizationID,
+		UserID:         userID,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
+		return
+	}
+	//NOTE : should add if for requesterRole== nil or no?
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
