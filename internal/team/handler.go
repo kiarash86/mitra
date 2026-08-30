@@ -97,6 +97,15 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	team, err = h.queries.CreateTeam(c.Request.Context(), sqlc.CreateTeamParams{
+		OrganizationID: organizationID,
+		Name:           req.Name,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create team"})
+		return
+	}
+
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
