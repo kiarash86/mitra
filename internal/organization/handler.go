@@ -132,7 +132,7 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		return
 	}
 
-	role, err := h.queries.GetOrganizationMemberRole(c, sqlc.GetOrganizationMemberRoleParams{
+	role, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: org.ID,
 		UserID:         uuid.UUID(userID),
 	})
