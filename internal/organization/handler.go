@@ -53,7 +53,11 @@ func (h *Handler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
+	if !slugPattern.MatchString(req.Slug) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
+	}
 
+	
 }
 
 func (h *Handler) GetBySlug(c *gin.Context) {
