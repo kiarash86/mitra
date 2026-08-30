@@ -79,7 +79,7 @@ func (h *Handler) Create(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create organization"})
 	}
-	
+
 	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
 		OrganizationID: org.ID,
 		UserID:         uuid.UUID(userID),
@@ -89,8 +89,9 @@ func (h *Handler) Create(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "organization created but couldnt add you as owner"})
 	}
-	
-	
+
+	//TODO : DELETE ORG IF COULDNT ADD OWNER OR NO? : FUTURE
+
 }
 
 func (h *Handler) GetBySlug(c *gin.Context) {
