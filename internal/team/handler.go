@@ -150,6 +150,22 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 		return
 	}
 	//NOTE : should add if for requesterRole== nil or no?
+
+	list, err := h.queries.ListTeamsByOrganization(c.Request.Context(), organizationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get list of teams"})
+		return
+	}
+	teams := make([]teamResponse, 0, len(list))
+	for _, team := range list {
+		teams = append(teams, teamResponse{
+			ID:             team.ID.String(),
+			Name:           team.Name,
+			OrganizationID: team.OrganizationID.String(),
+			CreatedAt:      team.CreatedAt,
+		})
+	}
+
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
