@@ -170,6 +170,22 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization or you dont have permission"})
 	}
 
+	list, err := h.queries.ListOrganizationMembers(c.Request.Context(), id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list members of this organization"})
+	}
+	members := make([]organizationMemberResponse, 0, len(list))
+	for _, l := range list {
+		members = append(members, organizationMemberResponse{
+			UserID:    l.UserID.String(),
+			FullName:  l.FullName,
+			Email:     l.Email,
+			Role:      l.Role,
+			CreatedAt: l.CreatedAt,
+		})
+	}
+
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
