@@ -186,6 +186,8 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		})
 	}
 
+	c.JSON(http.StatusOK, gin.H{"members": members})
+
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
