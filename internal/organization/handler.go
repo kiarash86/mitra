@@ -80,6 +80,16 @@ func (h *Handler) Create(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create organization"})
 	}
 	
+	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
+		OrganizationID: org.ID,
+		UserID:         uuid.UUID(userID),
+		Role:           "owner",
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "organization created but couldnt add you as owner"})
+	}
+	
 	
 }
 
