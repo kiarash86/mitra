@@ -59,7 +59,9 @@ type addTeamMemberRequest struct {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	//TODO : CREATE TEAM
+	var req createTeamRequest
+	c.ShouldBindBodyWithJSON(&req)
+
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
