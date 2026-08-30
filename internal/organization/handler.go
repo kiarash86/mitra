@@ -236,4 +236,14 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
+	err = h.queries.RemoveOrganizationMember(c.Request.Context(), sqlc.RemoveOrganizationMemberParams{
+		OrganizationID: organizationID,
+		UserID:         targetID,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt remove member"})
+		return
+	}
+
 }
