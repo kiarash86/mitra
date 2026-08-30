@@ -47,7 +47,13 @@ type organizationMemberResponse struct {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	//TODO : CREATE NEW ORGANIZATION
+	var req createOrganizationRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+
 }
 
 func (h *Handler) GetBySlug(c *gin.Context) {
