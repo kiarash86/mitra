@@ -162,6 +162,14 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
 	}
 
+	role, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: id,
+		UserID:         uuid.UUID(userID),
+	})
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization or you dont have permission"})
+	}
+
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
