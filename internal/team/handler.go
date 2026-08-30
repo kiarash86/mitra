@@ -3,6 +3,7 @@ package team
 import (
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
 
@@ -55,4 +56,28 @@ type teamMemberResponse struct {
 type addTeamMemberRequest struct {
 	UserID string `json:"user_id" binding:"required,uuid"`
 	Role   string `json:"role" binding:"required,min=2,max=50"`
+}
+
+func (h *Handler) Create(c *gin.Context) {
+	//TODO : CREATE TEAM
+}
+
+func (h *Handler) ListByOrganization(c *gin.Context) {
+	//TODO : LIST OF TEAMS AN ORGANIZATIOM HAS
+}
+
+func (h *Handler) ListMembers(c *gin.Context) {
+	//TODO : LIST OF MEMBERS OF A TEAM
+}
+
+func (h *Handler) AddMember(c *gin.Context) {
+	//TODO : ADD TO MEMBERS OF TEAM
+}
+
+func (h *Handler) RemoveMember(c *gin.Context) {
+	//TODO : REMOVE FROM MEMBERS OF TEAM
+}
+
+func (h *Handler) SoftDelete(c *gin.Context) {
+	//TODO : SOFT DELETING A TEAM
 }
