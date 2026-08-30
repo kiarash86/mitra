@@ -166,6 +166,8 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 		})
 	}
 
+	c.JSON(http.StatusOK, gin.H{"teams": teams})
+
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
