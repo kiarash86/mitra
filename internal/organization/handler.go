@@ -107,6 +107,14 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 	if !slugPattern.MatchString(slug) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
 	}
+	org, err := h.queries.GetOrganizationBySlug(c.Request.Context(), slug)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get organization by slug"})
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "couldnt find organization with this slug"})
+	}
 
 }
 
