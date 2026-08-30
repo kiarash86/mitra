@@ -133,6 +133,13 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization id"})
 		return
 	}
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization went wrong"})
+		return
+	}
+
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
