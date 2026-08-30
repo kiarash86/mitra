@@ -130,6 +130,13 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "in the process we have a problem"})
 	}
 
+	c.JSON(http.StatusFound, organizationResponse{
+		ID:        org.ID.String(),
+		Name:      org.Name,
+		Slug:      org.Slug,
+		Role:      role,
+		CreatedAt: org.CreatedAt,
+	})
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
