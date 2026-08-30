@@ -3,6 +3,7 @@ package team
 import (
 	"net/http"
 	"time"
+	"uuid"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
@@ -65,8 +66,15 @@ func (h *Handler) Create(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "couldnt get req body"})
+		return
 	}
 
+	organizationID, err := uuid.Parse(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization id"})
+		return
+	}
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
