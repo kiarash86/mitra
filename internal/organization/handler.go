@@ -2,14 +2,15 @@ package organization
 
 import (
 	"errors"
+	"net/http"
+	"regexp"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
-	"net/http"
-	"regexp"
-	"time"
 )
 
 var slugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
@@ -194,5 +195,10 @@ func (h *Handler) ListMembers(c *gin.Context) {
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
-	//TODO : DELETE MEMBERS OF ORGANIZATION
+	organizationID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of organization_id"})
+		return
+	}
+
 }
