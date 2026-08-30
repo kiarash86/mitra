@@ -213,17 +213,26 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	role, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: organizationID,
 		UserID:         uuid.UUID(requesterID),
 	})
-	if err != nil || (role != "owner" && role != "admin") {
+	if err != nil || (requesterRole != "owner" && requesterRole != "admin") {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can remove members"})
 		return
 	}
 
 	if targetID == uuid.UUID(requesterID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you cant remove yourself"})
+		return
+	}
+
+	targetRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: organizationID,
+		UserID:         targetID,
+	})
+	if err == nil && targetRole == "owner" && requesterRole != "owner" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can remove another owner"})
 		return
 	}
 
