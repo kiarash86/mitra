@@ -52,3 +52,7 @@ type teamMemberResponse struct {
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
+type addTeamMemberRequest struct {
+	UserID string `json:"user_id" binding:"required,uuid"`
+	Role   string `json:"role" binding:"required,min=2,max=50"`
+}
