@@ -1,6 +1,7 @@
 package team
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -60,7 +61,11 @@ type addTeamMemberRequest struct {
 
 func (h *Handler) Create(c *gin.Context) {
 	var req createTeamRequest
-	c.ShouldBindBodyWithJSON(&req)
+	err := c.ShouldBindBodyWithJSON(&req)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "couldnt get req body"})
+	}
 
 }
 
