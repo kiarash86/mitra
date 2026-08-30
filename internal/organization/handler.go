@@ -113,19 +113,23 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 
 	if !slugPattern.MatchString(slug) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
+		return
 	}
 	org, err := h.queries.GetOrganizationBySlug(c.Request.Context(), slug)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get organization by slug"})
+		return
 	}
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "couldnt find organization with this slug"})
+		return
 	}
 
 	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "something went wrong with user authorization"})
+		return
 	}
 
 	role, err := h.queries.GetOrganizationMemberRole(c, sqlc.GetOrganizationMemberRoleParams{
@@ -135,6 +139,7 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "in the process we have a problem"})
+		return
 	}
 
 	c.JSON(http.StatusFound, organizationResponse{
