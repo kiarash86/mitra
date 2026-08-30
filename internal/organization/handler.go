@@ -201,4 +201,11 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
+
+	userID, err := uuid.Parse(c.Param("user_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of user_id"})
+		return
+	}
+
 }
