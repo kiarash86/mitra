@@ -71,6 +71,14 @@ func (h *Handler) Create(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this slug"})
 	}
 
+	org, err := h.queries.CreateOrganization(c.Request.Context(), sqlc.CreateOrganizationParams{
+		Name: req.Name,
+		Slug: req.Slug,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create organization"})
+	}
 	
 	
 }
