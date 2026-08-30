@@ -246,4 +246,5 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
+	c.Status(http.StatusNoContent)
 }
