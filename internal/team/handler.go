@@ -127,7 +127,12 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
-	//TODO : LIST OF TEAMS AN ORGANIZATIOM HAS
+	organizationID, err := uuid.Parse(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization id"})
+		return
+	}
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
