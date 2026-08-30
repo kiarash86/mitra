@@ -116,6 +116,13 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "couldnt find organization with this slug"})
 	}
 
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "something went wrong with user authorization"})
+	}
+
+	
+
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
