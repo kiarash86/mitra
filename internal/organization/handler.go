@@ -152,7 +152,10 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
-	//TODO : LISTING ALL EMPLOYEES
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of id"})
+	}
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
