@@ -156,6 +156,12 @@ func (h *Handler) ListMembers(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of id"})
 	}
+
+	userID, ok := middleware.CurrentUserID(c.Request.Context())
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error", "unauthorized id or something like that"})
+	}
+
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
