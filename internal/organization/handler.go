@@ -207,7 +207,7 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	user, ok := middleware.CurrentUserID(c)
+	requesterID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
 		return
