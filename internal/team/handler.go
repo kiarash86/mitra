@@ -194,7 +194,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
 		return
 	}
-	if requesterRole != "owner" && requesterRole != "admin" {
+	if requesterRole != "owner" && requesterRole != "admin" && requesterRole != "leader" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "you dont have enough permision for creating teams"})
 		return
 	}
@@ -250,7 +250,7 @@ func (h *Handler) AddMember(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
 		return
 	}
-	if requesterRole != "owner" && requesterRole != "admin" {
+	if requesterRole != "owner" && requesterRole != "admin" && requesterRole != "leader" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "you dont have enough permision for creating teams"})
 		return
 	}
@@ -300,7 +300,7 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
 		return
 	}
-	if requesterRole != "owner" && requesterRole != "admin" {
+	if requesterRole != "owner" && requesterRole != "admin" && requesterRole != "leader" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "you dont have enough permision for creating teams"})
 		return
 	}
@@ -341,7 +341,7 @@ func (h *Handler) SoftDelete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
 		return
 	}
-	if requesterRole != "owner" && requesterRole != "admin" {
+	if requesterRole != "owner" && requesterRole != "admin" && requesterRole != "leader" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "you dont have enough permision for creating teams"})
 		return
 	}
