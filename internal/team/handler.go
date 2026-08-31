@@ -293,6 +293,15 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
+	err = h.queries.RemoveTeamMember(c.Request.Context(), sqlc.RemoveTeamMemberParams{
+		UserID: uuid.UUID(userid),
+		TeamID: teamid,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt Remove the member"})
+	}
+
 }
 
 func (h *Handler) SoftDelete(c *gin.Context) {
