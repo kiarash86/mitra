@@ -1,10 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web</title>
+    <meta name="description" content="میترا — سامانه مدیریت و ارتباطات سازمانی یکپارچه: سازمان، تیم، پروژه و تسک در یک فضای کاری واحد." />
+    <meta name="theme-color" content="#201e2f" />
+    <title>میترا</title>
+    <script>
+      (function () {
+        try {
+          var l = localStorage.getItem("mitra-locale");
+          if (l === "en") {
+            document.documentElement.lang = "en";
+            document.documentElement.dir = "ltr";
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
