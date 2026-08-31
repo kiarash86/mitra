@@ -49,7 +49,20 @@ func IsOrganizationOwnerOrAdmin(ctx context.Context, queries *sqlc.Queries, orgI
 }
 
 func IsProjectMember(ctx context.Context, queries *sqlc.Queries, projectID, userID uuid.UUID) (bool, error) {
-	//TODO : IS THIS USER ONE OF THE PROJECT MEMBERS?
+	_, err := queries.GetProjectMemberRole(ctx, sqlc.GetProjectMemberRoleParams{
+		ProjectID: projectID,
+		UserID:    userID,
+	})
+
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+
+	return false, err
 }
 
 func IsProjectOwnerOrAdmin(ctx context.Context, queries *sqlc.Queries, projectID, userID uuid.UUID) (bool, error) {
