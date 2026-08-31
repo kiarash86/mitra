@@ -87,7 +87,7 @@ func (h *Handler) Create(c *gin.Context) {
 
 	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: organizationID,
-		UserID:         userID,
+		UserID:         uuid.UUID(userID),
 	})
 
 	if err != nil {
@@ -99,7 +99,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	team, err = h.queries.CreateTeam(c.Request.Context(), sqlc.CreateTeamParams{
+	team, err := h.queries.CreateTeam(c.Request.Context(), sqlc.CreateTeamParams{
 		OrganizationID: organizationID,
 		Name:           req.Name,
 	})
@@ -111,7 +111,7 @@ func (h *Handler) Create(c *gin.Context) {
 	_, err = h.queries.AddTeamMember(c.Request.Context(), sqlc.AddTeamMemberParams{
 		TeamID: team.ID,
 
-		UserID: userID,
+		UserID: uuid.UUID(userID),
 		Role:   "lead"})
 
 	if err != nil {
@@ -141,9 +141,9 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 		return
 	}
 
-	_, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+	_, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: organizationID,
-		UserID:         userID,
+		UserID:         uuid.UUID(userID),
 	})
 
 	if err != nil {
