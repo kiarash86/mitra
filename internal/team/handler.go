@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
-	"github.com/kiarash86/mitra/internal/team"
+	// "github.com/kiarash86/mitra/internal/team"
 )
 
 // teams (
@@ -185,9 +185,11 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
-	memberlist, err := h.queries.ListTeamMembers(c.Request.Context(), sqlc.ListTeamMembersRow{
-		ID: teamid,
-	})
+	memberlist, err := h.queries.ListTeamMembers(c.Request.Context(), teamid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get list of teams"})
+		return
+	}
 
 }
 
