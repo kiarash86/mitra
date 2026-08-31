@@ -287,4 +287,25 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
+	
+
+
+
+
+	if targetID == uuid.UUID(requesterID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you cant remove yourself"})
+		return
+	}
+
+	targetRole, err := h.queries.GetProjectMemberRole(c.Request.Context(), sqlc.GetProjectMemberRoleParams{
+		ProjectID: projectID,
+		UserID:    targetID,
+	})
+	if err == nil && targetRole == "owner" && requesterRole != "owner" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can remove another owner"})
+		return
+	}
+
+
+
 }
