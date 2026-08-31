@@ -1,1 +1,198 @@
+@import "@fontsource-variable/vazirmatn";
 @import "tailwindcss";
+
+/*
+  Mitra design tokens
+  -------------------
+  Three materials, three jobs:
+    paper   — warm, quiet background the work sits on
+    ink     — structure, text, the dark sidebar (cool indigo-black)
+    saffron — the one warm accent: action, focus, the seal of "done"
+  Status colors are deliberately a *different* family from saffron so a
+  priority chip and a primary button are never confused at a glance.
+*/
+@theme {
+  --font-sans: "Vazirmatn Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* paper — warm neutral surface */
+  --color-paper-50: #fbf9f4;
+  --color-paper-100: #f4f1e9;
+  --color-paper-200: #e9e4d6;
+  --color-paper-300: #d9d2bd;
+
+  /* ink — cool indigo-black, text/structure/dark surfaces */
+  --color-ink-50: #f5f5f8;
+  --color-ink-100: #ebeaf0;
+  --color-ink-200: #d4d2df;
+  --color-ink-300: #b2afc5;
+  --color-ink-400: #8b87a3;
+  --color-ink-500: #6c6786;
+  --color-ink-600: #534f6c;
+  --color-ink-700: #403d56;
+  --color-ink-800: #2e2c40;
+  --color-ink-900: #201e2f;
+  --color-ink-950: #15131f;
+
+  /* saffron — brand gold, the "mehr" seal */
+  --color-saffron-50: #fcf6ea;
+  --color-saffron-100: #f8e9c9;
+  --color-saffron-200: #f0d08e;
+  --color-saffron-300: #e6b45c;
+  --color-saffron-400: #d89935;
+  --color-saffron-500: #c1811e;
+  --color-saffron-600: #a15d10;
+  --color-saffron-700: #7e4712;
+  --color-saffron-800: #633813;
+  --color-saffron-900: #4f2e14;
+  --color-saffron-950: #2c1809;
+
+  /* status: workflow (todo uses plain ink, so only three hues needed) */
+  --color-progress-50: #f1f7fa;
+  --color-progress-100: #e3eef5;
+  --color-progress-500: #4c87af;
+  --color-progress-600: #386c90;
+
+  --color-plum-50: #f6f1f9;
+  --color-plum-100: #efe7f4;
+  --color-plum-500: #8b6ba8;
+  --color-plum-600: #705289;
+
+  --color-moss-50: #eef4ec;
+  --color-moss-100: #e6efe3;
+  --color-moss-500: #5c8a52;
+  --color-moss-600: #476b40;
+
+  /* status: priority heat scale (low -> urgent) */
+  --color-ember-50: #f9efe6;
+  --color-ember-100: #f5e4d6;
+  --color-ember-500: #c06a2e;
+  --color-ember-600: #9b5424;
+
+  --color-cinnabar-50: #fbefea;
+  --color-cinnabar-100: #f7e3dd;
+  --color-cinnabar-500: #c2492f;
+  --color-cinnabar-600: #a23a24;
+  --color-cinnabar-700: #7f2e1c;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-soft: 0 1px 2px rgba(21, 19, 31, 0.04), 0 2px 10px rgba(21, 19, 31, 0.05);
+  --shadow-md: 0 2px 4px rgba(21, 19, 31, 0.05), 0 8px 24px rgba(21, 19, 31, 0.08);
+  --shadow-lg: 0 12px 32px rgba(21, 19, 31, 0.16), 0 4px 10px rgba(21, 19, 31, 0.08);
+  --shadow-ink: 0 8px 28px rgba(21, 19, 31, 0.35);
+
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-fade-up: fade-up 0.45s var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-seal: seal-stamp 0.6s var(--ease-out-soft) both;
+  --animate-in: fade-in 0.15s ease-out both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -50% 0;
+  }
+}
+
+@keyframes seal-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-8deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.18) rotate(2deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5) rotate(4deg);
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-paper-50 text-ink-800 antialiased;
+    font-feature-settings: "ss01" 1;
+  }
+
+  ::selection {
+    background-color: var(--color-saffron-200);
+    color: var(--color-ink-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-saffron-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-ink-200);
+    border-radius: 999px;
+    border: 2px solid var(--color-paper-50);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ink-300);
+  }
+}
+
+@layer utilities {
+  .skeleton {
+    background-image: linear-gradient(
+      90deg,
+      var(--color-paper-200) 25%,
+      var(--color-paper-100) 37%,
+      var(--color-paper-200) 63%
+    );
+    background-size: 400% 100%;
+    animation: var(--animate-shimmer);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

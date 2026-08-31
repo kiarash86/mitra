@@ -1,36 +1,60 @@
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { PanelLeft, PanelLeftClose, Bell } from "lucide-react";
+import { useI18n } from "../../i18n";
 import { useUiStore } from "../../stores/ui";
+import { useOrganizationStore } from "../../stores/organization";
 import { useNotificationStore } from "../../stores/notification";
-import { useAuthStore } from "../../stores/auth";
+import { IconButton } from "../ui/IconButton";
+import { LanguageSwitcher } from "../ui/LanguageSwitcher";
+import { formatNumber } from "../../lib/formatters";
+import { cn } from "../../lib/cn";
 
 export function Header() {
+  const { t, locale } = useI18n();
+  const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+  const currentOrg = useOrganizationStore((s) => s.currentOrg);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
-  const user = useAuthStore((s) => s.user);
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
+
+  useEffect(() => {
+    fetchNotifications().catch(() => {});
+  }, [fetchNotifications]);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
-      <button
-        onClick={toggleSidebar}
-        className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-paper-200 bg-white px-5">
+      <div className="flex items-center gap-3">
+        <IconButton
+          label={t.common.toggleSidebar}
+          icon={
+            sidebarOpen ? (
+              <PanelLeftClose className="h-[18px] w-[18px]" />
+            ) : (
+              <PanelLeft className="h-[18px] w-[18px]" />
+            )
+          }
+          onClick={toggleSidebar}
+        />
+        {currentOrg && <span className="text-sm font-medium text-ink-700">{currentOrg.name}</span>}
+      </div>
 
-      <div className="flex items-center gap-4">
-        <button className="relative rounded-md p-2 text-gray-500 hover:bg-gray-100">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
+      <div className="flex items-center gap-1.5">
+        <LanguageSwitcher />
+        <Link
+          to="/notifications"
+          aria-label={t.nav.notifications}
+          className={cn(
+            "relative inline-flex h-10 w-10 items-center justify-center rounded-md text-ink-600 transition-colors duration-150 hover:bg-ink-100 hover:text-ink-900",
+          )}
+        >
+          <Bell className="h-[18px] w-[18px]" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-              {unreadCount > 9 ? "9+" : unreadCount}
+            <span className="absolute end-1.5 top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-cinnabar-500 px-1 text-[10px] font-bold text-white">
+              {formatNumber(Math.min(unreadCount, 99), locale)}
             </span>
           )}
-        </button>
-
-        <span className="text-sm text-gray-600">{user?.full_name}</span>
+        </Link>
       </div>
     </header>
   );
