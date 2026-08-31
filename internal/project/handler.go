@@ -16,3 +16,8 @@ type createProjectRequest struct {
 	Name        string `json:"name" binding:"required,min=2,max=255"`
 	Description string `json:"description" binding:"max=10000"`
 }
+
+type updateProjectRequest struct {
+	Name        string `json:"name" binding:"required,min=2,max=255"`
+	Description string `json:"description" binding:"max=10000"`
+}
