@@ -228,6 +228,7 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
+
 func (h *Handler) ListMembers(c *gin.Context) {
 	projectID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -281,7 +282,11 @@ func (h *Handler) ListMembers(c *gin.Context) {
 }
 
 func (h *Handler) AddMember(c *gin.Context) {
-	//TODO : ADD MEMBER TO PROJECT
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of projectID"})
+		return
+	}
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
