@@ -118,7 +118,10 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
-	//TODO : LIST ALL PROJECTS AN ORGANIZATION HAS
+	organizationID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organizatinID type"})
+	}
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
