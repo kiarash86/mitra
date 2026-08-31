@@ -1,31 +1,42 @@
 import type { TaskStatus, TaskPriority } from "../types/task";
 
-export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: "To Do",
-  in_progress: "In Progress",
-  review: "Review",
-  done: "Done",
-};
+/*
+  Display text lives in the i18n dictionaries (src/i18n/fa.ts, en.ts) under
+  common.taskStatus / common.taskPriority / common.roles, keyed by the same
+  string values defined here. This file only holds the value lists (used to
+  drive selects/columns and API payloads) and style tokens — never text.
+*/
 
-export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-  urgent: "Urgent",
-};
+export const TASK_STATUS_ORDER: TaskStatus[] = ["todo", "in_progress", "review", "done"];
+export const TASK_PRIORITY_ORDER: TaskPriority[] = ["low", "medium", "high", "urgent"];
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
-  todo: "bg-gray-100 text-gray-700",
-  in_progress: "bg-blue-100 text-blue-700",
-  review: "bg-yellow-100 text-yellow-700",
-  done: "bg-green-100 text-green-700",
+  todo: "bg-ink-100 text-ink-600",
+  in_progress: "bg-progress-100 text-progress-600",
+  review: "bg-plum-100 text-plum-600",
+  done: "bg-moss-100 text-moss-600",
+};
+
+export const TASK_STATUS_DOT: Record<TaskStatus, string> = {
+  todo: "bg-ink-400",
+  in_progress: "bg-progress-500",
+  review: "bg-plum-500",
+  done: "bg-moss-500",
+};
+
+/** currentColor-based text classes, for SVG strokes/fills keyed by status. */
+export const TASK_STATUS_TEXT: Record<TaskStatus, string> = {
+  todo: "text-ink-400",
+  in_progress: "text-progress-500",
+  review: "text-plum-500",
+  done: "text-moss-500",
 };
 
 export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
-  low: "bg-gray-100 text-gray-600",
-  medium: "bg-blue-100 text-blue-600",
-  high: "bg-orange-100 text-orange-600",
-  urgent: "bg-red-100 text-red-600",
+  low: "bg-ink-100 text-ink-500",
+  medium: "bg-saffron-100 text-saffron-700",
+  high: "bg-ember-100 text-ember-600",
+  urgent: "bg-cinnabar-100 text-cinnabar-600",
 };
 
 export const ORG_ROLES = ["owner", "admin", "member", "viewer"] as const;
