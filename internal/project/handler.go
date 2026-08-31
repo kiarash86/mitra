@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/kiarash86/mitra/internal/middleware"
 )
 
 type Handler struct {
@@ -68,6 +69,23 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	requesterRole, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: uuid.UUID(organizationID),
+		UserID:         uuid.UUID(userID),
+	})
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
+		return
+	}
+
+	if requesterRole != "admin" && requesterRole != "owner" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you dont have enough permission for this process"})
+
+		return
+	}
+
+
+	
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
