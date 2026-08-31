@@ -293,6 +293,12 @@ func (h *Handler) AddMember(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of user_id"})
 		return
 	}
+
+	requesterID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
+		return
+	}
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
