@@ -47,7 +47,10 @@ type projectMemberResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (ph *Handler) Create(c *gin.Context) {
+func (h *Handler) Create(c *gin.Context) {
 	//TODO : CREATE A PROJECT
 }
 
+func (h *Handler) ListByOrganization(c *gin.Context) {
+	//TODO : LIST ALL PROJECTS AN ORGANIZATION HAS
+}
