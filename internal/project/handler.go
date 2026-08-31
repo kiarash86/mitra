@@ -128,6 +128,21 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 		return
 	}
 
+	list, err := h.queries.ListProjectsByOrganization(c.Request.Context(), organizationID)
+
+	projects := make([]projectResponse, 0, len(list))
+	for _, project := range list {
+		projects = append(projects, projectResponse{
+			ID:             project.ID.String(),
+			OrganizationID: project.OrganizationID.String(),
+			Name:           project.Name,
+			Description:    project.Description.String,
+			CreatedAt:      project.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"projects": projects})
+
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
