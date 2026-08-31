@@ -223,6 +223,15 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
 	}
+	updatedProject, err := h.queries.UpdateProject(c.Request.Context(), sqlc.UpdateProjectParams{
+		ID:          projectID,
+		Name:        req.Name,
+		Description: req.Description,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update project"})
+		return
+	}
 
 }
 
