@@ -293,10 +293,10 @@ func (h *Handler) AddMember(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
-	targetID, err := uuid.Parse(c.Param("user_id"))
+
+	targetID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of user_id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
 		return
 	}
 
