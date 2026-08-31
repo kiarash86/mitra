@@ -178,7 +178,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	userOrganizationID, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+	_, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: project.OrganizationID,
 		UserID:         uuid.UUID(userID),
 	})
@@ -190,6 +190,8 @@ func (h *Handler) GetByID(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
 		return
 	}
+
+	c.JSON(http.StatusOK, project)
 
 }
 
