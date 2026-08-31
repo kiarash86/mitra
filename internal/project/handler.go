@@ -58,3 +58,8 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 func (h *Handler) GetByID(c *gin.Context) {
 	//TODO : GET A PROJECT BY GIVING ID
 }
+
+func (ph *Handler) Update(c *gin.Context) {
+	// TODO : UPDATE PROJECT INFO
+}
+
