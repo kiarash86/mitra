@@ -2,6 +2,7 @@ package project
 
 import (
 	"time"
+	"uuid"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
@@ -77,4 +78,8 @@ func (h *Handler) AddMember(c *gin.Context) {
 
 func (h *Handler) RemoveMember(c *gin.Context) {
 	//TODO : REMOVE A MEMBER FROM A PRJ/ SAME PERMISSION AS DELETE
+}
+
+func (ph *Handler) canManage(c *gin.Context, project sqlc.Project, userID uuid.UUID) bool {
+	//TODO : CAN DELETE/ EDIT OR ANYTHING LIKE THIS? ONLY ADMIN/OWNER PRJ AND ORG
 }
