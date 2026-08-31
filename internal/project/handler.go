@@ -3,7 +3,8 @@ package project
 import (
 	"net/http"
 	"time"
-	"uuid"
+
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
@@ -69,7 +70,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	requesterRole, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: uuid.UUID(organizationID),
 		UserID:         uuid.UUID(userID),
 	})
@@ -84,8 +85,17 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	prj, err := h.queries.CreateProject(c.Request.Context(), sqlc.CreateProjectParams{
+		OrganizationID: organizationID,
+		Name:           req.Name,
+		Description:    req.Description,
+	})
 
-	
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create project"})
+		return
+	}
+
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
