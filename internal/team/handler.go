@@ -175,7 +175,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 	teamid, err := uuid.Parse(c.Param("id"))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
 		return
 	}
 
@@ -222,7 +222,13 @@ func (h *Handler) ListMembers(c *gin.Context) {
 }
 
 func (h *Handler) AddMember(c *gin.Context) {
-	//TODO : ADD TO MEMBERS OF TEAM
+	teamid, err := uuid.Parse(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
