@@ -172,6 +172,12 @@ func (h *Handler) GetByID(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
 	}
+	user, err := h.queries.GetUserByID(c.Request.Context(), uuid.UUID(userID))
+	if err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get user"})
+		return
+	}
 
 }
 
