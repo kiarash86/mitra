@@ -200,8 +200,11 @@ func (h *Handler) Update(c *gin.Context) {
 }
 
 func (h *Handler) Delete(c *gin.Context) {
-
-	// TODO : SOFT DELETE PROJECT ONLY BY OWNER OR ADMIN OR PROJECT OWNER/ADMIN CAN DELETE
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of projectID"})
+		return
+	}
 }
 func (h *Handler) ListMembers(c *gin.Context) {
 	projectID, err := uuid.Parse(c.Param("id"))
