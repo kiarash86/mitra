@@ -155,7 +155,13 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
-	//TODO : GET A PROJECT BY GIVING ID
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
+	
 }
 
 func (h *Handler) Update(c *gin.Context) {
