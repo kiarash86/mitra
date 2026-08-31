@@ -86,7 +86,20 @@ func IsProjectOwnerOrAdmin(ctx context.Context, queries *sqlc.Queries, projectID
 }
 
 func IsTeamMember(ctx context.Context, queries *sqlc.Queries, teamID, userID uuid.UUID) (bool, error) {
-	//TODO : IS THIS USER ONE OF THIS THE TEAM MEMBERS?
+	_, err := queries.GetTeamMemberRole(ctx, sqlc.GetTeamMemberRoleParams{
+		TeamID: teamID,
+		UserID: userID,
+	})
+
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+
+	return false, err
 }
 
 func IsTeamLeader(ctx context.Context, queries *sqlc.Queries, teamID, userID uuid.UUID) (bool, error) {
