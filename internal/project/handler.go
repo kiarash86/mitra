@@ -55,7 +55,6 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 	//TODO : LIST ALL PROJECTS AN ORGANIZATION HAS
 }
 
-
-
 func (h *Handler) GetByID(c *gin.Context) {
+	//TODO : GET A PROJECT BY GIVING ID
 }
