@@ -85,7 +85,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	prj, err := h.queries.CreateProject(c.Request.Context(), sqlc.CreateProjectParams{
+	project, err := h.queries.CreateProject(c.Request.Context(), sqlc.CreateProjectParams{
 		OrganizationID: organizationID,
 		Name:           req.Name,
 		Description:    req.Description,
@@ -97,16 +97,23 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	_, err = h.queries.AddProjectMember(c.Request.Context(), sqlc.AddProjectMemberParams{
-		ProjectID: prj.ID,
+		ProjectID: project.ID,
 		UserID:    uuid.UUID(userID),
 		Role:      "owner",
 	})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "project created but i couldnt add u as owner"})
+		return
 	}
 
-	
+	c.JSON(http.StatusCreated, projectResponse{
+		ID:             project.ID.String(),
+		OrganizationID: project.OrganizationID.String(),
+		Name:           project.Name,
+		Description:    project.Description,
+		CreatedAt:      project.CreatedAt,
+	})
 
 }
 
