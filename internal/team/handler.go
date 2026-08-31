@@ -179,7 +179,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
-	userID, ok := middleware.CurrentUserID(c)
+	userid, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization went wrong"})
 		return
@@ -190,6 +190,20 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get list of teams"})
 		return
 	}
+
+	teams := make([]teamMemberResponse, 0, len(memberlist))
+
+	for _, teammember := range memberlist {
+		teams = append(teams, teamMemberResponse{
+			UserID:    teammember.UserID.String(),
+			FullName:  teammember.FullName,
+			Email:     teammember.Email,
+			Role:      teammember.Role,
+			CreatedAt: teammember.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"teams": teams})
 
 }
 
