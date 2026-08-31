@@ -216,6 +216,29 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
+	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project wasnt there"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
+
+	_, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: project.OrganizationID,
+		UserID:         uuid.UUID(userID),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
+		return
+	}
+	
 }
 
 func (h *Handler) AddMember(c *gin.Context) {
