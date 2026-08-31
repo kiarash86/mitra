@@ -3,6 +3,7 @@ package project
 import (
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
 
@@ -45,3 +46,8 @@ type projectMemberResponse struct {
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+func (ph *Handler) Create(c *gin.Context) {
+	//TODO : CREATE A PROJECT
+}
+
