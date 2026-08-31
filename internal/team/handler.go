@@ -185,6 +185,20 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
+	requesterRole, err := h.queries.GetTeamMemberRole(c.Request.Context(), sqlc.GetTeamMemberRoleParams{
+		TeamID: teamid,
+		UserID: uuid.UUID(userid),
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
+		return
+	}
+	if requesterRole != "owner" && requesterRole != "admin" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "you dont have enough permision for creating teams"})
+		return
+	}
+
 	memberlist, err := h.queries.ListTeamMembers(c.Request.Context(), teamid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get list of teams"})
