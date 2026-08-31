@@ -67,3 +67,6 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	// TODO : SOFT DELETE PROJECT ONLY BY OWNER OR ADMIN OR PROJECT OWNER/ADMIN CAN DELETE
 }
+func (h *Handler) ListMembers(c *gin.Context) {
+	// TODO : LIST MEMBER OF A PROJECT
+}
