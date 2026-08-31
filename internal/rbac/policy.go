@@ -2,13 +2,29 @@ package rbac
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
 
 func IsOrganizationMember(ctx context.Context, queries *sqlc.Queries, orgID, userID uuid.UUID) (bool, error) {
-	//TODO : IS ORGANIZATION MEMBER?
+
+	_, err := queries.GetOrganizationMemberRole(ctx, sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: orgID,
+		UserID:         userID,
+	})
+
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+
+	return false, err
 }
 
 func IsOrganizationOwnerOrAdmin(ctx context.Context, queries *sqlc.Queries, orgID, userID uuid.UUID) (bool, error) {
