@@ -26,6 +26,10 @@ type updateProjectRequest struct {
 	Description string `json:"description" binding:"max=10000"`
 }
 
+type addProjectMemberRequest struct {
+	UserID string `json:"user_id" binding:"required,uuid"`
+	Role   string `json:"role" binding:"required,min=2,max=50"`
+}
 type projectResponse struct {
 	ID             string    `json:"id"`
 	OrganizationID string    `json:"organization_id"`
