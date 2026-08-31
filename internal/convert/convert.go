@@ -34,7 +34,8 @@ func TimestamptzToTime(t pgtype.Timestamptz) *time.Time {
 	if !t.Valid {
 		return nil
 	}
-	return &t.Time
+	tm := t.Time
+	return &tm
 }
 
 func UUIDToPgtypeUUID(id uuid.UUID) pgtype.UUID {
