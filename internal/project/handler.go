@@ -54,3 +54,8 @@ func (h *Handler) Create(c *gin.Context) {
 func (h *Handler) ListByOrganization(c *gin.Context) {
 	//TODO : LIST ALL PROJECTS AN ORGANIZATION HAS
 }
+
+
+
+func (h *Handler) GetByID(c *gin.Context) {
+}
