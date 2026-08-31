@@ -211,6 +211,15 @@ func (h *Handler) Delete(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
 		return
 	}
+	project, err := ph.queries.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
 }
 func (h *Handler) ListMembers(c *gin.Context) {
 	projectID, err := uuid.Parse(c.Param("id"))
