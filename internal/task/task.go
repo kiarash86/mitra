@@ -55,3 +55,10 @@ type taskResponse struct {
 	CreatedAt        time.Time  `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 }
+
+var allowedTaskStatuses = map[string]bool{
+	"todo":        true,
+	"in_progress": true,
+	"review":      true,
+	"done":        true,
+}
