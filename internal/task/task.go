@@ -62,3 +62,10 @@ var allowedTaskStatuses = map[string]bool{
 	"review":      true,
 	"done":        true,
 }
+
+var allowedTaskPriorities = map[string]bool{
+	"low":    true,
+	"medium": true,
+	"high":   true,
+	"urgent": true,
+}
