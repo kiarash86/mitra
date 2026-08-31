@@ -1,6 +1,10 @@
 package project
 
-import "github.com/kiarash86/mitra/internal/db/sqlc"
+import (
+	"time"
+
+	"github.com/kiarash86/mitra/internal/db/sqlc"
+)
 
 type Handler struct {
 	queries *sqlc.Queries
@@ -20,4 +24,12 @@ type createProjectRequest struct {
 type updateProjectRequest struct {
 	Name        string `json:"name" binding:"required,min=2,max=255"`
 	Description string `json:"description" binding:"max=10000"`
+}
+
+type projectResponse struct {
+	ID             string    `json:"id"`
+	OrganizationID string    `json:"organization_id"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
 }
