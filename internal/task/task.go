@@ -22,3 +22,10 @@ type createTaskRequest struct {
 	Priority    string     `json:"priority"`
 	DueDate     *time.Time `json:"due_date"`
 }
+
+type updateTaskRequest struct {
+	Title       string     `json:"title" binding:"required,min=2,max=255"`
+	Description string     `json:"description" binding:"max=10000"`
+	Priority    string     `json:"priority" binding:"required"`
+	DueDate     *time.Time `json:"due_date"`
+}
