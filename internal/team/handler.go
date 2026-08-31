@@ -346,4 +346,10 @@ func (h *Handler) SoftDelete(c *gin.Context) {
 		return
 	}
 
+	err = h.queries.SoftDeleteTeam(c.Request.Context(), uuid.UUID(userid))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt Remove the team"})
+	}
+
+	c.Status(http.StatusNoContent)
 }
