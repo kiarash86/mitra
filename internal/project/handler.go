@@ -128,6 +128,15 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 		return
 	}
 
+	_, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: uuid.UUID(organizationID),
+		UserID:         uuid.UUID(userID),
+	})
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
+		return
+	}
+
 	list, err := h.queries.ListProjectsByOrganization(c.Request.Context(), organizationID)
 
 	projects := make([]projectResponse, 0, len(list))
