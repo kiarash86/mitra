@@ -33,3 +33,7 @@ type updateTaskRequest struct {
 type updateTaskStatusRequest struct {
 	Status string `json:"status" binding:"required"`
 }
+
+type assignTaskToUserRequest struct {
+	UserID string `json:"user_id" binding:"required,uuid"`
+}
