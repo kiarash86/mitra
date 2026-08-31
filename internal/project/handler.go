@@ -166,6 +166,12 @@ func (h *Handler) GetByID(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
 	}
+	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
 
 }
 
