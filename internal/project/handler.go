@@ -306,6 +306,16 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
+		err = h.queries.RemoveProjectMember(c.Request.Context(), sqlc.RemoveProjectMemberParams{
+		ProjectID: projectID,
+		UserID:    targetID,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt remove member"})
+		return
+	}
+
 
 
 }
