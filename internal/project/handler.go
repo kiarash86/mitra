@@ -233,6 +233,13 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, projectResponse{
+		ID:             updatedProject.ID.String(),
+		OrganizationID: updatedProject.OrganizationID.String(),
+		Name:           updatedProject.Name,
+		Description:    updatedProject.Description,
+		CreatedAt:      updatedProject.CreatedAt})
+
 }
 
 func (h *Handler) Delete(c *gin.Context) {
