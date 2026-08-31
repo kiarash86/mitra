@@ -40,3 +40,18 @@ type assignTaskToUserRequest struct {
 type assignTaskToTeamRequest struct {
 	TeamID string `json:"team_id" binding:"required,uuid"`
 }
+
+type taskResponse struct {
+	ID               string     `json:"id"`
+	ProjectID        string     `json:"project_id"`
+	Title            string     `json:"title"`
+	Description      string     `json:"description,omitempty"`
+	Status           string     `json:"status"`
+	Priority         string     `json:"priority"`
+	AssignedToUserID *string    `json:"assigned_to_user_id,omitempty"`
+	AssignedToTeamID *string    `json:"assigned_to_team_id,omitempty"`
+	DueDate          *time.Time `json:"due_date,omitempty"`
+	CreatedBy        string     `json:"created_by"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+}
