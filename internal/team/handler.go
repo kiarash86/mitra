@@ -178,6 +178,12 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization went wrong"})
+		return
+	}
+
 }
 
 func (h *Handler) AddMember(c *gin.Context) {
