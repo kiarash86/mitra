@@ -3,6 +3,7 @@ package task
 import (
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/convert"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
@@ -86,4 +87,44 @@ func taskToResponse(task sqlc.Task) taskResponse {
 		CreatedAt:        task.CreatedAt,
 		UpdatedAt:        task.UpdatedAt,
 	}
+}
+
+func (h *Handler) Create(c *gin.Context) {
+	// TODO : CREATE A TASK
+}
+
+func (h *Handler) ListByProject(c *gin.Context) {
+	// TODO : LIST TASKS OF PROJECT
+}
+
+func (h *Handler) ListAssignedToMe(c *gin.Context) {
+	// TODO : LIST TASKS OF MINE
+}
+
+func (h *Handler) GetByID(c *gin.Context) {
+	// TODO : GET TASK USING ID
+}
+
+func (h *Handler) Update(c *gin.Context) {
+	// TODO : UPDATE ENTIRE OF TASK
+}
+
+func (h *Handler) UpdateStatus(c *gin.Context) {
+	// TODO : UPDATE STATUS
+}
+
+func (h *Handler) AssignToUser(c *gin.Context) {
+	// TODO : ASSIGN TASK TO SOMEONE
+}
+
+func (h *Handler) AssignToTeam(c *gin.Context) {
+	// TODO : ASSIGN TASK TO TEAM
+}
+
+func (h *Handler) Unassign(c *gin.Context) {
+	// TODO : UNASSIGNING TASK
+}
+
+func (h *Handler) Delete(c *gin.Context) {
+	// TODO : SOFT DELETE TASK
 }
