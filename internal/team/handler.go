@@ -332,4 +332,18 @@ func (h *Handler) SoftDelete(c *gin.Context) {
 		return
 	}
 
+	requesterRole, err := h.queries.GetTeamMemberRole(c.Request.Context(), sqlc.GetTeamMemberRoleParams{
+		TeamID: teamid,
+		UserID: uuid.UUID(userid),
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
+		return
+	}
+	if requesterRole != "owner" && requesterRole != "admin" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "you dont have enough permision for creating teams"})
+		return
+	}
+
 }
