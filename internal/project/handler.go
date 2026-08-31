@@ -33,3 +33,11 @@ type projectResponse struct {
 	Description    string    `json:"description,omitempty"`
 	CreatedAt      time.Time `json:"created_at"`
 }
+
+type projectMemberResponse struct {
+	UserID    string    `json:"user_id"`
+	FullName  string    `json:"full_name"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+}
