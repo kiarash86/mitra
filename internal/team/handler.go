@@ -302,6 +302,8 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt Remove the member"})
 	}
 
+	c.Status(http.StatusNoContent)
+
 }
 
 func (h *Handler) SoftDelete(c *gin.Context) {
