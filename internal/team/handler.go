@@ -225,13 +225,27 @@ func (h *Handler) AddMember(c *gin.Context) {
 	teamid, err := uuid.Parse(c.Param("id"))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization id"})
 		return
 	}
 
 	userid, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization went wrong"})
+		return
+	}
+
+	requesterRole, err := h.queries.GetTeamMemberRole(c.Request.Context(), sqlc.GetTeamMemberRoleParams{
+		TeamID: teamid,
+		UserID: uuid.UUID(userid),
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
+		return
+	}
+	if requesterRole != "owner" && requesterRole != "admin" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "you dont have enough permision for creating teams"})
 		return
 	}
 
