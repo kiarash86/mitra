@@ -260,5 +260,10 @@ func (h *Handler) AddMember(c *gin.Context) {
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
-	//TODO : REMOVE A MEMBER FROM A PRJ/ SAME PERMISSION AS DELETE
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of projectID"})
+		return
+	}
+
 }
