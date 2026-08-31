@@ -220,6 +220,13 @@ func (h *Handler) Delete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
 	}
+
+	if err := h.queries.SoftDeleteProject(c.Request.Context(), projectID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt delete project"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 func (h *Handler) ListMembers(c *gin.Context) {
 	projectID, err := uuid.Parse(c.Param("id"))
