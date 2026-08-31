@@ -1,6 +1,6 @@
 module github.com/kiarash86/mitra
 
-go 1.25
+go 1.27
 
 require (
 	github.com/caarlos0/env/v11 v11.4.1
