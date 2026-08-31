@@ -1,10 +1,12 @@
 package project
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
@@ -168,14 +170,11 @@ func (h *Handler) GetByID(c *gin.Context) {
 	}
 	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
 	if err != nil {
-
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-	user, err := h.queries.GetUserByID(c.Request.Context(), uuid.UUID(userID))
-	if err != nil {
-
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get user"})
 		return
 	}
 
