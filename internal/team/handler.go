@@ -3,7 +3,8 @@ package team
 import (
 	"net/http"
 	"time"
-	"uuid"
+
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
@@ -183,6 +184,10 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization went wrong"})
 		return
 	}
+
+	memberlist, err := h.queries.ListTeamMembers(c.Request.Context(), sqlc.ListTeamMembersRow{
+		ID: teamid,
+	})
 
 }
 
