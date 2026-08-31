@@ -1,13 +1,15 @@
+import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../hooks/use-auth";
+import { Spinner } from "../ui/Spinner";
 
-export function GuestGuard({ children }: { children: React.ReactNode }) {
+export function GuestGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="flex h-screen items-center justify-center bg-paper-50">
+        <Spinner size="lg" />
       </div>
     );
   }

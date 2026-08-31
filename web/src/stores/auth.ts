@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User } from "../types/auth";
 import { authApi } from "../api/auth";
+import { usersApi } from "../api/users";
 
 interface AuthState {
   user: User | null;
@@ -12,6 +13,7 @@ interface AuthState {
 
   login: (email: string, password: string) => Promise<void>;
   register: (fullName: string, email: string, password: string) => Promise<void>;
+  updateProfile: (fullName: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -69,6 +71,11 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         set({ user: null, accessToken: null, refreshToken: null });
+      },
+
+      updateProfile: async (fullName) => {
+        const user = await usersApi.updateProfile({ full_name: fullName });
+        set({ user });
       },
 
       clearError: () => set({ error: null }),
