@@ -3,6 +3,7 @@ package convert
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -34,4 +35,8 @@ func TimestamptzToTime(t pgtype.Timestamptz) *time.Time {
 		return nil
 	}
 	return &t.Time
+}
+
+func UUIDToPgtypeUUID(id uuid.UUID) pgtype.UUID {
+	return pgtype.UUID{Bytes: [16]byte(id), Valid: true}
 }
