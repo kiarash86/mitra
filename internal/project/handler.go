@@ -287,11 +287,6 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	
-
-
-
-
 	if targetID == uuid.UUID(requesterID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you cant remove yourself"})
 		return
@@ -306,7 +301,7 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-		err = h.queries.RemoveProjectMember(c.Request.Context(), sqlc.RemoveProjectMemberParams{
+	err = h.queries.RemoveProjectMember(c.Request.Context(), sqlc.RemoveProjectMemberParams{
 		ProjectID: projectID,
 		UserID:    targetID,
 	})
@@ -315,7 +310,6 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt remove member"})
 		return
 	}
-
-
+	c.Status(http.StatusNoContent)
 
 }
