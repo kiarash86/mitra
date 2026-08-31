@@ -1,6 +1,7 @@
 package project
 
 import (
+	"net/http"
 	"time"
 	"uuid"
 
@@ -49,7 +50,11 @@ type projectMemberResponse struct {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	//TODO : CREATE A PROJECT
+
+	organizationID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organizatinID type"})
+	}
 }
 
 func (h *Handler) ListByOrganization(c *gin.Context) {
