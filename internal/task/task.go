@@ -29,3 +29,7 @@ type updateTaskRequest struct {
 	Priority    string     `json:"priority" binding:"required"`
 	DueDate     *time.Time `json:"due_date"`
 }
+
+type updateTaskStatusRequest struct {
+	Status string `json:"status" binding:"required"`
+}
