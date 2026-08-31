@@ -74,3 +74,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 func (h *Handler) AddMember(c *gin.Context) {
 	//TODO : ADD MEMBER TO PROJECT
 }
+
+func (h *Handler) RemoveMember(c *gin.Context) {
+	//TODO : REMOVE A MEMBER FROM A PRJ/ SAME PERMISSION AS DELETE
+}
