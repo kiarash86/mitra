@@ -306,7 +306,7 @@ func (h *Handler) AddMember(c *gin.Context) {
 		return
 	}
 
-	project, err := ph.queries.GetProjectByID(c.Request.Context(), projectID)
+	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
@@ -325,6 +325,12 @@ func (h *Handler) AddMember(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt add member"})
 		return
 	}
+
+	c.JSON(http.StatusCreated, projectMemberResponse{
+		UserID:    member.UserID.String(),
+		Role:      member.Role,
+		CreatedAt: member.CreatedAt,
+	})
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
