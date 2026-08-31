@@ -249,6 +249,20 @@ func (h *Handler) AddMember(c *gin.Context) {
 		return
 	}
 
+	teammember, err := h.queries.AddTeamMember(c.Request.Context(), sqlc.AddTeamMemberParams{
+		TeamID: teamid,
+		UserID: uuid.UUID(userid),
+		Role:   requesterRole,
+	})
+
+	respone := teamMemberResponse{
+		UserID:    teammember.ID.String(),
+		Role:      teammember.Role,
+		CreatedAt: teammember.CreatedAt,
+	}
+
+	c.JSON(http.StatusOK, gin.H{"teams": respone})
+
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
