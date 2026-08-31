@@ -9,3 +9,10 @@ func TextToString(t pgtype.Text) string {
 	return t.String
 
 }
+
+func StringToText(s string) pgtype.Text {
+	if s == "" {
+		return pgtype.Text{}
+	}
+	return pgtype.Text{String: s, Valid: true}
+}
