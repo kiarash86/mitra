@@ -266,7 +266,13 @@ func (h *Handler) AddMember(c *gin.Context) {
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
-	//TODO : REMOVE FROM MEMBERS OF TEAM
+	teamid, err := uuid.Parse(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization id"})
+		return
+	}
+
 }
 
 func (h *Handler) SoftDelete(c *gin.Context) {
