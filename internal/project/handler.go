@@ -205,6 +205,12 @@ func (h *Handler) Delete(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of projectID"})
 		return
 	}
+
+	requesterID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
+		return
+	}
 }
 func (h *Handler) ListMembers(c *gin.Context) {
 	projectID, err := uuid.Parse(c.Param("id"))
