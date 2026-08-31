@@ -70,3 +70,7 @@ func (h *Handler) Delete(c *gin.Context) {
 func (h *Handler) ListMembers(c *gin.Context) {
 	// TODO : LIST MEMBER OF A PROJECT
 }
+
+func (h *Handler) AddMember(c *gin.Context) {
+	//TODO : ADD MEMBER TO PROJECT
+}
