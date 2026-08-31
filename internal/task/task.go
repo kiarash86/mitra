@@ -3,6 +3,7 @@ package task
 import (
 	"time"
 
+	"github.com/kiarash86/mitra/internal/convert"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
 
@@ -68,4 +69,21 @@ var allowedTaskPriorities = map[string]bool{
 	"medium": true,
 	"high":   true,
 	"urgent": true,
+}
+
+func taskToResponse(task sqlc.Task) taskResponse {
+	return taskResponse{
+		ID:               task.ID.String(),
+		ProjectID:        task.ProjectID.String(),
+		Title:            task.Title,
+		Description:      convert.TextToString(task.Description),
+		Status:           task.Status,
+		Priority:         task.Priority,
+		AssignedToUserID: convert.PgtypeUUIDToStringPtr(task.AssignedToUserID),
+		AssignedToTeamID: convert.PgtypeUUIDToStringPtr(task.AssignedToTeamID),
+		DueDate:          convert.TimestamptzToTime(task.DueDate),
+		CreatedBy:        task.CreatedBy.String(),
+		CreatedAt:        task.CreatedAt,
+		UpdatedAt:        task.UpdatedAt,
+	}
 }
