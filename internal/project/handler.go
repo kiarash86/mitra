@@ -251,6 +251,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 			CreatedAt: member.CreatedAt,
 		})
 	}
+	c.JSON(http.StatusOK, gin.H{"members": projectMembers})
 
 }
 
