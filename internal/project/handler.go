@@ -278,5 +278,13 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	
+	requesterRole, err := h.queries.GetProjectMemberRole(c.Request.Context(), sqlc.GetProjectMemberRoleParams{
+		ProjectID: projectID,
+		UserID:    uuid.UUID(requesterID),
+	})
+	if err != nil || (requesterRole != "owner" && requesterRole != "admin") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can remove members"})
+		return
+	}
+
 }
