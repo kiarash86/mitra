@@ -103,5 +103,21 @@ func IsTeamMember(ctx context.Context, queries *sqlc.Queries, teamID, userID uui
 }
 
 func IsTeamLeader(ctx context.Context, queries *sqlc.Queries, teamID, userID uuid.UUID) (bool, error) {
-	//TODO : IS THIS USER TEAM LEADER OF THIS TEAM?
+	role, err := queries.GetTeamMemberRole(ctx, sqlc.GetTeamMemberRoleParams{
+		TeamID: teamID,
+		UserID: userID,
+	})
+
+	if err != nil {
+
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	if role == "leader" {
+		return true, nil
+	}
+	return false, nil
 }
