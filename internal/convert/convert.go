@@ -40,3 +40,11 @@ func TimestamptzToTime(t pgtype.Timestamptz) *time.Time {
 func UUIDToPgtypeUUID(id uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: [16]byte(id), Valid: true}
 }
+
+func PgtypeUUIDToStringPtr(u pgtype.UUID) *string {
+	if !u.Valid {
+		return nil
+	}
+	s := uuid.UUID(u.Bytes).String()
+	return &s
+}
