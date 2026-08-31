@@ -288,6 +288,12 @@ func (h *Handler) AddMember(c *gin.Context) {
 		return
 	}
 
+	var req addProjectMemberRequest
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	
 	targetID, err := uuid.Parse(c.Param("user_id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of user_id"})
@@ -307,6 +313,16 @@ func (h *Handler) AddMember(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
+
+	member, err := h.queries.AddProjectMember(c.Request.Context(), sqlc.AddProjectMemberParams{
+		ProjectID: projectID,
+		UserID:    targetID,
+		Role:      req.Role,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt add member"})
 		return
 	}
 }
