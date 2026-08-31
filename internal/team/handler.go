@@ -225,7 +225,13 @@ func (h *Handler) AddMember(c *gin.Context) {
 	teamid, err := uuid.Parse(c.Param("id"))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	targetid, err := uuid.Parse(c.Param("user_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
 		return
 	}
 
@@ -251,7 +257,7 @@ func (h *Handler) AddMember(c *gin.Context) {
 
 	teammember, err := h.queries.AddTeamMember(c.Request.Context(), sqlc.AddTeamMemberParams{
 		TeamID: teamid,
-		UserID: uuid.UUID(userid),
+		UserID: targetid,
 		Role:   requesterRole,
 	})
 
@@ -269,7 +275,13 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	teamid, err := uuid.Parse(c.Param("id"))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organization id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
+	targetid, err := uuid.Parse(c.Param("user_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
 		return
 	}
 
@@ -294,7 +306,7 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	}
 
 	err = h.queries.RemoveTeamMember(c.Request.Context(), sqlc.RemoveTeamMemberParams{
-		UserID: uuid.UUID(userid),
+		UserID: targetid,
 		TeamID: teamid,
 	})
 
