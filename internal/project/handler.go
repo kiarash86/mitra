@@ -238,7 +238,20 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
 		return
 	}
-	
+
+	list, err := h.queries.ListProjectMembers(c.Request.Context(), projectID)
+
+	projectMembers := make([]projectMemberResponse, 0, len(list))
+	for _, member := range list {
+		projectMembers = append(projectMembers, projectMemberResponse{
+			UserID:    member.UserID.String(),
+			FullName:  member.FullName,
+			Email:     member.Email,
+			Role:      member.Role,
+			CreatedAt: member.CreatedAt,
+		})
+	}
+
 }
 
 func (h *Handler) AddMember(c *gin.Context) {
