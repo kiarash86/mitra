@@ -319,5 +319,11 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 }
 
 func (h *Handler) SoftDelete(c *gin.Context) {
-	//TODO : SOFT DELETING A TEAM
+	teamid, err := uuid.Parse(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid team id"})
+		return
+	}
+
 }
