@@ -326,4 +326,10 @@ func (h *Handler) SoftDelete(c *gin.Context) {
 		return
 	}
 
+	userid, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization went wrong"})
+		return
+	}
+
 }
