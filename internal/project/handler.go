@@ -214,13 +214,13 @@ func (h *Handler) Delete(c *gin.Context) {
 	project, err := ph.queries.GetProjectByID(c.Request.Context(), projectID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
 	}
 
+	//TODO : CHECK WHO IS IT?
 	if err := h.queries.SoftDeleteProject(c.Request.Context(), projectID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt delete project"})
 		return
