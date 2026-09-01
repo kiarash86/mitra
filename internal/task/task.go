@@ -316,4 +316,6 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
+	c.Status(http.StatusNoContent)
+
 }
