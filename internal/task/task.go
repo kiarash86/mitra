@@ -246,7 +246,11 @@ func (h *Handler) Update(c *gin.Context) {
 }
 
 func (h *Handler) UpdateStatus(c *gin.Context) {
-	// TODO : UPDATE STATUS
+	taskID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return
+	}
 }
 
 func (h *Handler) AssignToUser(c *gin.Context) {
