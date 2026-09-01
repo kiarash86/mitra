@@ -320,6 +320,8 @@ func (h *Handler) AssignToUser(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, taskToResponse(task))
+
 }
 
 func (h *Handler) Unassign(c *gin.Context) {
