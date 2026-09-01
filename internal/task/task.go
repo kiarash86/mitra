@@ -268,6 +268,15 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
+	task, err := h.queries.UpdateTaskStatus(c.Request.Context(), sqlc.UpdateTaskStatusParams{
+		ID:     taskID,
+		Status: req.Status,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update task status"})
+		return
+	}
+
 }
 
 func (h *Handler) AssignToUser(c *gin.Context) {
