@@ -290,6 +290,16 @@ func (h *Handler) Unassign(c *gin.Context) {
 		return
 	}
 
+	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
+	}
+	if !isMemberOfProject {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return
+	}
+
 	task, err = h.queries.UnassignTask(c.Request.Context(), taskID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt unassign task"})
