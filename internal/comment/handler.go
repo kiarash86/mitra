@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/kiarash86/mitra/internal/middleware"
 )
 
 type Handler struct {
@@ -38,6 +39,12 @@ func (h *Handler) Create(c *gin.Context) {
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
 	}
 }
