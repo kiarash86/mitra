@@ -307,6 +307,9 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update task"})
 		return
 	}
+
+	c.JSON(http.StatusOK, taskToResponse(task))
+
 }
 
 func (h *Handler) UpdateStatus(c *gin.Context) {
