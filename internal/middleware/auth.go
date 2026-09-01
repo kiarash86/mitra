@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/kiarash86/mitra/internal/auth"
 )
@@ -34,4 +35,13 @@ func RequireAuth(tokens *auth.TokenManager) gin.HandlerFunc {
 		ctx.Set(ContextUserIDKey, claims.UserID)
 
 	}
+}
+
+func CurrentUserID(c *gin.Context) (uuid.UUID, bool) {
+	val, exists := c.Get(ContextUserIDKey)
+	if !exists {
+		return uuid.UUID{}, false
+	}
+	userID, ok := val.(uuid.UUID)
+	return userID, ok
 }
