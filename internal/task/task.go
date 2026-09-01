@@ -283,6 +283,13 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 		return
 	}
+
+	var req updateTaskRequest
+	err = c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 }
 
 func (h *Handler) UpdateStatus(c *gin.Context) {
