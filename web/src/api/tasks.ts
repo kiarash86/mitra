@@ -13,16 +13,16 @@ export const tasksApi = {
     }
   ) =>
     client
-      .post<Task>(`/api/projects/${projectId}/tasks`, data)
+      .post<Task>(`/v1/projects/${projectId}/tasks`, data)
       .then((r) => r.data),
 
   listByProject: (projectId: string, params?: { status?: TaskStatus }) =>
     client
-      .get<Task[]>(`/api/projects/${projectId}/tasks`, { params })
+      .get<Task[]>(`/v1/projects/${projectId}/tasks`, { params })
       .then((r) => r.data),
 
   getById: (taskId: string) =>
-    client.get<Task>(`/api/tasks/${taskId}`).then((r) => r.data),
+    client.get<Task>(`/v1/tasks/${taskId}`).then((r) => r.data),
 
   update: (
     taskId: string,
@@ -35,8 +35,8 @@ export const tasksApi = {
       due_date?: string | null;
     }
   ) =>
-    client.patch<Task>(`/api/tasks/${taskId}`, data).then((r) => r.data),
+    client.patch<Task>(`/v1/tasks/${taskId}`, data).then((r) => r.data),
 
   delete: (taskId: string) =>
-    client.delete(`/api/tasks/${taskId}`).then((r) => r.data),
+    client.delete(`/v1/tasks/${taskId}`).then((r) => r.data),
 };
