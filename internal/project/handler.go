@@ -129,11 +129,13 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 		return
 	}
 
-	_, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
-		OrganizationID: uuid.UUID(organizationID),
-		UserID:         uuid.UUID(userID),
-	})
+	isMemberOfOrganization, err := rbac.IsOrganizationMember(c.Request.Context(), h.queries, organizationID, uuid.UUID(userID))
+
 	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "couldnt check your role"})
+		return
+	}
+	if !isMemberOfOrganization {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
 		return
 	}
