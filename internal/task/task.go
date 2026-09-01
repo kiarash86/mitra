@@ -211,6 +211,11 @@ func (h *Handler) ListAssignedToMe(c *gin.Context) {
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
+	taskID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
 
 }
 
