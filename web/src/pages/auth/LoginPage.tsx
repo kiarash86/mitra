@@ -1,14 +1,23 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Mail } from "lucide-react";
 import { useAuthStore } from "../../stores/auth";
+import { useI18n } from "../../i18n";
+import { AuthLayout } from "../../components/layout/AuthLayout";
+import { Input } from "../../components/ui/Input";
+import { PasswordInput } from "../../components/ui/PasswordInput";
+import { Button } from "../../components/ui/Button";
+import { Alert } from "../../components/ui/Alert";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError } = useAuthStore();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await login(email, password);
@@ -19,57 +28,47 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <h1 className="text-center text-3xl font-bold text-indigo-600">Mitra</h1>
-          <h2 className="mt-2 text-center text-sm text-gray-600">Sign in to your account</h2>
-        </div>
+    <AuthLayout>
+      <h1 className="text-xl font-bold text-ink-900">{t.auth.login.title}</h1>
+      <p className="mt-1 text-sm text-ink-500">{t.auth.login.subtitle}</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-              {error}
-              <button onClick={clearError} className="ml-2 underline">
-                dismiss
-              </button>
-            </div>
-          )}
+      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        {error && <Alert variant="error">{error}</Alert>}
 
-          <input
-            type="email"
-            placeholder="Email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
+        <Input
+          type="email"
+          label={t.auth.login.email}
+          icon={<Mail className="h-4 w-4" />}
+          required
+          autoComplete="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (error) clearError();
+          }}
+        />
+        <PasswordInput
+          label={t.auth.login.password}
+          required
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (error) clearError();
+          }}
+        />
 
-          <input
-            type="password"
-            placeholder="Password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          />
+        <Button type="submit" size="lg" className="w-full" loading={isLoading}>
+          {isLoading ? t.auth.login.submitLoading : t.auth.login.submit}
+        </Button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {isLoading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-600">
-          Don&apos;t have an account?{" "}
-          <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-            Register
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="mt-6 text-center text-sm text-ink-500">
+        {t.auth.login.noAccount}{" "}
+        <Link to="/register" className="font-medium text-saffron-700 hover:text-saffron-800">
+          {t.auth.login.registerLink}
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

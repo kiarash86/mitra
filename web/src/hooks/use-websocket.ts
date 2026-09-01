@@ -18,8 +18,10 @@ export function useWebSocket({
 }: UseWebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Holds the latest `connect` so the reconnect callback below never closes
+  // over a stale/self-referencing binding.
+  const connectRef = useRef<() => void>(() => {});
   const [status, setStatus] = useState<"connecting" | "open" | "closed">("closed");
-  const accessToken = useAuthStore((s) => s.accessToken);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -48,13 +50,17 @@ export function useWebSocket({
     ws.onclose = () => {
       setStatus("closed");
       onClose?.();
-      reconnectTimer.current = setTimeout(connect, reconnectInterval);
+      reconnectTimer.current = setTimeout(() => connectRef.current(), reconnectInterval);
     };
 
     ws.onerror = () => {
       ws.close();
     };
-  }, [url, onMessage, onOpen, onClose, reconnectInterval, accessToken]);
+  }, [url, onMessage, onOpen, onClose, reconnectInterval]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   const disconnect = useCallback(() => {
     clearTimeout(reconnectTimer.current);
