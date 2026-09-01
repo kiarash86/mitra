@@ -1,13 +1,16 @@
 package comment
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/rbac"
 )
 
 type Handler struct {
@@ -53,6 +56,37 @@ func (h *Handler) Create(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
 	}
+
+	task, err := h.queries.GetTaskByID(c.Request.Context(), taskID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
+		return
+	}
+
+	member, err := rbac.IsProjectMember(c.Request.Context(), h.queries, task.ProjectID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check project role"})
+		return
+	}
+	if !member {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this task's project"})
+		return
+	}
+
+	comment, err := h.queries.CreateComment(c.Request.Context(), sqlc.CreateCommentParams{
+		TaskID:   taskID,
+		AuthorID: userID,
+		Body:     req.Body,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create comment"})
+		return
+	}
+
 }
 
 func (h *Handler) ListByTask(c *gin.Context) {
