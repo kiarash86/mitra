@@ -181,6 +181,15 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
+	comment, err := h.queries.GetCommentByID(c.Request.Context(), commentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "comment not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get comment"})
+		return
+	}
 
 }
 
