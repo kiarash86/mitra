@@ -92,6 +92,14 @@ func main() {
 	protected := api.Group("")
 	protected.Use(middleware.RequireAuth(tokens))
 
+	orgGroup := protected.Group("/organizations")
+	orgGroup.POST("", orgHandler.Create)
+	orgGroup.GET("/by-slug/:slug", orgHandler.GetBySlug)
+	orgGroup.GET("/:id/members", orgHandler.ListMembers)
+	orgGroup.DELETE("/:id/members/:user_id", orgHandler.RemoveMember)
+	orgGroup.POST("/:id/projects", projectHandler.Create)
+	orgGroup.GET("/:id/projects", projectHandler.ListByOrganization)
+
 	srv := &http.Server{
 		Addr:    ":" + cfg.AppPort,
 		Handler: router,
