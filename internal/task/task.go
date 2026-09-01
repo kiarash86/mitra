@@ -124,6 +124,8 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusCreated, taskToResponse(task))
+
 }
 
 func (h *Handler) ListByProject(c *gin.Context) {
