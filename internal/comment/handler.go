@@ -9,3 +9,7 @@ type Handler struct {
 func NewHandler(queries *sqlc.Queries) *Handler {
 	return &Handler{}
 }
+
+type createCommentRequest struct {
+	Body string `json:"body" binding:"required,min=1,max=10000"`
+}
