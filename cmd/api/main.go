@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"go/doc/comment"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +18,7 @@ import (
 	"github.com/kiarash86/mitra/internal/organization"
 	"github.com/kiarash86/mitra/internal/project"
 	"github.com/kiarash86/mitra/internal/task"
+	"github.com/kiarash86/mitra/internal/comment"
 )
 
 func main() {
