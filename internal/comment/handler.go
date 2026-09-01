@@ -226,5 +226,14 @@ func (h *Handler) Delete(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 		return
 	}
+	comment, err := h.queries.GetCommentByID(c.Request.Context(), commentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "couldnt find comment"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get comment"})
+		return
+	}
 
 }
