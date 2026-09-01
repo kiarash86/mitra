@@ -431,26 +431,30 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	requesterRole, err := h.queries.GetProjectMemberRole(c.Request.Context(), sqlc.GetProjectMemberRoleParams{
-		ProjectID: projectID,
-		UserID:    uuid.UUID(requesterID),
-	})
-	if err != nil || (requesterRole != "lead" && requesterRole != "admin") {
-		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can remove members"})
+	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
 	}
 
+	isProjectAdminOwner, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, projectID, uuid.UUID(requesterID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+	}
+
+	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(requesterID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+	}
+	if !isOrgAdmin && !isProjectAdminOwner {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+	}
 	if targetID == uuid.UUID(requesterID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you cant remove yourself"})
-		return
-	}
-
-	targetRole, err := h.queries.GetProjectMemberRole(c.Request.Context(), sqlc.GetProjectMemberRoleParams{
-		ProjectID: projectID,
-		UserID:    targetID,
-	})
-	if err == nil && targetRole == "owner" && requesterRole != "owner" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can remove another owner"})
 		return
 	}
 
