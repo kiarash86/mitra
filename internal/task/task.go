@@ -199,6 +199,13 @@ func (h *Handler) ListAssignedToMe(c *gin.Context) {
 		return
 	}
 
+	list, _ := h.queries.ListTasksAssignedToUser(c.Request.Context(), convert.UUIDToPgtypeUUID(userID))
+	tasks := make([]taskResponse, 0, len(list))
+
+	for _, taskk := range list {
+		tasks = append(tasks, taskToResponse(taskk))
+	}
+
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
