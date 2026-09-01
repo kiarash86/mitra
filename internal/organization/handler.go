@@ -165,7 +165,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
-	member, err := rbac.IsOrganizationMember(c.Request.Context(), h.queries, id, uuid.UUID(userID))
+	member, err := rbac.IsOrganizationMember(c.Request.Context() , h.queries , id , uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
 		return
