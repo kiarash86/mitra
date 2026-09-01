@@ -99,7 +99,38 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) ListByTask(c *gin.Context) {
-	//TODO : LIST OF COMMENTS UNDER TASK
+	taskID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return
+	}
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
+	task, err := h.queries.GetTaskByID(c.Request.Context(), taskID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
+		return
+	}
+
+	member, err := rbac.IsProjectMember(c.Request.Context(), h.queries, task.ProjectID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check project role"})
+		return
+	}
+	if !member {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this task's project"})
+		return
+	}
+
 }
 
 func (h *Handler) Update(c *gin.Context) {
