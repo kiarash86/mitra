@@ -302,6 +302,16 @@ func (h *Handler) AssignToUser(c *gin.Context) {
 		return
 	}
 
+	isProjectMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, assignID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check asignee  role"})
+		return
+	}
+	if !isProjectMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "assignee is not member of this project"})
+		return
+	}
+
 }
 
 func (h *Handler) Unassign(c *gin.Context) {
