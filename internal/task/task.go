@@ -290,6 +290,11 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if !allowedTaskPriorities[req.Priority] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "priority must be one of low, medium, high, urgent"})
+		return
+	}
 }
 
 func (h *Handler) UpdateStatus(c *gin.Context) {
