@@ -295,6 +295,18 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "priority must be one of low, medium, high, urgent"})
 		return
 	}
+
+	task, err := h.queries.UpdateTask(c.Request.Context(), sqlc.UpdateTaskParams{
+		ID:          taskID,
+		Title:       req.Title,
+		Description: convert.StringToText(req.Description),
+		Priority:    req.Priority,
+		DueDate:     convert.TimeToTimestamptz(req.DueDate),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update task"})
+		return
+	}
 }
 
 func (h *Handler) UpdateStatus(c *gin.Context) {
