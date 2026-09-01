@@ -1,14 +1,17 @@
 package task
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/kiarash86/mitra/internal/convert"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/rbac"
 )
 
 type Handler struct {
@@ -114,7 +117,17 @@ func (h *Handler) Create(c *gin.Context) {
 		req.Priority = "medium"
 	}
 	if !allowedTaskPriorities[req.Priority] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "priority must be one of low, medium, high, urgent"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "priority must be one of [low, medium, high, urgent]"})
+		return
+	}
+
+	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
 	}
 
