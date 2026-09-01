@@ -193,6 +193,12 @@ func (h *Handler) ListByProject(c *gin.Context) {
 }
 
 func (h *Handler) ListAssignedToMe(c *gin.Context) {
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
+		return
+	}
+
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
