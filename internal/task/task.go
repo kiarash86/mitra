@@ -311,4 +311,9 @@ func (h *Handler) Delete(c *gin.Context) {
 		}
 	}
 
+	if err := h.queries.SoftDeleteTask(c.Request.Context(), task.ID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt delete task"})
+		return
+	}
+
 }
