@@ -267,5 +267,11 @@ func (h *Handler) Delete(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
 		return
 	}
-	
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
 }
