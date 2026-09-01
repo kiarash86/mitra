@@ -261,6 +261,17 @@ func (h *Handler) AssignToUser(c *gin.Context) {
 		return
 	}
 
+	var req assignTaskToUserRequest
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	assignID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
 }
 
 func (h *Handler) Unassign(c *gin.Context) {
