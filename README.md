@@ -1,3 +1,5 @@
+**English** · [فارسی](./README.fa.md)
+
 # Mitra
 
 A **project-centric** organizational management and communication system: organizations create projects, projects have members and tasks, and tasks are assigned to users.
@@ -44,17 +46,33 @@ Redis and NATS/JetStream have been removed from the stack for now. Details and t
 
 ## Prerequisites
 
-- Go 1.27+
-- Node.js 20+
-- Docker (to run PostgreSQL locally) — or a separately installed Postgres instance
-- [golang-migrate CLI](https://github.com/golang-migrate/migrate#installation)
+- Docker + Docker Compose — for the all-in-one setup, or just to run PostgreSQL locally
+- Go 1.27+ — only needed for the manual (non-Docker) backend setup
+- Node.js 20+ — only needed for the manual (non-Docker) frontend setup
+- [golang-migrate CLI](https://github.com/golang-migrate/migrate#installation) — only needed for the manual backend setup
 
 ---
 
-## Local Setup (Backend)
+## Local Setup
+
+### Option A — Docker (all services)
 
 ```bash
-# 1. Start the database
+cp .env.example .env
+# optionally set a real JWT_SECRET in .env — otherwise a fallback dev secret
+# baked into docker-compose.yaml is used (fine for localhost only)
+
+docker compose up --build
+```
+
+This starts everything: `postgres` → migrations run automatically via the `migrate` service → `api` on `http://localhost:8080` → `web` on `http://localhost:3000`.
+
+> `web`'s `VITE_API_URL` build arg is empty by default in `docker-compose.yaml`, so the frontend falls back to `http://localhost:8080` for the API at build time. If you're deploying `api` and `web` on different hosts, set `VITE_API_URL` accordingly before building.
+
+### Option B — Manual (Backend)
+
+```bash
+# 1. Start the database only
 docker compose up -d postgres
 
 # 2. Configure env
@@ -70,11 +88,7 @@ go run ./cmd/api
 # health check: curl http://localhost:8080/health
 ```
 
-> The `migrate`, `api`, and `web` services are also defined in `docker-compose.yaml`, but running them fully via `docker compose up` requires `Dockerfile`s for `api` and `web`, which haven't been added yet. Until then, the approach above (running directly with `go run`) is the recommended development workflow.
-
----
-
-## Local Setup (Frontend)
+### Manual (Frontend)
 
 ```bash
 cd web
@@ -82,11 +96,18 @@ npm install
 npm run dev
 ```
 
+By default the frontend talks to `http://localhost:8080`. Set `VITE_API_URL` in `web/.env` to point elsewhere.
+
 ---
 
 ## API (Currently Implemented)
 
-Base path: `/api/v1`
+Base path: `/api/v1` (except `/health`, which is unversioned)
+
+### Health
+| Method | Path      | Description            |
+| ------ | --------- | ----------------------- |
+| GET    | `/health` | Liveness/health check   |
 
 ### Auth
 | Method | Path             | Description |
@@ -95,39 +116,39 @@ Base path: `/api/v1`
 | POST   | `/auth/login`    | Login       |
 
 ### Organizations *(requires Authorization: Bearer)*
-| Method | Path                                  | Description                    |
-| ------ | ------------------------------------- | ------------------------------ |
-| POST   | `/organizations`                      | Create organization            |
-| GET    | `/organizations/by-slug/:slug`        | Get organization by slug       |
-| GET    | `/organizations/:id/members`          | List members                   |
-| DELETE | `/organizations/:id/members/:user_id` | Remove member                  |
-| POST   | `/organizations/:id/projects`         | Create project in organization |
-| GET    | `/organizations/:id/projects`         | List organization's projects   |
+| Method | Path                                   | Description                    |
+| ------ | --------------------------------------- | ------------------------------- |
+| POST   | `/organizations`                       | Create organization            |
+| GET    | `/organizations/by-slug/:slug`         | Get organization by slug       |
+| GET    | `/organizations/:id/members`           | List members                    |
+| DELETE | `/organizations/:id/members/:user_id`  | Remove member                   |
+| POST   | `/organizations/:id/projects`          | Create project in organization |
+| GET    | `/organizations/:id/projects`          | List organization's projects    |
 
 ### Projects
-| Method | Path                             | Description            |
-| ------ | -------------------------------- | ---------------------- |
-| GET    | `/projects/:id`                  | Project details        |
-| PUT    | `/projects/:id`                  | Edit project           |
-| DELETE | `/projects/:id`                  | Delete (soft) project  |
-| GET    | `/projects/:id/members`          | List project members   |
-| POST   | `/projects/:id/members`          | Add member             |
-| DELETE | `/projects/:id/members/:user_id` | Remove member          |
-| POST   | `/projects/:id/tasks`            | Create task in project |
-| GET    | `/projects/:id/tasks`            | List project's tasks   |
+| Method | Path                              | Description             |
+| ------ | ---------------------------------- | ------------------------ |
+| GET    | `/projects/:id`                   | Project details          |
+| PUT    | `/projects/:id`                   | Edit project              |
+| DELETE | `/projects/:id`                   | Delete (soft) project     |
+| GET    | `/projects/:id/members`           | List project members     |
+| POST   | `/projects/:id/members`           | Add member                |
+| DELETE | `/projects/:id/members/:user_id`  | Remove member             |
+| POST   | `/projects/:id/tasks`             | Create task in project    |
+| GET    | `/projects/:id/tasks`             | List project's tasks      |
 
 ### Tasks
-| Method | Path                     | Description          |
-| ------ | ------------------------ | -------------------- |
-| GET    | `/tasks/assigned-to-me`  | Tasks assigned to me |
-| GET    | `/tasks/:id`             | Task details         |
-| PUT    | `/tasks/:id`             | Edit task            |
-| PATCH  | `/tasks/:id/status`      | Change status        |
-| POST   | `/tasks/:id/assign/user` | Assign to a user     |
-| POST   | `/tasks/:id/unassign`    | Unassign             |
-| DELETE | `/tasks/:id`             | Delete (soft)        |
-| GET    | `/tasks/:id/comments`    | List task comments   |
-| POST   | `/tasks/:id/comments`    | Add comment          |
+| Method | Path                      | Description           |
+| ------ | -------------------------- | ---------------------- |
+| GET    | `/tasks/assigned-to-me`   | Tasks assigned to me   |
+| GET    | `/tasks/:id`              | Task details            |
+| PUT    | `/tasks/:id`              | Edit task                |
+| PATCH  | `/tasks/:id/status`       | Change status            |
+| POST   | `/tasks/:id/assign/user`  | Assign to a user         |
+| POST   | `/tasks/:id/unassign`     | Unassign                  |
+| DELETE | `/tasks/:id`              | Delete (soft)            |
+| GET    | `/tasks/:id/comments`     | List task comments       |
+| POST   | `/tasks/:id/comments`     | Add comment               |
 
 ### Comments
 | Method | Path            | Description    |
@@ -139,9 +160,8 @@ Base path: `/api/v1`
 
 ## Known Limitations (Phase 1)
 
-- No `/auth/refresh` — an expired access token currently requires logging in again.
+- **No `/auth/refresh` endpoint yet** — the frontend's axios client already has retry logic wired up to call it on a 401, but the backend doesn't implement this route yet, so an expired access token currently just logs the user out and requires a fresh login.
 - Presence/Realtime/Push notifications are not yet implemented (Phase 2).
 - No Redis/NATS — rationale and temporary workaround documented in `MITRA.md`.
-- No `Dockerfile` yet for the `api` and `web` services; local development runs via `go run` / `npm run dev`.
 
 The full phasing roadmap and architectural decisions are documented in [`MITRA.md`](./MITRA.md).
