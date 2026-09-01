@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -14,10 +12,59 @@ services:
     volumes:
       - mitra_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mitra -d mitra"]
+      test: [ "CMD-SHELL", "pg_isready -U mitra -d mitra" ]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  migrate:
+    image: migrate/migrate:v4.18.1
+    container_name: mitra-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./internal/db/migrations:/migrations
+    entrypoint: [ "migrate", "-path", "/migrations", "-database", "postgres://mitra:mitra@postgres:5432/mitra?sslmode=disable", "up" ]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mitra-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      APP_ENV: production
+      APP_PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: mitra
+      DB_PASSWORD: mitra
+      DB_NAME: mitra
+      DB_SSLMODE: disable
+      JWT_SECRET: ${JWT_SECRET:-1f002246d99dfcb07372c3963082a1c958fd15af59e984629a633792eeb5a43c}
+      JWT_ACCESS_TOKEN_TTL: 15m
+      JWT_REFRESH_TOKEN_TTL: 720h
+    ports:
+      - "8080:8080"
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    container_name: mitra-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
 
 volumes:
   mitra_postgres_data:
