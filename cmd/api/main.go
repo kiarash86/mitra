@@ -100,6 +100,16 @@ func main() {
 	orgGroup.POST("/:id/projects", projectHandler.Create)
 	orgGroup.GET("/:id/projects", projectHandler.ListByOrganization)
 
+	projectGroup := protected.Group("/projects")
+	projectGroup.GET("/:id", projectHandler.GetByID)
+	projectGroup.PUT("/:id", projectHandler.Update)
+	projectGroup.DELETE("/:id", projectHandler.Delete)
+	projectGroup.GET("/:id/members", projectHandler.ListMembers)
+	projectGroup.POST("/:id/members", projectHandler.AddMember)
+	projectGroup.DELETE("/:id/members/:user_id", projectHandler.RemoveMember)
+	projectGroup.POST("/:id/tasks", taskHandler.Create)
+	projectGroup.GET("/:id/tasks", taskHandler.ListByProject)
+
 	srv := &http.Server{
 		Addr:    ":" + cfg.AppPort,
 		Handler: router,
