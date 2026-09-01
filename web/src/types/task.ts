@@ -9,7 +9,6 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   assigned_to_user_id: string | null;
-  assigned_to_team_id: string | null;
   due_date: string | null;
   created_by: string;
   created_at: string;

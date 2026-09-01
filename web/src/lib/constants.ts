@@ -40,5 +40,4 @@ export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
 };
 
 export const ORG_ROLES = ["owner", "admin", "member", "viewer"] as const;
-export const TEAM_ROLES = ["lead", "member"] as const;
 export const PROJECT_ROLES = ["lead", "member", "viewer"] as const;

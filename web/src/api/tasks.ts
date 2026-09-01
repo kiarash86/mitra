@@ -9,7 +9,6 @@ export const tasksApi = {
       description?: string;
       priority?: TaskPriority;
       assigned_to_user_id?: string;
-      assigned_to_team_id?: string;
       due_date?: string;
     }
   ) =>
@@ -33,7 +32,6 @@ export const tasksApi = {
       status?: TaskStatus;
       priority?: TaskPriority;
       assigned_to_user_id?: string | null;
-      assigned_to_team_id?: string | null;
       due_date?: string | null;
     }
   ) =>

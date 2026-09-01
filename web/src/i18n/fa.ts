@@ -61,7 +61,6 @@ export const fa: Dictionary = {
     memberCount: (n) => `${n.toLocaleString("fa-IR")} عضو`,
     taskCount: (n) => `${n.toLocaleString("fa-IR")} تسک`,
     projectCount: (n) => `${n.toLocaleString("fa-IR")} پروژه`,
-    teamCount: (n) => `${n.toLocaleString("fa-IR")} تیم`,
   },
   languageSwitcher: {
     label: "زبان",
@@ -71,7 +70,6 @@ export const fa: Dictionary = {
   nav: {
     dashboard: "داشبورد",
     organization: "سازمان",
-    teams: "تیم‌ها",
     projects: "پروژه‌ها",
     chat: "گفتگو",
     notifications: "اعلان‌ها",
@@ -79,10 +77,10 @@ export const fa: Dictionary = {
     logout: "خروج",
   },
   auth: {
-    brandTagline: "سازمان، تیم، پروژه و تسک — در یک فضای کاری واحد.",
+    brandTagline: "سازمان، پروژه و تسک — در یک فضای کاری واحد.",
     brandBullets: [
       "مدیریت پروژه و تسک با نگاهی روشن به وضعیت هر کار",
-      "هماهنگی تیمی با نقش و دسترسی مشخص برای هرکس",
+      "دسترسی و همکاری مبتنی بر نقش برای هر عضو پروژه",
       "گزارش و فعالیت زنده از آنچه در سازمان می‌گذرد",
     ],
     login: {
@@ -121,7 +119,7 @@ export const fa: Dictionary = {
     statusBreakdownEmpty: "هنوز تسکی ثبت نشده است.",
     noOrgTitle: "هنوز سازمانی ندارید",
     noOrgDescription:
-      "برای شروع، یک سازمان بسازید تا بتوانید تیم، پروژه و تسک‌ها را در آن مدیریت کنید.",
+      "برای شروع، یک سازمان بسازید تا بتوانید پروژه‌ها و تسک‌ها را در آن مدیریت کنید.",
     noOrgCta: "ساخت سازمان",
   },
   organizations: {
@@ -152,20 +150,6 @@ export const fa: Dictionary = {
     roleLabel: "نقش",
     removeConfirm: (name) => `«${name}» از سازمان حذف شود؟`,
     empty: "هنوز عضوی اضافه نشده است.",
-  },
-  teams: {
-    listTitle: "تیم‌ها",
-    listSubtitle: "تیم‌های سازمان و اعضای هرکدام را مدیریت کنید.",
-    createButton: "تیم جدید",
-    createModalTitle: "ساخت تیم جدید",
-    nameLabel: "نام تیم",
-    emptyTitle: "هنوز تیمی ساخته نشده",
-    emptyDescription: "با ساخت اولین تیم، اعضای سازمان را دور هم جمع کنید.",
-    detailMembersTitle: "اعضای تیم",
-    addMemberButton: "افزودن عضو",
-    deleteButton: "حذف تیم",
-    deleteConfirm: (name) => `تیم «${name}» برای همیشه حذف شود؟`,
-    createdLabel: "تاریخ ایجاد",
   },
   projects: {
     listTitle: "پروژه‌ها",

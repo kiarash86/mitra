@@ -15,7 +15,7 @@ interface TaskState {
     projectId: string,
     data: { title: string; description?: string; priority?: TaskPriority; assigned_to_user_id?: string; due_date?: string }
   ) => Promise<Task>;
-  updateTask: (taskId: string, data: { title?: string; description?: string | null; status?: TaskStatus; priority?: TaskPriority; assigned_to_user_id?: string | null; assigned_to_team_id?: string | null; due_date?: string | null }) => Promise<void>;
+  updateTask: (taskId: string, data: { title?: string; description?: string | null; status?: TaskStatus; priority?: TaskPriority; assigned_to_user_id?: string | null; due_date?: string | null }) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
 }
 

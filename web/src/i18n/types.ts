@@ -65,7 +65,6 @@ export interface Dictionary {
     memberCount: (n: number) => string;
     taskCount: (n: number) => string;
     projectCount: (n: number) => string;
-    teamCount: (n: number) => string;
   };
   languageSwitcher: {
     label: string;
@@ -75,7 +74,6 @@ export interface Dictionary {
   nav: {
     dashboard: string;
     organization: string;
-    teams: string;
     projects: string;
     chat: string;
     notifications: string;
@@ -151,20 +149,6 @@ export interface Dictionary {
     roleLabel: string;
     removeConfirm: (name: string) => string;
     empty: string;
-  };
-  teams: {
-    listTitle: string;
-    listSubtitle: string;
-    createButton: string;
-    createModalTitle: string;
-    nameLabel: string;
-    emptyTitle: string;
-    emptyDescription: string;
-    detailMembersTitle: string;
-    addMemberButton: string;
-    deleteButton: string;
-    deleteConfirm: (name: string) => string;
-    createdLabel: string;
   };
   projects: {
     listTitle: string;

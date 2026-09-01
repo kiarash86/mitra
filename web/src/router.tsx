@@ -8,8 +8,6 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import OrganizationSettingsPage from "./pages/organizations/OrganizationSettingsPage";
 import MembersPage from "./pages/organizations/MembersPage";
-import TeamListPage from "./pages/teams/TeamListPage";
-import TeamDetailPage from "./pages/teams/TeamDetailPage";
 import ProjectListPage from "./pages/projects/ProjectListPage";
 import ProjectDetailPage from "./pages/projects/ProjectDetailPage";
 import TaskBoardPage from "./pages/tasks/TaskBoardPage";
@@ -71,26 +69,6 @@ export const router = createBrowserRouter([
       <AuthGuard>
         <AppShell>
           <MembersPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/teams",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <TeamListPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/teams/:teamId",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <TeamDetailPage />
         </AppShell>
       </AuthGuard>
     ),

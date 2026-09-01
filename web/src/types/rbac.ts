@@ -1,4 +1,4 @@
-export type Scope = "organization" | "team" | "project";
+export type Scope = "organization" | "project";
 
 export type RoleName = "owner" | "admin" | "manager" | "member" | "viewer";
 

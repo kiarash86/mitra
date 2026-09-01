@@ -61,7 +61,6 @@ export const en: Dictionary = {
     memberCount: (n) => `${n.toLocaleString("en-US")} member${n === 1 ? "" : "s"}`,
     taskCount: (n) => `${n.toLocaleString("en-US")} task${n === 1 ? "" : "s"}`,
     projectCount: (n) => `${n.toLocaleString("en-US")} project${n === 1 ? "" : "s"}`,
-    teamCount: (n) => `${n.toLocaleString("en-US")} team${n === 1 ? "" : "s"}`,
   },
   languageSwitcher: {
     label: "Language",
@@ -71,7 +70,6 @@ export const en: Dictionary = {
   nav: {
     dashboard: "Dashboard",
     organization: "Organization",
-    teams: "Teams",
     projects: "Projects",
     chat: "Chat",
     notifications: "Notifications",
@@ -79,10 +77,10 @@ export const en: Dictionary = {
     logout: "Log out",
   },
   auth: {
-    brandTagline: "Organization, team, project and tasks — one workspace.",
+    brandTagline: "Organization, project and tasks — one workspace.",
     brandBullets: [
       "Project and task management with a clear view of every job's status",
-      "Team coordination with defined roles and access for everyone",
+      "Role-based access and collaboration for every project member",
       "Live reporting and activity from across the organization",
     ],
     login: {
@@ -121,7 +119,7 @@ export const en: Dictionary = {
     statusBreakdownEmpty: "No tasks logged yet.",
     noOrgTitle: "You don't have an organization yet",
     noOrgDescription:
-      "Create an organization to start managing teams, projects and tasks in one place.",
+      "Create an organization to start managing projects and tasks in one place.",
     noOrgCta: "Create organization",
   },
   organizations: {
@@ -152,20 +150,6 @@ export const en: Dictionary = {
     roleLabel: "Role",
     removeConfirm: (name) => `Remove "${name}" from the organization?`,
     empty: "No members added yet.",
-  },
-  teams: {
-    listTitle: "Teams",
-    listSubtitle: "Manage your organization's teams and their members.",
-    createButton: "New team",
-    createModalTitle: "Create a new team",
-    nameLabel: "Team name",
-    emptyTitle: "No teams yet",
-    emptyDescription: "Create your first team to bring your organization's members together.",
-    detailMembersTitle: "Team members",
-    addMemberButton: "Add member",
-    deleteButton: "Delete team",
-    deleteConfirm: (name) => `Permanently delete the "${name}" team?`,
-    createdLabel: "Created",
   },
   projects: {
     listTitle: "Projects",
