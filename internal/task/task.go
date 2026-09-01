@@ -1,9 +1,11 @@
 package task
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/kiarash86/mitra/internal/convert"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
@@ -90,7 +92,13 @@ func taskToResponse(task sqlc.Task) taskResponse {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	// TODO : CREATE A TASK
+	taskID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return
+	}
+
+	
 }
 
 func (h *Handler) ListByProject(c *gin.Context) {
