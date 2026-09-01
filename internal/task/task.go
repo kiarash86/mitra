@@ -131,6 +131,16 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	projectMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
+	}
+	if !projectMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return
+	}
+
 	task, err := h.queries.CreateTask(c.Request.Context(), sqlc.CreateTaskParams{
 		ProjectID:   projectID,
 		Title:       req.Title,
