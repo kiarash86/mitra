@@ -236,6 +236,14 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
+	if comment.AuthorID != userID {
+		task, err := h.queries.GetTaskByID(c.Request.Context(), comment.TaskID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
+			return
+		}
+	}
+
 	if err := h.queries.SoftDeleteComment(c.Request.Context(), commentID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt delete comment"})
 		return
