@@ -7,13 +7,13 @@ export const organizationsApi = {
 
   getBySlug: (slug: string) =>
     client
-      .get<Organization>(`/v1/organizations/${slug}`)
+      .get<Organization>(`/v1/organizations/by-slug/${slug}`)
       .then((r) => r.data),
 
   listMembers: (orgId: string) =>
     client
-      .get<OrganizationMember[]>(`/v1/organizations/${orgId}/members`)
-      .then((r) => r.data),
+      .get<{ members: OrganizationMember[] }>(`/v1/organizations/${orgId}/members`)
+      .then((r) => r.data.members),
 
   addMember: (orgId: string, data: { user_id: string; role: string }) =>
     client

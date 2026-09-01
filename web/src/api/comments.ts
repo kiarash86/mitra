@@ -4,8 +4,8 @@ import type { Comment } from "../types/task";
 export const commentsApi = {
   listByTask: (taskId: string) =>
     client
-      .get<Comment[]>(`/v1/tasks/${taskId}/comments`)
-      .then((r) => r.data),
+      .get<{ comments: Comment[] }>(`/v1/tasks/${taskId}/comments`)
+      .then((r) => r.data.comments),
 
   create: (taskId: string, data: { body: string }) =>
     client

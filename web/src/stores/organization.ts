@@ -63,6 +63,13 @@ export const useOrganizationStore = create<OrganizationState>()(
         set({ members });
       },
     }),
-    { name: "organization-storage", partialize: (s) => ({ currentOrg: s.currentOrg }) },
+    {
+      name: "organization-storage",
+      partialize: (s) => ({ currentOrg: s.currentOrg }),
+      merge: (persisted, current) => ({
+        ...current,
+        currentOrg: (persisted as Partial<OrganizationState> | undefined)?.currentOrg ?? current.currentOrg,
+      }),
+    },
   ),
 );

@@ -86,6 +86,9 @@ export function isOverdue(dateStr: string): boolean {
   return new Date(dateStr).getTime() < today.getTime();
 }
 
-export function formatNumber(value: number, locale: Locale): string {
+export function formatNumber(value: number | undefined | null, locale: Locale): string {
+  if (value === undefined || value === null || Number.isNaN(value)) {
+    return (0).toLocaleString(INTL_LOCALE[locale]);
+  }
   return value.toLocaleString(INTL_LOCALE[locale]);
 }

@@ -9,8 +9,8 @@ export const projectsApi = {
 
   listByOrganization: (orgId: string) =>
     client
-      .get<Project[]>(`/v1/organizations/${orgId}/projects`)
-      .then((r) => r.data),
+      .get<{ projects: Project[] }>(`/v1/organizations/${orgId}/projects`)
+      .then((r) => r.data.projects),
 
   getById: (projectId: string) =>
     client.get<Project>(`/v1/projects/${projectId}`).then((r) => r.data),
@@ -25,8 +25,8 @@ export const projectsApi = {
 
   listMembers: (projectId: string) =>
     client
-      .get<ProjectMember[]>(`/v1/projects/${projectId}/members`)
-      .then((r) => r.data),
+      .get<{ members: ProjectMember[] }>(`/v1/projects/${projectId}/members`)
+      .then((r) => r.data.members),
 
   addMember: (projectId: string, data: { user_id: string; role: string }) =>
     client

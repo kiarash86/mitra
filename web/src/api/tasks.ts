@@ -18,8 +18,8 @@ export const tasksApi = {
 
   listByProject: (projectId: string, params?: { status?: TaskStatus }) =>
     client
-      .get<Task[]>(`/v1/projects/${projectId}/tasks`, { params })
-      .then((r) => r.data),
+      .get<{ tasks: Task[] }>(`/v1/projects/${projectId}/tasks`, { params })
+      .then((r) => r.data.tasks),
 
   getById: (taskId: string) =>
     client.get<Task>(`/v1/tasks/${taskId}`).then((r) => r.data),
