@@ -311,6 +311,14 @@ func (h *Handler) AssignToUser(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "assignee is not member of this project"})
 		return
 	}
+	task, err = h.queries.AssignTaskToUser(c.Request.Context(), sqlc.AssignTaskToUserParams{
+		ID:               taskID,
+		AssignedToUserID: convert.UUIDToPgtypeUUID(assignID),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt assign task"})
+		return
+	}
 
 }
 
