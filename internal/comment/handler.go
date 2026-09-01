@@ -38,6 +38,12 @@ type commentResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type commentWithAuthorResponse struct {
+	commentResponse
+	AuthorFullName string `json:"author_full_name"`
+	AuthorEmail    string `json:"author_email"`
+}
+
 func (h *Handler) Create(c *gin.Context) {
 	taskID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -128,6 +134,12 @@ func (h *Handler) ListByTask(c *gin.Context) {
 	}
 	if !member {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this task's project"})
+		return
+	}
+
+	list, err := h.queries.ListCommentsByTask(c.Request.Context(), taskID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list comments"})
 		return
 	}
 
