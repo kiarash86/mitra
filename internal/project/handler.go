@@ -177,15 +177,13 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	_, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
-		OrganizationID: project.OrganizationID,
-		UserID:         uuid.UUID(userID),
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
+	isMemberOfOrganization, err := rbac.IsOrganizationMember(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
+
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "couldnt check your role"})
 		return
 	}
-	if err != nil {
+	if !isMemberOfOrganization {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
 		return
 	}
