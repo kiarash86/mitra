@@ -54,7 +54,6 @@ type taskResponse struct {
 	Status           string     `json:"status"`
 	Priority         string     `json:"priority"`
 	AssignedToUserID *string    `json:"assigned_to_user_id,omitempty"`
-	AssignedToTeamID *string    `json:"assigned_to_team_id,omitempty"`
 	DueDate          *time.Time `json:"due_date,omitempty"`
 	CreatedBy        string     `json:"created_by"`
 	CreatedAt        time.Time  `json:"created_at"`
@@ -84,7 +83,6 @@ func taskToResponse(task sqlc.Task) taskResponse {
 		Status:           task.Status,
 		Priority:         task.Priority,
 		AssignedToUserID: convert.PgtypeUUIDToStringPtr(task.AssignedToUserID),
-		AssignedToTeamID: convert.PgtypeUUIDToStringPtr(task.AssignedToTeamID),
 		DueDate:          convert.TimestamptzToTime(task.DueDate),
 		CreatedBy:        task.CreatedBy.String(),
 		CreatedAt:        task.CreatedAt,
