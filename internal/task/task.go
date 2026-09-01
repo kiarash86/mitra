@@ -284,4 +284,14 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
+	project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
+
 }
