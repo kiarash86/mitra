@@ -269,6 +269,12 @@ func (h *Handler) Unassign(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 		return
 	}
+
+	task, err := h.queries.UnassignTask(c.Request.Context(), taskID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt unassign task"})
+		return
+	}
 }
 
 func (h *Handler) Delete(c *gin.Context) {
