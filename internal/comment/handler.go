@@ -168,7 +168,12 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid comment id"})
 		return
 	}
-
+	var req updateCommentRequest
+	err = c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 }
 
 func (h *Handler) Delete(c *gin.Context) {
