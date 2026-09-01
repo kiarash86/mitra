@@ -1,6 +1,7 @@
 package comment
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,12 @@ type commentResponse struct {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	//TODO : CREATE COMMENT UNDER A TASK
+	var req createCommentRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 }
 
 func (h *Handler) ListByTask(c *gin.Context) {
