@@ -165,7 +165,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
-	member, err := rbac.IsOrganizationMember(c.Request.Context() , h.queries , id , uuid.UUID(userID))
+	member, err := rbac.IsOrganizationMember(c.Request.Context(), h.queries, id, uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
 		return
@@ -215,11 +215,12 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
-		OrganizationID: organizationID,
-		UserID:         uuid.UUID(requesterID),
-	})
-	if err != nil || (requesterRole != "owner" && requesterRole != "admin") {
+	isOrgAdminOrOwner, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, organizationID, uuid.UUID(requesterID))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "couldnt get your role"})
+		return
+	}
+	if !isOrgAdminOrOwner {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can remove members"})
 		return
 	}
@@ -232,6 +233,10 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	targetRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: organizationID,
 		UserID:         targetID,
+	})
+	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: organizationID,
+		UserID:         uuid.UUID(requesterID),
 	})
 	if err == nil && targetRole == "owner" && requesterRole != "owner" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can remove another owner"})
