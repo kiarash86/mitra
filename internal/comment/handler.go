@@ -247,6 +247,22 @@ func (h *Handler) Delete(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 			return
 		}
+		pAdmin, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, project.ID, userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+			return
+		}
+		if !pAdmin {
+			orgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, userID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
+				return
+			}
+			if !orgAdmin {
+				c.JSON(http.StatusForbidden, gin.H{"error": "not enough permission for deleting comment"})
+				return
+			}
+		}
 	}
 
 	if err := h.queries.SoftDeleteComment(c.Request.Context(), commentID); err != nil {
