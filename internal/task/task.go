@@ -258,7 +258,11 @@ func (h *Handler) AssignToTeam(c *gin.Context) {
 }
 
 func (h *Handler) Unassign(c *gin.Context) {
-	// TODO : UNASSIGNING TASK
+	taskID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return
+	}
 }
 
 func (h *Handler) Delete(c *gin.Context) {
