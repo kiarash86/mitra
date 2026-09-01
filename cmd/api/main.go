@@ -110,6 +110,17 @@ func main() {
 	projectGroup.POST("/:id/tasks", taskHandler.Create)
 	projectGroup.GET("/:id/tasks", taskHandler.ListByProject)
 
+	taskGroup := protected.Group("/tasks")
+	taskGroup.GET("/assigned-to-me", taskHandler.ListAssignedToMe)
+	taskGroup.GET("/:id", taskHandler.GetByID)
+	taskGroup.PUT("/:id", taskHandler.Update)
+	taskGroup.DELETE("/:id", taskHandler.Delete)
+	taskGroup.PATCH("/:id/status", taskHandler.UpdateStatus)
+	taskGroup.POST("/:id/assign/user", taskHandler.AssignToUser)
+	taskGroup.POST("/:id/unassign", taskHandler.Unassign)
+	taskGroup.GET("/:id/comments", commentHandler.ListByTask)
+	taskGroup.POST("/:id/comments", commentHandler.Create)
+
 	srv := &http.Server{
 		Addr:    ":" + cfg.AppPort,
 		Handler: router,
