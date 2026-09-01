@@ -225,7 +225,7 @@ func (h *Handler) Update(c *gin.Context) {
 	updatedProject, err := h.queries.UpdateProject(c.Request.Context(), sqlc.UpdateProjectParams{
 		ID:          projectID,
 		Name:        req.Name,
-		Description: req.Description,
+		Description: convert.StringToText(req.Description),
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update project"})
@@ -236,7 +236,7 @@ func (h *Handler) Update(c *gin.Context) {
 		ID:             updatedProject.ID.String(),
 		OrganizationID: updatedProject.OrganizationID.String(),
 		Name:           updatedProject.Name,
-		Description:    updatedProject.Description,
+		Description:    convert.TextToString(updatedProject.Description),
 		CreatedAt:      updatedProject.CreatedAt})
 
 }
