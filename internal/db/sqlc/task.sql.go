@@ -12,44 +12,11 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const assignTaskToTeam = `-- name: AssignTaskToTeam :one
-UPDATE tasks
-SET assigned_to_team_id = $2, assigned_to_user_id = NULL, updated_at = now()
-WHERE id = $1
-RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at
-`
-
-type AssignTaskToTeamParams struct {
-	ID               uuid.UUID   `json:"id"`
-	AssignedToTeamID pgtype.UUID `json:"assigned_to_team_id"`
-}
-
-func (q *Queries) AssignTaskToTeam(ctx context.Context, arg AssignTaskToTeamParams) (Task, error) {
-	row := q.db.QueryRow(ctx, assignTaskToTeam, arg.ID, arg.AssignedToTeamID)
-	var i Task
-	err := row.Scan(
-		&i.ID,
-		&i.ProjectID,
-		&i.Title,
-		&i.Description,
-		&i.Status,
-		&i.Priority,
-		&i.AssignedToUserID,
-		&i.AssignedToTeamID,
-		&i.DueDate,
-		&i.CreatedBy,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
 const assignTaskToUser = `-- name: AssignTaskToUser :one
 UPDATE tasks
-SET assigned_to_user_id = $2, assigned_to_team_id = NULL, updated_at = now()
+SET assigned_to_user_id = $2, updated_at = now()
 WHERE id = $1
-RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at
+RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at
 `
 
 type AssignTaskToUserParams struct {
@@ -68,7 +35,6 @@ func (q *Queries) AssignTaskToUser(ctx context.Context, arg AssignTaskToUserPara
 		&i.Status,
 		&i.Priority,
 		&i.AssignedToUserID,
-		&i.AssignedToTeamID,
 		&i.DueDate,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -81,7 +47,7 @@ func (q *Queries) AssignTaskToUser(ctx context.Context, arg AssignTaskToUserPara
 const createTask = `-- name: CreateTask :one
 INSERT INTO tasks (project_id, title, description, priority, due_date, created_by)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at
+RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at
 `
 
 type CreateTaskParams struct {
@@ -111,7 +77,6 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.Status,
 		&i.Priority,
 		&i.AssignedToUserID,
-		&i.AssignedToTeamID,
 		&i.DueDate,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -122,7 +87,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 }
 
 const getTaskByID = `-- name: GetTaskByID :one
-SELECT id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
+SELECT id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
 WHERE id = $1
 `
 
@@ -137,7 +102,6 @@ func (q *Queries) GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error) {
 		&i.Status,
 		&i.Priority,
 		&i.AssignedToUserID,
-		&i.AssignedToTeamID,
 		&i.DueDate,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -147,48 +111,8 @@ func (q *Queries) GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error) {
 	return i, err
 }
 
-const listTasksAssignedToTeam = `-- name: ListTasksAssignedToTeam :many
-SELECT id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
-WHERE assigned_to_team_id = $1
-ORDER BY due_date ASC NULLS LAST
-`
-
-func (q *Queries) ListTasksAssignedToTeam(ctx context.Context, assignedToTeamID pgtype.UUID) ([]Task, error) {
-	rows, err := q.db.Query(ctx, listTasksAssignedToTeam, assignedToTeamID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Task{}
-	for rows.Next() {
-		var i Task
-		if err := rows.Scan(
-			&i.ID,
-			&i.ProjectID,
-			&i.Title,
-			&i.Description,
-			&i.Status,
-			&i.Priority,
-			&i.AssignedToUserID,
-			&i.AssignedToTeamID,
-			&i.DueDate,
-			&i.CreatedBy,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listTasksAssignedToUser = `-- name: ListTasksAssignedToUser :many
-SELECT id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
+SELECT id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
 WHERE assigned_to_user_id = $1
 ORDER BY due_date ASC NULLS LAST
 `
@@ -210,7 +134,6 @@ func (q *Queries) ListTasksAssignedToUser(ctx context.Context, assignedToUserID 
 			&i.Status,
 			&i.Priority,
 			&i.AssignedToUserID,
-			&i.AssignedToTeamID,
 			&i.DueDate,
 			&i.CreatedBy,
 			&i.CreatedAt,
@@ -228,7 +151,7 @@ func (q *Queries) ListTasksAssignedToUser(ctx context.Context, assignedToUserID 
 }
 
 const listTasksByProject = `-- name: ListTasksByProject :many
-SELECT id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
+SELECT id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
 WHERE project_id = $1
 ORDER BY created_at DESC
 `
@@ -250,7 +173,6 @@ func (q *Queries) ListTasksByProject(ctx context.Context, projectID uuid.UUID) (
 			&i.Status,
 			&i.Priority,
 			&i.AssignedToUserID,
-			&i.AssignedToTeamID,
 			&i.DueDate,
 			&i.CreatedBy,
 			&i.CreatedAt,
@@ -280,9 +202,9 @@ func (q *Queries) SoftDeleteTask(ctx context.Context, id uuid.UUID) error {
 
 const unassignTask = `-- name: UnassignTask :one
 UPDATE tasks
-SET assigned_to_user_id = NULL, assigned_to_team_id = NULL, updated_at = now()
+SET assigned_to_user_id = NULL, updated_at = now()
 WHERE id = $1
-RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at
+RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) UnassignTask(ctx context.Context, id uuid.UUID) (Task, error) {
@@ -296,7 +218,6 @@ func (q *Queries) UnassignTask(ctx context.Context, id uuid.UUID) (Task, error) 
 		&i.Status,
 		&i.Priority,
 		&i.AssignedToUserID,
-		&i.AssignedToTeamID,
 		&i.DueDate,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -310,7 +231,7 @@ const updateTask = `-- name: UpdateTask :one
 UPDATE tasks
 SET title = $2, description = $3, priority = $4, due_date = $5, updated_at = now()
 WHERE id = $1
-RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at
+RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at
 `
 
 type UpdateTaskParams struct {
@@ -338,7 +259,6 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, e
 		&i.Status,
 		&i.Priority,
 		&i.AssignedToUserID,
-		&i.AssignedToTeamID,
 		&i.DueDate,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -352,7 +272,7 @@ const updateTaskStatus = `-- name: UpdateTaskStatus :one
 UPDATE tasks
 SET status = $2, updated_at = now()
 WHERE id = $1
-RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, assigned_to_team_id, due_date, created_by, created_at, updated_at, deleted_at
+RETURNING id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at
 `
 
 type UpdateTaskStatusParams struct {
@@ -371,7 +291,6 @@ func (q *Queries) UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusPara
 		&i.Status,
 		&i.Priority,
 		&i.AssignedToUserID,
-		&i.AssignedToTeamID,
 		&i.DueDate,
 		&i.CreatedBy,
 		&i.CreatedAt,

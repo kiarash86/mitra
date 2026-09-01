@@ -64,29 +64,11 @@ type Task struct {
 	Status           string             `json:"status"`
 	Priority         string             `json:"priority"`
 	AssignedToUserID pgtype.UUID        `json:"assigned_to_user_id"`
-	AssignedToTeamID pgtype.UUID        `json:"assigned_to_team_id"`
 	DueDate          pgtype.Timestamptz `json:"due_date"`
 	CreatedBy        uuid.UUID          `json:"created_by"`
 	CreatedAt        time.Time          `json:"created_at"`
 	UpdatedAt        time.Time          `json:"updated_at"`
 	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
-}
-
-type Team struct {
-	ID             uuid.UUID          `json:"id"`
-	Name           string             `json:"name"`
-	OrganizationID uuid.UUID          `json:"organization_id"`
-	CreatedAt      time.Time          `json:"created_at"`
-	UpdatedAt      time.Time          `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
-}
-
-type TeamMember struct {
-	ID        uuid.UUID `json:"id"`
-	TeamID    uuid.UUID `json:"team_id"`
-	UserID    uuid.UUID `json:"user_id"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
 }
 
 type User struct {
