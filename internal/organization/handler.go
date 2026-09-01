@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/rbac"
 )
 
 var slugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
@@ -150,7 +151,7 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		CreatedAt: org.CreatedAt,
 	})
 }
-	
+
 func (h *Handler) ListMembers(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -164,12 +165,13 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
-	_, err = h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
-		OrganizationID: id,
-		UserID:         uuid.UUID(userID),
-	})
+	member, err := rbac.IsOrganizationMember(c.Request.Context(), h.queries, id, uuid.UUID(userID))
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization or you dont have permission"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+		return
+	}
+	if !member {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this organization"})
 		return
 	}
 
