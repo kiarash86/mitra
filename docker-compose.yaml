@@ -50,7 +50,6 @@ services:
       JWT_SECRET: ${JWT_SECRET:-1f002246d99dfcb07372c3963082a1c958fd15af59e984629a633792eeb5a43c}
       JWT_ACCESS_TOKEN_TTL: 15m
       JWT_REFRESH_TOKEN_TTL: 720h
-      CORS_ALLOWED_ORIGINS: http://localhost:3000
     ports:
       - "8080:8080"
 
