@@ -110,6 +110,13 @@ func (h *Handler) Create(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
 	}
+	if req.Priority == "" {
+		req.Priority = "medium"
+	}
+	if !allowedTaskPriorities[req.Priority] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "priority must be one of low, medium, high, urgent"})
+		return
+	}
 
 	task, err := h.queries.CreateTask(c.Request.Context(), sqlc.CreateTaskParams{
 		ProjectID:   projectID,
