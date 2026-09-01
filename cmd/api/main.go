@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"go/doc/comment"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +15,10 @@ import (
 	"github.com/kiarash86/mitra/internal/auth"
 	"github.com/kiarash86/mitra/internal/config"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/organization"
+	"github.com/kiarash86/mitra/internal/project"
+	"github.com/kiarash86/mitra/internal/task"
 )
 
 func main() {
@@ -73,6 +78,10 @@ func main() {
 	tokens := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTAccessTokenTTL, cfg.JWTRefreshTokenTTL)
 
 	authHandler := auth.NewAuthHandler(queries, tokens)
+	orgHandler := organization.NewHandler(queries)
+	projectHandler := project.NewHandler(queries)
+	taskHandler := task.NewHandler(queries)
+	commentHandler := comment.NewHandler(queries)
 
 	api := router.Group("/api/v1")
 	authGroup := api.Group("/auth")
