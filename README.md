@@ -1,80 +1,80 @@
 # Mitra
 
-سامانه‌ی مدیریت و ارتباطات سازمانی — **پروژه‌محور**: سازمان‌ها پروژه می‌سازند، پروژه‌ها عضو و تسک دارند، تسک‌ها به کاربر تخصیص داده می‌شوند.
+A **project-centric** organizational management and communication system: organizations create projects, projects have members and tasks, and tasks are assigned to users.
 
 Backend: Go (Gin) · sqlc · PostgreSQL — Frontend: React + TypeScript (Vite)
 
 ---
 
-## ساختار سلسله‌مراتبی
+## Hierarchical Structure
 
 ```
 Organization
-  └── OrganizationMember (نقش: owner / admin / member / viewer)
+  └── OrganizationMember (role: owner / admin / member / viewer)
 
 Project
   ├── belongs to Organization
-  ├── ProjectMember (نقش در سطح پروژه)
+  ├── ProjectMember (project-level role)
   └── Task
-        ├── assigned to یک User (نه Team — این سیستم فاقد مفهوم Team است)
+        ├── assigned to a single User (not a Team — this system has no Team concept)
         ├── status: todo / in_progress / review / done
         ├── priority: low / medium / high / urgent
         └── Comment
 ```
 
-> این پروژه عمداً بدون سطح «Team» طراحی شده؛ RBAC فقط در دو سطح `organization` و `project` تعریف می‌شود.
+> This project is intentionally designed without a "Team" level; RBAC is defined only at the `organization` and `project` levels.
 
 ---
 
-## پشته‌ی فنی
+## Tech Stack
 
-| بخش | تکنولوژی |
-|---|---|
-| Backend | Go + [Gin](https://gin-gonic.com/) |
-| Data Access | [sqlc](https://sqlc.dev/) (بدون ORM) روی [pgx/v5](https://github.com/jackc/pgx) |
-| Migration | [golang-migrate](https://github.com/golang-migrate/migrate) |
-| Auth | JWT (access + refresh) با [golang-jwt/v5](https://github.com/golang-jwt/jwt)، پسورد با bcrypt |
-| Database | PostgreSQL 16 |
-| Frontend | React 19 + TypeScript + Vite، Zustand (state)، React Router، i18n (فارسی/انگلیسی) |
+| Layer       | Technology                                                                                                  |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
+| Backend     | Go + [Gin](https://gin-gonic.com/)                                                                          |
+| Data Access | [sqlc](https://sqlc.dev/) (no ORM) on top of [pgx/v5](https://github.com/jackc/pgx)                         |
+| Migrations  | [golang-migrate](https://github.com/golang-migrate/migrate)                                                 |
+| Auth        | JWT (access + refresh) via [golang-jwt/v5](https://github.com/golang-jwt/jwt), passwords hashed with bcrypt |
+| Database    | PostgreSQL 16                                                                                               |
+| Frontend    | React 19 + TypeScript + Vite, Zustand (state), React Router, i18n (Persian/English)                         |
 
-**تصمیم‌های معماری فعلی (کنترل هزینه در فاز ۱):**
-Redis و NATS/JetStream فعلاً از استک حذف شده‌اند. جزئیات و معیار بازگشتشان در [`MITRA.md`](./MITRA.md) آمده.
+**Current architectural decisions (cost control in Phase 1):**
+Redis and NATS/JetStream have been removed from the stack for now. Details and the criteria for bringing them back are documented in [`MITRA.md`](./MITRA.md).
 
 ---
 
-## پیش‌نیازها
+## Prerequisites
 
 - Go 1.27+
 - Node.js 20+
-- Docker (برای اجرای PostgreSQL محلی) — یا یک Postgres نصب‌شده به‌صورت جداگانه
+- Docker (to run PostgreSQL locally) — or a separately installed Postgres instance
 - [golang-migrate CLI](https://github.com/golang-migrate/migrate#installation)
 
 ---
 
-## راه‌اندازی محلی (Backend)
+## Local Setup (Backend)
 
 ```bash
-# ۱. دیتابیس رو بالا بیار
+# 1. Start the database
 docker compose up -d postgres
 
-# ۲. env رو تنظیم کن
+# 2. Configure env
 cp .env.example .env
-# JWT_SECRET رو حتماً با یک مقدار امن و تصادفی جایگزین کن
+# Make sure to replace JWT_SECRET with a secure, random value
 
-# ۳. migration ها رو اجرا کن
+# 3. Run migrations
 export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
 migrate -database "$DATABASE_URL" -path internal/db/migrations up
 
-# ۴. سرور رو اجرا کن
+# 4. Run the server
 go run ./cmd/api
 # health check: curl http://localhost:8080/health
 ```
 
-> سرویس‌های `migrate`، `api` و `web` هم در `docker-compose.yaml` تعریف شده‌اند، اما اجرای کاملشان با `docker compose up` نیازمند `Dockerfile` برای `api` و `web` است که هنوز اضافه نشده‌اند. تا آن موقع، مسیر بالا (اجرای مستقیم با `go run`) روش پیشنهادی توسعه است.
+> The `migrate`, `api`, and `web` services are also defined in `docker-compose.yaml`, but running them fully via `docker compose up` requires `Dockerfile`s for `api` and `web`, which haven't been added yet. Until then, the approach above (running directly with `go run`) is the recommended development workflow.
 
 ---
 
-## راه‌اندازی محلی (Frontend)
+## Local Setup (Frontend)
 
 ```bash
 cd web
@@ -84,64 +84,64 @@ npm run dev
 
 ---
 
-## API (فعلاً پیاده‌سازی‌شده)
+## API (Currently Implemented)
 
-پایه: `/api/v1`
+Base path: `/api/v1`
 
 ### Auth
-| Method | مسیر | توضیح |
-|---|---|---|
-| POST | `/auth/register` | ثبت‌نام |
-| POST | `/auth/login` | ورود |
+| Method | Path             | Description |
+| ------ | ---------------- | ----------- |
+| POST   | `/auth/register` | Register    |
+| POST   | `/auth/login`    | Login       |
 
-### Organizations *(نیازمند Authorization: Bearer)*
-| Method | مسیر | توضیح |
-|---|---|---|
-| POST | `/organizations` | ساخت سازمان |
-| GET | `/organizations/by-slug/:slug` | گرفتن سازمان با slug |
-| GET | `/organizations/:id/members` | لیست اعضا |
-| DELETE | `/organizations/:id/members/:user_id` | حذف عضو |
-| POST | `/organizations/:id/projects` | ساخت پروژه در سازمان |
-| GET | `/organizations/:id/projects` | لیست پروژه‌های سازمان |
+### Organizations *(requires Authorization: Bearer)*
+| Method | Path                                  | Description                    |
+| ------ | ------------------------------------- | ------------------------------ |
+| POST   | `/organizations`                      | Create organization            |
+| GET    | `/organizations/by-slug/:slug`        | Get organization by slug       |
+| GET    | `/organizations/:id/members`          | List members                   |
+| DELETE | `/organizations/:id/members/:user_id` | Remove member                  |
+| POST   | `/organizations/:id/projects`         | Create project in organization |
+| GET    | `/organizations/:id/projects`         | List organization's projects   |
 
 ### Projects
-| Method | مسیر | توضیح |
-|---|---|---|
-| GET | `/projects/:id` | جزئیات پروژه |
-| PUT | `/projects/:id` | ویرایش پروژه |
-| DELETE | `/projects/:id` | حذف (soft) پروژه |
-| GET | `/projects/:id/members` | لیست اعضای پروژه |
-| POST | `/projects/:id/members` | افزودن عضو |
-| DELETE | `/projects/:id/members/:user_id` | حذف عضو |
-| POST | `/projects/:id/tasks` | ساخت تسک در پروژه |
-| GET | `/projects/:id/tasks` | لیست تسک‌های پروژه |
+| Method | Path                             | Description            |
+| ------ | -------------------------------- | ---------------------- |
+| GET    | `/projects/:id`                  | Project details        |
+| PUT    | `/projects/:id`                  | Edit project           |
+| DELETE | `/projects/:id`                  | Delete (soft) project  |
+| GET    | `/projects/:id/members`          | List project members   |
+| POST   | `/projects/:id/members`          | Add member             |
+| DELETE | `/projects/:id/members/:user_id` | Remove member          |
+| POST   | `/projects/:id/tasks`            | Create task in project |
+| GET    | `/projects/:id/tasks`            | List project's tasks   |
 
 ### Tasks
-| Method | مسیر | توضیح |
-|---|---|---|
-| GET | `/tasks/assigned-to-me` | تسک‌های تخصیص‌یافته به من |
-| GET | `/tasks/:id` | جزئیات تسک |
-| PUT | `/tasks/:id` | ویرایش تسک |
-| PATCH | `/tasks/:id/status` | تغییر وضعیت |
-| POST | `/tasks/:id/assign/user` | تخصیص به کاربر |
-| POST | `/tasks/:id/unassign` | لغو تخصیص |
-| DELETE | `/tasks/:id` | حذف (soft) |
-| GET | `/tasks/:id/comments` | لیست کامنت‌های تسک |
-| POST | `/tasks/:id/comments` | ثبت کامنت |
+| Method | Path                     | Description          |
+| ------ | ------------------------ | -------------------- |
+| GET    | `/tasks/assigned-to-me`  | Tasks assigned to me |
+| GET    | `/tasks/:id`             | Task details         |
+| PUT    | `/tasks/:id`             | Edit task            |
+| PATCH  | `/tasks/:id/status`      | Change status        |
+| POST   | `/tasks/:id/assign/user` | Assign to a user     |
+| POST   | `/tasks/:id/unassign`    | Unassign             |
+| DELETE | `/tasks/:id`             | Delete (soft)        |
+| GET    | `/tasks/:id/comments`    | List task comments   |
+| POST   | `/tasks/:id/comments`    | Add comment          |
 
 ### Comments
-| Method | مسیر | توضیح |
-|---|---|---|
-| PUT | `/comments/:id` | ویرایش کامنت |
-| DELETE | `/comments/:id` | حذف کامنت |
+| Method | Path            | Description    |
+| ------ | --------------- | -------------- |
+| PUT    | `/comments/:id` | Edit comment   |
+| DELETE | `/comments/:id` | Delete comment |
 
 ---
 
-## محدودیت‌های شناخته‌شده (فاز ۱)
+## Known Limitations (Phase 1)
 
-- بدون `/auth/refresh` — توکن access منقضی‌شده فعلاً نیاز به login مجدد دارد.
-- Presence/Realtime/Push notification هنوز پیاده نشده‌اند (فاز ۲).
-- بدون Redis/NATS — دلیل و جایگزین موقت در `MITRA.md`.
-- `Dockerfile` برای سرویس‌های `api` و `web` هنوز ساخته نشده؛ اجرای local با `go run` / `npm run dev` است.
+- No `/auth/refresh` — an expired access token currently requires logging in again.
+- Presence/Realtime/Push notifications are not yet implemented (Phase 2).
+- No Redis/NATS — rationale and temporary workaround documented in `MITRA.md`.
+- No `Dockerfile` yet for the `api` and `web` services; local development runs via `go run` / `npm run dev`.
 
-نقشه‌ی کامل فازبندی و تصمیمات معماری در [`MITRA.md`](./MITRA.md).
+The full phasing roadmap and architectural decisions are documented in [`MITRA.md`](./MITRA.md).
