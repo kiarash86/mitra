@@ -142,7 +142,22 @@ func (h *Handler) ListByTask(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list comments"})
 		return
 	}
+	comments := make([]commentWithAuthorResponse, 0, len(list))
+	for _, comment := range list {
 
+		comments = append(comments, commentWithAuthorResponse{
+			commentResponse: commentResponse{
+				ID:        comment.ID.String(),
+				TaskID:    comment.TaskID.String(),
+				AuthorID:  comment.AuthorID.String(),
+				Body:      comment.Body,
+				CreatedAt: comment.CreatedAt,
+				UpdatedAt: comment.UpdatedAt,
+			},
+			AuthorFullName: comment.FullName,
+			AuthorEmail:    comment.Email,
+		})
+	}
 }
 
 func (h *Handler) Update(c *gin.Context) {
