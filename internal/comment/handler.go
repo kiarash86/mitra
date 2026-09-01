@@ -87,6 +87,15 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusCreated, commentResponse{
+		ID:        comment.ID.String(),
+		TaskID:    comment.TaskID.String(),
+		AuthorID:  comment.AuthorID.String(),
+		Body:      comment.Body,
+		CreatedAt: comment.CreatedAt,
+		UpdatedAt: comment.UpdatedAt,
+	})
+
 }
 
 func (h *Handler) ListByTask(c *gin.Context) {
