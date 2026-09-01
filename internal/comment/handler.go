@@ -190,6 +190,10 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get comment"})
 		return
 	}
+	if comment.AuthorID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "author can edit it!!! not you"})
+		return
+	}
 
 }
 
