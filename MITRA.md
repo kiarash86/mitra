@@ -28,6 +28,8 @@
 
 > **بازبینی (کنترل هزینه):** Redis و NATS/JetStream فعلاً از استک حذف شدند تا هزینه‌ی زیرساخت در فاز ۱ پایین بماند. جزئیات و جایگزین موقت هرکدام در بخش ۴ آمده است. این تصمیم قابل بازگشت است — هر وقت نیاز مقیاس‌پذیری (چند instance بک‌اند، حجم بالای پیام) واقعی شد، برمی‌گردند.
 
+> **بازبینی (ساختار سازمانی):** مفهوم Team به‌طور کامل از سیستم حذف شد. سلسله‌مراتب حالا `Organization → Project` است، نه `Organization → Team → Project`. عضویت و نقش کاربر مستقیماً در سطح Organization و سطح Project تعریف می‌شود؛ تخصیص تسک هم فقط به کاربر انجام می‌شود (نه به تیم).
+
 ### چرا فرانت‌اند به دو کدبیس تقسیم شد
 - **Flutter برای موبایل (Android + iOS):** جایی که Flutter واقعاً بالغه — کامپایل native، عملکرد بالا، UI یکسان روی هر دو پلتفرم موبایل با یک کدبیس.
 - **React برای وب و دسکتاپ:** به‌جای سه کدبیس جدا، همون اپ React یک‌بار نوشته می‌شود؛ در مرورگر به‌عنوان وب سرو می‌شود و داخل **Tauri** بسته‌بندی می‌شود برای دسکتاپ. این یعنی در عمل فقط **دو کدبیس فرانت** وجود دارد، نه سه تا.
@@ -40,7 +42,7 @@
 | ماژول | توضیح |
 |---|---|
 | Auth Module | ورود، ثبت‌نام، مدیریت سشن، refresh token |
-| Organization Module | مدیریت سازمان، تیم‌ها، اعضا |
+| Organization Module | مدیریت سازمان، اعضا |
 | Project & Task Module | پروژه‌ها، تسک‌ها، وضعیت‌ها، تخصیص |
 | Chat Module | چت داخلی (متصل به WebSocket) |
 | Notification Module | اعلان‌های Push و درون‌برنامه‌ای |
@@ -76,7 +78,7 @@
 | Migration | **golang-migrate / Atlas** | مدیریت schema مستقل از sqlc |
 | صف پیام | ~~NATS + JetStream~~ → **حذف شد (فاز ۱)** | هزینه‌ی زیرساخت؛ جایگزین موقت: in-process fan-out (پایین را ببینید) |
 | Realtime | **gorilla/websocket** | کنترل کامل روی connection lifecycle، بدون overhead فریم‌ورک آماده |
-| RBAC | **پیاده‌سازی دستی، scope-aware** | به‌جای یک مدل تخت Organization-level، نقش‌ها روی سه سطح تعریف می‌شوند: Organization / Team / Project — تا یک کاربر بتواند Admin یک تیم و Member تیم دیگر باشد، یا permission سطح پروژه override شود |
+| RBAC | **پیاده‌سازی دستی، scope-aware** | به‌جای یک مدل تخت Organization-level، نقش‌ها روی دو سطح تعریف می‌شوند: Organization / Project — تا یک کاربر بتواند Admin یک پروژه و Member پروژه‌ی دیگر باشد، یا permission سطح پروژه override شود |
 
 ### زیرساخت
 - **دیتابیس اصلی:** PostgreSQL
@@ -103,8 +105,7 @@
 
 ```
 Organization (سازمان)
- └── Team (تیم)
-      └── TeamMember (عضویت کاربر در تیم)
+ └── OrganizationMember (عضویت کاربر در سازمان + نقش)
 
 User (کاربر)
  └── OrganizationMember (عضویت در سازمان + نقش)
@@ -116,13 +117,13 @@ Project (پروژه)
 
 Task (وظیفه)
  ├── belongs to Project
- ├── assigned to User / Team
+ ├── assigned to User
  ├── has Status (todo, in_progress, review, done)
  ├── has Priority
  └── has many Comment
 
 Chat
- ├── Channel (کانال تیمی یا گروهی)
+ ├── Channel (کانال پروژه‌ای یا گروهی)
  ├── DirectMessage (چت خصوصی)
  ├── Message
  └── MessageDeliveryStatus (sent / delivered / read — برای read receipts)
@@ -134,7 +135,7 @@ Notification
 
 Role & Permission (RBAC — scope-aware)
  ├── Role (Owner, Admin, Manager, Member, Viewer)
- ├── scope (organization | team | project)
+ ├── scope (organization | project)
  └── Permission (per-resource: project.create, task.assign, ...)
 
 ActivityLog (append-only، شبه event-sourcing)
@@ -149,7 +150,7 @@ ActivityLog (append-only، شبه event-sourcing)
 - **Multi-tenancy:** هر رکورد به `organization_id` وصل است تا داده‌ی سازمان‌ها کاملاً ایزوله بماند.
 - **Soft Delete:** برای تسک‌ها و پروژه‌ها از `deleted_at` استفاده می‌شود.
 - **Audit Trail:** `ActivityLog` به‌صورت append-only با payload کامل هر رویداد طراحی می‌شود — نه فقط یک لاگ خطی — تا در آینده بتوان روی آن analytics و گزارش تاریخی بدون migration ساخت.
-- **RBAC چندسطحی:** جدول Role مستقیماً به یک `scope_type` + `scope_id` وصل است (نه فقط organization)، تا override در سطح تیم یا پروژه از روز اول ممکن باشد.
+- **RBAC چندسطحی:** جدول Role مستقیماً به یک `scope_type` + `scope_id` وصل است (نه فقط organization)، تا override در سطح پروژه از روز اول ممکن باشد.
 - **Indexing:** روی `organization_id`, `project_id`, `assigned_to`, `status` و کلیدهای پرتکرار در ActivityLog.
 
 ---
@@ -180,12 +181,12 @@ ActivityLog (append-only، شبه event-sourcing)
 
 ### فاز ۱ — MVP هسته‌ای
 - [ ] Auth (ثبت‌نام، ورود، مدیریت سازمان)
-- [ ] مدیریت تیم و اعضا
+- [ ] مدیریت اعضای سازمان
 - [ ] مدیریت پروژه (CRUD)
 - [ ] مدیریت تسک (ایجاد، تخصیص، وضعیت)
 - [ ] کامنت روی تسک (REST، بدون realtime)
 - [ ] داشبورد ساده
-- [ ] RBAC پایه (scope organization/team)
+- [ ] RBAC پایه (scope organization/project)
 - [ ] Setup اولیه‌ی React (وب) و Flutter (موبایل) روی همان API
 
 ### فاز ۲ — ارتباطات و Realtime
@@ -218,12 +219,12 @@ ActivityLog (append-only، شبه event-sourcing)
 | Migration | golang-migrate / Atlas |
 | Realtime | gorilla/websocket + in-process hub (بدون NATS، فاز ۱) |
 | صف پیام | حذف‌شده در فاز ۱ (کنترل هزینه) — کاندید بازگشت: NATS/JetStream |
-| RBAC | پیاده‌سازی دستی، scope-aware (org/team/project) |
+| RBAC | پیاده‌سازی دستی، scope-aware (org/project) |
 | Database | PostgreSQL |
 | Cache/Presence | حذف‌شده در فاز ۱ (کنترل هزینه) — in-memory داخل پروسه؛ کاندید بازگشت: Redis |
 | فایل/پیوست | S3-compatible Object Storage |
 | Observability | OpenTelemetry + Prometheus/Grafana |
-| شروع پروژه | فاز ۱ (MVP) با تمرکز روی Task/Project/Team |
+| شروع پروژه | فاز ۱ (MVP) با تمرکز روی Task/Project (پروژه‌محور، بدون Team) |
 
 ---
 
