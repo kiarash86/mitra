@@ -3,12 +3,18 @@ FROM golang:1.27-alpine AS builder
 
 WORKDIR /app
 
-# Override at build time if proxy.golang.org is unreachable on your network, e.g.:
-#   docker compose build --build-arg GOPROXY=https://goproxy.io,direct api
-ARG GOPROXY=https://proxy.golang.org,direct
+ARG GOPROXY=https://goproxy.io,direct
 ENV GOPROXY=${GOPROXY}
+ENV GOSUMDB=off
 
-# cache deps separately from source
+
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ENV HTTP_PROXY=${HTTP_PROXY}
+ENV HTTPS_PROXY=${HTTPS_PROXY}
+
+RUN apk add --no-cache git
+
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -16,7 +22,6 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/bin/api ./cmd/api
 
-# --- runtime stage ---
 FROM alpine:3.20
 
 RUN apk add --no-cache ca-certificates
