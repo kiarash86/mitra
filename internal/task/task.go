@@ -250,11 +250,11 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 }
 
 func (h *Handler) AssignToUser(c *gin.Context) {
-	// TODO : ASSIGN TASK TO SOMEONE
-}
-
-func (h *Handler) AssignToTeam(c *gin.Context) {
-	// TODO : ASSIGN TASK TO TEAM
+	taskID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return
+	}
 }
 
 func (h *Handler) Unassign(c *gin.Context) {
