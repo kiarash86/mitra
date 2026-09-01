@@ -111,6 +111,19 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	task, err := h.queries.CreateTask(c.Request.Context(), sqlc.CreateTaskParams{
+		ProjectID:   projectID,
+		Title:       req.Title,
+		Description: convert.StringToText(req.Description),
+		Priority:    req.Priority,
+		DueDate:     convert.TimeToTimestamptz(req.DueDate),
+		CreatedBy:   userID,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create task"})
+		return
+	}
+
 }
 
 func (h *Handler) ListByProject(c *gin.Context) {
