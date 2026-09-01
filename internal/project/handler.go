@@ -9,8 +9,10 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kiarash86/mitra/internal/convert"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/rbac"
 )
 
 type Handler struct {
@@ -72,16 +74,13 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
-		OrganizationID: uuid.UUID(organizationID),
-		UserID:         uuid.UUID(userID),
-	})
+	isAdminOrOwner, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, organizationID, uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
 		return
 	}
 
-	if requesterRole != "admin" && requesterRole != "owner" {
+	if !isAdminOrOwner {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you dont have enough permission for this process"})
 
 		return
@@ -90,7 +89,7 @@ func (h *Handler) Create(c *gin.Context) {
 	project, err := h.queries.CreateProject(c.Request.Context(), sqlc.CreateProjectParams{
 		OrganizationID: organizationID,
 		Name:           req.Name,
-		Description:    req.Description,
+		Description:    convert.StringToText(req.Description),
 	})
 
 	if err != nil {
@@ -113,7 +112,7 @@ func (h *Handler) Create(c *gin.Context) {
 		ID:             project.ID.String(),
 		OrganizationID: project.OrganizationID.String(),
 		Name:           project.Name,
-		Description:    project.Description,
+		Description:    convert.TextToString(project.Description),
 		CreatedAt:      project.CreatedAt,
 	})
 
