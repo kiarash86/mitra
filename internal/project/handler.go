@@ -366,7 +366,7 @@ func (h *Handler) AddMember(c *gin.Context) {
 		return
 	}
 
-	requesterID, ok := middleware.CurrentUserID(c)
+	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
 		return
@@ -380,6 +380,19 @@ func (h *Handler) AddMember(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
+	}
+
+	isProjectAdminOwner, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, project.ID, uuid.UUID(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+	}
+
+	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+	}
+	if !isOrgAdmin && !isProjectAdminOwner {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
 	}
 
 	member, err := h.queries.AddProjectMember(c.Request.Context(), sqlc.AddProjectMemberParams{
