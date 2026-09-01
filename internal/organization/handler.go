@@ -72,7 +72,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	if errors.Is(err, pgx.ErrNoRows) {
+	if !errors.Is(err, pgx.ErrNoRows) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this slug"})
 		return
 	}
