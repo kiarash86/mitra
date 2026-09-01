@@ -222,6 +222,23 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
+	task, _ := h.queries.GetTaskByID(c.Request.Context(), taskID)
+	project, _ := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
+
+	isOwnerorAdmin, _ := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
+	if !isOwnerorAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you dont have enough permission for this process"})
+		return
+	}
+
+	ispro, _ := rbac.IsProjectMember(c.Request.Context(), h.queries, task.ProjectID, uuid.UUID(userID))
+	if !ispro {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this Project"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"task": taskToResponse(task)})
+
 }
 
 func (h *Handler) Update(c *gin.Context) {
