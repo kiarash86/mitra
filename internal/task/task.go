@@ -159,10 +159,9 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) ListByProject(c *gin.Context) {
-	projectID, err := uuid.Parse(c.Param("id"))
+	projecetID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
-		return
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organizatinID type"})
 	}
 
 }
