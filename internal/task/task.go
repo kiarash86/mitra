@@ -272,6 +272,36 @@ func (h *Handler) AssignToUser(c *gin.Context) {
 		return
 	}
 
+	task, err := h.queries.GetTaskByID(c.Request.Context(), taskID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
+		return
+	}
+
+	project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
+
+	isAdminOrOwnerProject, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, project.ID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
+	}
+	if !isAdminOrOwnerProject {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return
+	}
+
 }
 
 func (h *Handler) Unassign(c *gin.Context) {
