@@ -159,7 +159,12 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) ListByProject(c *gin.Context) {
-	// TODO : LIST TASKS OF PROJECT
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
 }
 
 func (h *Handler) ListAssignedToMe(c *gin.Context) {
