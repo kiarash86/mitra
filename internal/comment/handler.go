@@ -242,6 +242,11 @@ func (h *Handler) Delete(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
 			return
 		}
+		project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+			return
+		}
 	}
 
 	if err := h.queries.SoftDeleteComment(c.Request.Context(), commentID); err != nil {
