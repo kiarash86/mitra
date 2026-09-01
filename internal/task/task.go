@@ -258,6 +258,16 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
+	var req updateTaskStatusRequest
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if !allowedTaskStatuses[req.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "status must be one of todo, in_progress, review, done"})
+		return
+	}
+
 }
 
 func (h *Handler) AssignToUser(c *gin.Context) {
