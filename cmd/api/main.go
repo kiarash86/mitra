@@ -89,6 +89,9 @@ func main() {
 	authGroup.POST("/login", authHandler.Login)
 	authGroup.POST("/register", authHandler.Register)
 
+	protected := api.Group("")
+	protected.Use(middleware.RequireAuth(tokens))
+
 	srv := &http.Server{
 		Addr:    ":" + cfg.AppPort,
 		Handler: router,
