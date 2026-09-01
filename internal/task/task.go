@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kiarash86/mitra/internal/convert"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/kiarash86/mitra/internal/middleware"
 )
 
 type Handler struct {
@@ -101,6 +102,12 @@ func (h *Handler) Create(c *gin.Context) {
 	var req createTaskRequest
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
 	}
 
