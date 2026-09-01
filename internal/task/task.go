@@ -92,13 +92,12 @@ func taskToResponse(task sqlc.Task) taskResponse {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-	taskID, err := uuid.Parse(c.Param("id"))
+	projectID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
 		return
 	}
 
-	
 }
 
 func (h *Handler) ListByProject(c *gin.Context) {
