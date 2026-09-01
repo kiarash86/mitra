@@ -185,20 +185,7 @@ func (h *Handler) ListByProject(c *gin.Context) {
 	tasks := make([]taskResponse, 0, len(list))
 
 	for _, taskk := range list {
-		tasks = append(tasks, taskResponse{
-			ID:               taskk.ID.String(),
-			ProjectID:        taskk.ProjectID.String(),
-			Title:            taskk.Title,
-			Description:      convert.TextToString(taskk.Description),
-			Status:           taskk.Status,
-			Priority:         taskk.Priority,
-			AssignedToUserID: convert.PgtypeUUIDToStringPtr(taskk.AssignedToUserID),
-			AssignedToTeamID: convert.PgtypeUUIDToStringPtr(taskk.AssignedToTeamID),
-			DueDate:          convert.TimestamptzToTime(taskk.DueDate),
-			CreatedBy:        taskk.CreatedBy.String(),
-			CreatedAt:        taskk.CreatedAt,
-			UpdatedAt:        taskk.UpdatedAt,
-		})
+		tasks = append(tasks, taskToResponse(taskk))
 	}
 
 	c.JSON(http.StatusOK, gin.H{"tasks": tasks})
@@ -206,7 +193,6 @@ func (h *Handler) ListByProject(c *gin.Context) {
 }
 
 func (h *Handler) ListAssignedToMe(c *gin.Context) {
-	// TODO : LIST TASKS OF MINE
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
