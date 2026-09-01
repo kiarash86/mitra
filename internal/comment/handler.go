@@ -215,5 +215,9 @@ func (h *Handler) Update(c *gin.Context) {
 }
 
 func (h *Handler) Delete(c *gin.Context) {
-	//TODO : SOFT DELETE COMMENT
+	commentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid comment id"})
+		return
+	}
 }
