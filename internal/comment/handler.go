@@ -158,6 +158,8 @@ func (h *Handler) ListByTask(c *gin.Context) {
 			AuthorEmail:    comment.Email,
 		})
 	}
+	c.JSON(http.StatusOK, gin.H{"comments": comments})
+
 }
 
 func (h *Handler) Update(c *gin.Context) {
