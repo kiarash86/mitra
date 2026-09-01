@@ -195,6 +195,14 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
+	updatedComment, err := h.queries.UpdateComment(c.Request.Context(), sqlc.UpdateCommentParams{
+		ID:   commentID,
+		Body: req.Body,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update comment"})
+		return
+	}
 }
 
 func (h *Handler) Delete(c *gin.Context) {
