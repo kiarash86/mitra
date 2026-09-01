@@ -98,6 +98,12 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	var req createTaskRequest
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 }
 
 func (h *Handler) ListByProject(c *gin.Context) {
