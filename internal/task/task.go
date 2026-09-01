@@ -169,6 +169,18 @@ func (h *Handler) ListByProject(c *gin.Context) {
 		return
 	}
 
+	isorg, _ := rbac.IsProjectMember(c.Request.Context(), h.queries, projecetID, uuid.UUID(userID))
+	if !isorg {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this Project"})
+		return
+	}
+
+	isOwnerorAdmin, _ := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, projecetID, uuid.UUID(userID))
+	if !isOwnerorAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you dont have enough permission for this process"})
+		return
+	}
+
 }
 
 func (h *Handler) ListAssignedToMe(c *gin.Context) {
