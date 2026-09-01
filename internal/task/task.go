@@ -169,8 +169,8 @@ func (h *Handler) ListByProject(c *gin.Context) {
 		return
 	}
 
-	isorg, _ := rbac.IsProjectMember(c.Request.Context(), h.queries, projecetID, uuid.UUID(userID))
-	if !isorg {
+	ispro, _ := rbac.IsProjectMember(c.Request.Context(), h.queries, projecetID, uuid.UUID(userID))
+	if !ispro {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this Project"})
 		return
 	}
@@ -206,10 +206,12 @@ func (h *Handler) ListAssignedToMe(c *gin.Context) {
 		tasks = append(tasks, taskToResponse(taskk))
 	}
 
+	c.JSON(http.StatusOK, gin.H{"tasks": tasks})
+
 }
 
 func (h *Handler) GetByID(c *gin.Context) {
-	// TODO : GET TASK USING ID
+
 }
 
 func (h *Handler) Update(c *gin.Context) {
