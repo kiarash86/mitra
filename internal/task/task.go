@@ -262,5 +262,10 @@ func (h *Handler) Unassign(c *gin.Context) {
 }
 
 func (h *Handler) Delete(c *gin.Context) {
-	// TODO : SOFT DELETE TASK
+	taskID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return
+	}
+	
 }
