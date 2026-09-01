@@ -222,6 +222,20 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
 	}
+
+	isProjectAdminOwner, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, project.ID, uuid.UUID(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+	}
+
+	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+	}
+	if !isOrgAdmin && !isProjectAdminOwner {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+	}
+
 	updatedProject, err := h.queries.UpdateProject(c.Request.Context(), sqlc.UpdateProjectParams{
 		ID:          projectID,
 		Name:        req.Name,
