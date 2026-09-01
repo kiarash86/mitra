@@ -203,6 +203,15 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update comment"})
 		return
 	}
+
+	c.JSON(http.StatusOK, commentResponse{
+		ID:        updatedComment.ID.String(),
+		TaskID:    updatedComment.TaskID.String(),
+		AuthorID:  updatedComment.AuthorID.String(),
+		Body:      updatedComment.Body,
+		CreatedAt: updatedComment.CreatedAt,
+		UpdatedAt: updatedComment.UpdatedAt,
+	})
 }
 
 func (h *Handler) Delete(c *gin.Context) {
