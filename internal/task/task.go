@@ -296,7 +296,37 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	task, err := h.queries.UpdateTask(c.Request.Context(), sqlc.UpdateTaskParams{
+	task, err := h.queries.GetTaskByID(c.Request.Context(), taskID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
+		return
+	}
+
+	project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
+
+	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
+	}
+	if !isMemberOfProject {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return
+	}
+
+	task, err = h.queries.UpdateTask(c.Request.Context(), sqlc.UpdateTaskParams{
 		ID:          taskID,
 		Title:       req.Title,
 		Description: convert.StringToText(req.Description),
