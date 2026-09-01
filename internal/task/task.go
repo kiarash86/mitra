@@ -159,36 +159,50 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) ListByProject(c *gin.Context) {
-	projecetID, err := uuid.Parse(c.Param("id"))
+	projectID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organizatinID type"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
 	}
+
 	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 		return
 	}
 
-	ispro, _ := rbac.IsProjectMember(c.Request.Context(), h.queries, projecetID, uuid.UUID(userID))
-	if !ispro {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this Project"})
+	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 		return
 	}
 
-	isOwnerorAdmin, _ := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, projecetID, uuid.UUID(userID))
-	if !isOwnerorAdmin {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you dont have enough permission for this process"})
+	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
+	}
+	if !isMemberOfProject {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
 		return
 	}
 
-	list, err := h.queries.ListTasksByProject(c.Request.Context(), projecetID)
-	tasks := make([]taskResponse, 0, len(list))
-
-	for _, taskk := range list {
-		tasks = append(tasks, taskToResponse(taskk))
+	tasks, err := h.queries.ListTasksByProject(c.Request.Context(), projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list tasks"})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"tasks": tasks})
+	resp := make([]taskResponse, 0, len(tasks))
+	for _, task := range tasks {
+		resp = append(resp, taskToResponse(task))
+	}
+
+	c.JSON(http.StatusOK, gin.H{"tasks": resp})
 
 }
 
