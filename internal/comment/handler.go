@@ -163,7 +163,12 @@ func (h *Handler) ListByTask(c *gin.Context) {
 }
 
 func (h *Handler) Update(c *gin.Context) {
-	//TODO : EDIT COMMENT
+	commentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid comment id"})
+		return
+	}
+
 }
 
 func (h *Handler) Delete(c *gin.Context) {
