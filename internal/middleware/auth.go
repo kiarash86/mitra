@@ -3,7 +3,6 @@ package middleware
 import (
 	"net/http"
 	"strings"
-	"uuid"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
