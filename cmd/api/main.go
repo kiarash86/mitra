@@ -121,6 +121,10 @@ func main() {
 	taskGroup.GET("/:id/comments", commentHandler.ListByTask)
 	taskGroup.POST("/:id/comments", commentHandler.Create)
 
+	commentGroup := protected.Group("/comments")
+	commentGroup.PUT("/:id", commentHandler.Update)
+	commentGroup.DELETE("/:id", commentHandler.Delete)
+
 	srv := &http.Server{
 		Addr:    ":" + cfg.AppPort,
 		Handler: router,
