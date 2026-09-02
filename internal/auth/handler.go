@@ -1,10 +1,12 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
 )
@@ -114,12 +116,22 @@ func (ah *AuthHandler) ChangePassword(c *gin.Context) {
 	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
 	}
 
 	var req changePasswordRequest
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+	}
+	user, err := ah.queries.GetUserByID(c.Request.Context(), userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt load user"})
+		return
 	}
 }
 
