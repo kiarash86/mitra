@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/kiarash86/mitra/internal/middleware"
 )
 
 type AuthHandler struct {
@@ -106,6 +107,10 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 	}
 
 	ah.respondWithTokens(c, http.StatusOK, user.ID, user.FullName, user.Email, user.MustChangePassword)
+
+}
+
+func (ah *AuthHandler) ChangePassword(c *gin.Context) {
 
 }
 
