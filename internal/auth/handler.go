@@ -29,9 +29,10 @@ type changePasswordRequest struct {
 }
 
 type userResponse struct {
-	ID       string `json:"id"`
-	FullName string `json:"full_name"`
-	Email    string `json:"email"`
+	ID                 string `json:"id"`
+	FullName           string `json:"full_name"`
+	Email              string `json:"email"`
+	MustChangePassword bool   `json:"must_change_password"`
 }
 
 type authResponse struct {
