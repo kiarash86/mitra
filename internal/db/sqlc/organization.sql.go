@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const anyOrganizationExists = `-- name: AnyOrganizationExists :one
+SELECT EXISTS (SELECT 1 FROM organizations)
+`
+
+func (q *Queries) AnyOrganizationExists(ctx context.Context) (bool, error) {
+	row := q.db.QueryRow(ctx, anyOrganizationExists)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createOrganization = `-- name: CreateOrganization :one
 INSERT INTO organizations (name ,slug)
 VALUES($1 , $2)

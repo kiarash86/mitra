@@ -14,7 +14,7 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (email , password_hash , full_name)
 VALUES ($1 ,$2 , $3)
-RETURNING id, full_name, email, password_hash, created_at, updated_at, deleted_at
+RETURNING id, full_name, email, password_hash, must_change_password, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
@@ -31,6 +31,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.FullName,
 		&i.Email,
 		&i.PasswordHash,
+		&i.MustChangePassword,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -39,7 +40,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, full_name, email, password_hash, created_at, updated_at, deleted_at FROM  users 
+SELECT id, full_name, email, password_hash, must_change_password, created_at, updated_at, deleted_at FROM  users 
 WHERE email=$1
 `
 
@@ -51,6 +52,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.FullName,
 		&i.Email,
 		&i.PasswordHash,
+		&i.MustChangePassword,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -59,7 +61,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, full_name, email, password_hash, created_at, updated_at, deleted_at FROM  users 
+SELECT id, full_name, email, password_hash, must_change_password, created_at, updated_at, deleted_at FROM  users 
 WHERE id=$1
 `
 
@@ -71,6 +73,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.FullName,
 		&i.Email,
 		&i.PasswordHash,
+		&i.MustChangePassword,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -89,11 +92,27 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE users
+SET password_hash= $2 , must_change_password = false , updated_at = now()
+WHERE id = $1
+`
+
+type UpdateUserPasswordParams struct {
+	ID           uuid.UUID `json:"id"`
+	PasswordHash string    `json:"password_hash"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
+	return err
+}
+
 const updateUserProfile = `-- name: UpdateUserProfile :one
 UPDATE users
 SET full_name = $2, updated_at = now()
 WHERE id = $1
-RETURNING id, full_name, email, password_hash, created_at, updated_at, deleted_at
+RETURNING id, full_name, email, password_hash, must_change_password, created_at, updated_at, deleted_at
 `
 
 type UpdateUserProfileParams struct {
@@ -109,6 +128,7 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 		&i.FullName,
 		&i.Email,
 		&i.PasswordHash,
+		&i.MustChangePassword,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
