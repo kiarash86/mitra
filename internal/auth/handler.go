@@ -153,6 +153,7 @@ func (ah *AuthHandler) ChangePassword(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update password"})
 		return
 	}
+	c.Status(http.StatusNoContent)
 }
 
 func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.UUID, fullName, email string, mustChangePassword bool) {
