@@ -105,11 +105,11 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	ah.respondWithTokens(c, http.StatusOK, user.ID, user.FullName, user.Email )
+	ah.respondWithTokens(c, http.StatusOK, user.ID, user.FullName, user.Email, user.MustChangePassword)
 
 }
 
-func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.UUID, fullName, email string) {
+func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.UUID, fullName, email string, mustChangePassword bool) {
 	accessToken, err := h.tokens.GenerateAccessToken(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue access token"})
@@ -126,9 +126,10 @@ func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		User: userResponse{
-			ID:       userID.String(),
-			FullName: fullName,
-			Email:    email,
+			ID:                 userID.String(),
+			FullName:           fullName,
+			Email:              email,
+			MustChangePassword: mustChangePassword,
 		},
 	})
 }
