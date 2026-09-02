@@ -47,67 +47,57 @@ type organizationMemberResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (h *Handler) Create(c *gin.Context) {
-	var req createOrganizationRequest
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if !slugPattern.MatchString(req.Slug) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
-		return
-	}
-
-	userID, ok := middleware.CurrentUserID(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
-		return
-	}
-
-	_, err = h.queries.GetOrganizationBySlug(c, req.Slug)
-	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "an organizaiton with this slug is already settled"})
-		return
-	}
-
-	if !errors.Is(err, pgx.ErrNoRows) {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this slug"})
-		return
-	}
-
-	org, err := h.queries.CreateOrganization(c.Request.Context(), sqlc.CreateOrganizationParams{
-		Name: req.Name,
-		Slug: req.Slug,
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create organization"})
-		return
-	}
-
-	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
-		OrganizationID: org.ID,
-		UserID:         uuid.UUID(userID),
-		Role:           "owner",
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "organization created but couldnt add you as owner"})
-		return
-	}
-
-	//TODO : DELETE ORG IF COULDNT ADD OWNER OR NO? : FUTURE
-
-	c.JSON(http.StatusCreated, organizationResponse{
-		ID:        org.ID.String(),
-		Name:      org.Name,
-		Slug:      org.Slug,
-		Role:      "owner",
-		CreatedAt: org.CreatedAt,
-	})
-}
+// func (h *Handler) Create(c *gin.Context) {
+// 	var req createOrganizationRequest
+// 	err := c.ShouldBindBodyWithJSON(&req)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	if !slugPattern.MatchString(req.Slug) {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
+// 		return
+// 	}
+// 	userID, ok := middleware.CurrentUserID(c)
+// 	if !ok {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
+// 		return
+// 	}
+// 	_, err = h.queries.GetOrganizationBySlug(c, req.Slug)
+// 	if err == nil {
+// 		c.JSON(http.StatusConflict, gin.H{"error": "an organizaiton with this slug is already settled"})
+// 		return
+// 	}
+// 	if !errors.Is(err, pgx.ErrNoRows) {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this slug"})
+// 		return
+// 	}
+// 	org, err := h.queries.CreateOrganization(c.Request.Context(), sqlc.CreateOrganizationParams{
+// 		Name: req.Name,
+// 		Slug: req.Slug,
+// 	})
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create organization"})
+// 		return
+// 	}
+// 	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
+// 		OrganizationID: org.ID,
+// 		UserID:         uuid.UUID(userID),
+// 		Role:           "owner",
+// 	})
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "organization created but couldnt add you as owner"})
+// 		return
+// 	}
+// 	//TODO : DELETE ORG IF COULDNT ADD OWNER OR NO? : FUTURE
+// 	c.JSON(http.StatusCreated, organizationResponse{
+// 		ID:        org.ID.String(),
+// 		Name:      org.Name,
+// 		Slug:      org.Slug,
+// 		Role:      "owner",
+// 		CreatedAt: org.CreatedAt,
+// 	})
+// }
 
 func (h *Handler) GetBySlug(c *gin.Context) {
 	slug := c.Param("slug")
