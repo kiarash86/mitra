@@ -138,6 +138,13 @@ func (ah *AuthHandler) ChangePassword(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "current password is incorrect"})
 		return
 	}
+
+	password, err := HashPassword(req.NewPassword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong with hashing"})
+		return
+	}
+
 }
 
 func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.UUID, fullName, email string, mustChangePassword bool) {
