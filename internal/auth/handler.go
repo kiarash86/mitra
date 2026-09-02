@@ -111,6 +111,10 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 }
 
 func (ah *AuthHandler) ChangePassword(c *gin.Context) {
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+	}
 
 }
 
