@@ -31,6 +31,11 @@ type createOrganizationRequest struct {
 	Slug string `json:"slug" binding:"required,min=2,max=255"`
 }
 
+type createMemberRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	FullName string `json:"full_name" binding:"required,min=2,max=255"`
+	Role     string `json:"role" binding:"required,oneof=owner admin member viewer"`
+}
 type organizationResponse struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
