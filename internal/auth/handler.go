@@ -145,6 +145,14 @@ func (ah *AuthHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
+	err = ah.queries.UpdateUserPassword(c.Request.Context(), sqlc.UpdateUserPasswordParams{
+		ID:           userID,
+		PasswordHash: password,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update password"})
+		return
+	}
 }
 
 func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.UUID, fullName, email string, mustChangePassword bool) {
