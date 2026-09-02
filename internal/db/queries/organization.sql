@@ -9,4 +9,4 @@ SELECT * FROM organizations
 WHERE slug= $1;
 
 -- name: AnyOrganizationExists :one
-SELECT EXISTS (SELECT 1 FROM organizations)
+SELECT EXISTS (SELECT 1 FROM organizations);
