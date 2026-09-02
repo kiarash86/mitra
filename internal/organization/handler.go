@@ -245,3 +245,13 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
+
+func (h *Handler) CreateMember(c *gin.Context) {
+	//TODO : ADMIN/OWNER CREATES MEMBER
+	// VALIDATE ROLE
+	// VALIDATE TARGET ROLE
+	// CHECK IF EXISTS
+	// CREATE TEMPpassword
+	//CREATE USER
+	//SEND USER
+}
