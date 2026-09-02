@@ -26,7 +26,7 @@ UPDATE users
 SET deleted_at = now()
 where id= $1;
 
--- name: UpdateUserPassword : exec
+-- name: UpdateUserPassword :exec
 UPDATE users
 SET password_hash= $2 , must_change_password = false , updated_at = now()
 WHERE id = $1;
