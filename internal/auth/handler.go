@@ -105,7 +105,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	ah.respondWithTokens(c, http.StatusOK, user.ID, user.FullName, user.Email)
+	ah.respondWithTokens(c, http.StatusOK, user.ID, user.FullName, user.Email )
 
 }
 
