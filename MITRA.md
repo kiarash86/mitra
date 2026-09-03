@@ -41,7 +41,7 @@
 
 | ماژول | توضیح |
 |---|---|
-| Auth Module | ورود، ثبت‌نام، مدیریت سشن، refresh token |
+| Auth Module | ورود، مدیریت سشن، refresh token |
 | Organization Module | مدیریت سازمان، اعضا |
 | Project & Task Module | پروژه‌ها، تسک‌ها، وضعیت‌ها، تخصیص |
 | Chat Module | چت داخلی (متصل به WebSocket) |
@@ -75,7 +75,7 @@
 |---|---|---|
 | فریم‌ورک | **Go + Gin** | Concurrency و throughput بالا؛ اولویت اول پروژه performance است |
 | Data Access | **sqlc** | SQL دستی، کد Go تایپ‌سیف در build-time، بدون overhead و N+1 پنهان ORM |
-| Migration | **golang-migrate / Atlas** | مدیریت schema مستقل از sqlc |
+| Migration | **golang-migrate / Atlas / using docker(curent) not sure which way**  | مدیریت schema مستقل از sqlc |
 | صف پیام | ~~NATS + JetStream~~ → **حذف شد (فاز ۱)** | هزینه‌ی زیرساخت؛ جایگزین موقت: in-process fan-out (پایین را ببینید) |
 | Realtime | **gorilla/websocket** | کنترل کامل روی connection lifecycle، بدون overhead فریم‌ورک آماده |
 | RBAC | **پیاده‌سازی دستی، scope-aware** | به‌جای یک مدل تخت Organization-level، نقش‌ها روی دو سطح تعریف می‌شوند: Organization / Project — تا یک کاربر بتواند Admin یک پروژه و Member پروژه‌ی دیگر باشد، یا permission سطح پروژه override شود |
