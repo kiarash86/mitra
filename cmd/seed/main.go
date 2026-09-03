@@ -73,7 +73,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("couldnt create organization: %v", err)
 	}
-	member, err := queries.AddOrganizationMember(ctx, sqlc.AddOrganizationMemberParams{
+	_, err = queries.AddOrganizationMember(ctx, sqlc.AddOrganizationMemberParams{
 		OrganizationID: organization.ID,
 		UserID:         user.ID,
 		Role:           "owner",
@@ -82,6 +82,10 @@ func main() {
 		log.Fatalf("couldnt add user to organization: %v", err)
 
 	}
+
+	fmt.Printf("organization with %q (slug:%s) created succesfully\n", organization.Name, organization.Slug)
+	fmt.Printf("owner account: %s -> password: %s\n", user.Email, ownerPassword)
+	os.Exit(0)
 }
 
 func getEnv(key string) string {
