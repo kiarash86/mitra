@@ -286,6 +286,11 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can add members"})
 		return
 	}
+
+	if req.Role == "owner" && requesterRole != "owner" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can make someone owner"})
+		return
+	}
 	// VALIDATE ROLE
 	// VALIDATE TARGET ROLE
 	// CHECK IF EXISTS
