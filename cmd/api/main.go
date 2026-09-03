@@ -12,13 +12,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kiarash86/mitra/internal/auth"
+	"github.com/kiarash86/mitra/internal/comment"
 	"github.com/kiarash86/mitra/internal/config"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
 	"github.com/kiarash86/mitra/internal/organization"
 	"github.com/kiarash86/mitra/internal/project"
 	"github.com/kiarash86/mitra/internal/task"
-	"github.com/kiarash86/mitra/internal/comment"
 )
 
 func main() {
@@ -87,15 +87,16 @@ func main() {
 	authGroup := api.Group("/auth")
 
 	authGroup.POST("/login", authHandler.Login)
-	authGroup.POST("/register", authHandler.Register)
 
 	protected := api.Group("")
 	protected.Use(middleware.RequireAuth(tokens))
 
+	protected.POST("/auth/change-password", authHandler.ChangePassword)
+
 	orgGroup := protected.Group("/organizations")
-	orgGroup.POST("", orgHandler.Create)
 	orgGroup.GET("/by-slug/:slug", orgHandler.GetBySlug)
 	orgGroup.GET("/:id/members", orgHandler.ListMembers)
+	orgGroup.POST("/:id/members", orgHandler.CreateMember)
 	orgGroup.DELETE("/:id/members/:user_id", orgHandler.RemoveMember)
 	orgGroup.POST("/:id/projects", projectHandler.Create)
 	orgGroup.GET("/:id/projects", projectHandler.ListByOrganization)
