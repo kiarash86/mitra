@@ -257,6 +257,13 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of organization_id"})
 		return
 	}
+
+	requesterID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
+		return
+	}
+
 	// VALIDATE ROLE
 	// VALIDATE TARGET ROLE
 	// CHECK IF EXISTS
