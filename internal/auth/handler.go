@@ -123,6 +123,7 @@ func (ah *AuthHandler) ChangePassword(c *gin.Context) {
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+		return
 	}
 	user, err := ah.queries.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
