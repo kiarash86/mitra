@@ -264,6 +264,22 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		return
 	}
 
+	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: organizationID,
+		UserID:         requesterID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this organization"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
+		return
+	}
+	if requesterRole != "owner" && requesterRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can add members"})
+		return
+	}
 	// VALIDATE ROLE
 	// VALIDATE TARGET ROLE
 	// CHECK IF EXISTS
