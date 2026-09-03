@@ -291,6 +291,16 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can make someone owner"})
 		return
 	}
+
+	_, err = h.queries.GetUserByEmail(c.Request.Context(), req.Email)
+	if err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "a user with this email already exists"})
+		return
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this email"})
+		return
+	}
 	// VALIDATE ROLE
 	// VALIDATE TARGET ROLE
 	// CHECK IF EXISTS
