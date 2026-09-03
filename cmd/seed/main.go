@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/kiarash86/mitra/internal/auth"
 	"github.com/kiarash86/mitra/internal/config"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
@@ -42,6 +43,12 @@ func main() {
 		fmt.Println("there is a organization already. bye! bye!")
 		return
 	}
+
+	hashedPassword, err := auth.HashPassword(ownerPassword)
+	if err != nil {
+		log.Fatalf("couldnt hash admin password: %v", err)
+	}
+
 }
 
 func getEnv(key string) string {
