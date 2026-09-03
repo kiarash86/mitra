@@ -66,6 +66,14 @@ func main() {
 		log.Fatalf("trick to decieve program for must_change_password failed: %v", err)
 	}
 
+	organization, err := queries.CreateOrganization(ctx, sqlc.CreateOrganizationParams{
+		Name: orgName,
+		Slug: orgSlug,
+	})
+	if err != nil {
+		log.Fatalf("couldnt create organization: %v", err)
+	}
+
 }
 
 func getEnv(key string) string {
