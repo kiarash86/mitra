@@ -14,6 +14,7 @@ import (
 type Querier interface {
 	AddOrganizationMember(ctx context.Context, arg AddOrganizationMemberParams) (OrganizationMember, error)
 	AddProjectMember(ctx context.Context, arg AddProjectMemberParams) (ProjectMember, error)
+	AnyOrganizationExists(ctx context.Context) (bool, error)
 	AssignTaskToUser(ctx context.Context, arg AssignTaskToUserParams) (Task, error)
 	CreateComment(ctx context.Context, arg CreateCommentParams) (Comment, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
@@ -45,6 +46,7 @@ type Querier interface {
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error)
 	UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error)
 	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (Task, error)
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 }
 

@@ -38,10 +38,6 @@ func RequireAuth(tokens *auth.TokenManager) gin.HandlerFunc {
 }
 
 func CurrentUserID(c *gin.Context) (uuid.UUID, bool) {
-	val, exists := c.Get(ContextUserIDKey)
-	if !exists {
-		return uuid.UUID{}, false
-	}
-	userID, ok := val.(uuid.UUID)
-	return userID, ok
+	return auth.CurrentUserID(c)
+	//TODO : DELETE AND USE AUTH ONE FUTURE
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/kiarash86/mitra/internal/auth"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
 	"github.com/kiarash86/mitra/internal/rbac"
@@ -31,6 +32,11 @@ type createOrganizationRequest struct {
 	Slug string `json:"slug" binding:"required,min=2,max=255"`
 }
 
+type createMemberRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	FullName string `json:"full_name" binding:"required,min=2,max=255"`
+	Role     string `json:"role" binding:"required,oneof=owner admin member viewer"`
+}
 type organizationResponse struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
@@ -46,68 +52,65 @@ type organizationMemberResponse struct {
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
-
-func (h *Handler) Create(c *gin.Context) {
-	var req createOrganizationRequest
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if !slugPattern.MatchString(req.Slug) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
-		return
-	}
-
-	userID, ok := middleware.CurrentUserID(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
-		return
-	}
-
-	_, err = h.queries.GetOrganizationBySlug(c, req.Slug)
-	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "an organizaiton with this slug is already settled"})
-		return
-	}
-
-	if !errors.Is(err, pgx.ErrNoRows) {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this slug"})
-		return
-	}
-
-	org, err := h.queries.CreateOrganization(c.Request.Context(), sqlc.CreateOrganizationParams{
-		Name: req.Name,
-		Slug: req.Slug,
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create organization"})
-		return
-	}
-
-	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
-		OrganizationID: org.ID,
-		UserID:         uuid.UUID(userID),
-		Role:           "owner",
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "organization created but couldnt add you as owner"})
-		return
-	}
-
-	//TODO : DELETE ORG IF COULDNT ADD OWNER OR NO? : FUTURE
-
-	c.JSON(http.StatusCreated, organizationResponse{
-		ID:        org.ID.String(),
-		Name:      org.Name,
-		Slug:      org.Slug,
-		Role:      "owner",
-		CreatedAt: org.CreatedAt,
-	})
+type createMemberResponse struct {
+	UserID       string `json:"user_id"`
+	Email        string `json:"email"`
+	FullName     string `json:"full_name"`
+	Role         string `json:"role"`
+	TempPassword string `json:"temp_password"`
 }
+
+// func (h *Handler) Create(c *gin.Context) {
+// 	var req createOrganizationRequest
+// 	err := c.ShouldBindBodyWithJSON(&req)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	if !slugPattern.MatchString(req.Slug) {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid slug"})
+// 		return
+// 	}
+// 	userID, ok := middleware.CurrentUserID(c)
+// 	if !ok {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
+// 		return
+// 	}
+// 	_, err = h.queries.GetOrganizationBySlug(c, req.Slug)
+// 	if err == nil {
+// 		c.JSON(http.StatusConflict, gin.H{"error": "an organizaiton with this slug is already settled"})
+// 		return
+// 	}
+// 	if !errors.Is(err, pgx.ErrNoRows) {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this slug"})
+// 		return
+// 	}
+// 	org, err := h.queries.CreateOrganization(c.Request.Context(), sqlc.CreateOrganizationParams{
+// 		Name: req.Name,
+// 		Slug: req.Slug,
+// 	})
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create organization"})
+// 		return
+// 	}
+// 	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
+// 		OrganizationID: org.ID,
+// 		UserID:         uuid.UUID(userID),
+// 		Role:           "owner",
+// 	})
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "organization created but couldnt add you as owner"})
+// 		return
+// 	}
+// 	//TODO : DELETE ORG IF COULDNT ADD OWNER OR NO? : FUTURE
+// 	c.JSON(http.StatusCreated, organizationResponse{
+// 		ID:        org.ID.String(),
+// 		Name:      org.Name,
+// 		Slug:      org.Slug,
+// 		Role:      "owner",
+// 		CreatedAt: org.CreatedAt,
+// 	})
+// }
 
 func (h *Handler) GetBySlug(c *gin.Context) {
 	slug := c.Param("slug")
@@ -118,12 +121,11 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 	}
 	org, err := h.queries.GetOrganizationBySlug(c.Request.Context(), slug)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "couldnt find organization with this slug"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get organization by slug"})
-		return
-	}
-
-	if errors.Is(err, pgx.ErrNoRows) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "couldnt find organization with this slug"})
 		return
 	}
 
@@ -254,4 +256,95 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) CreateMember(c *gin.Context) {
+	organizationID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of organization_id"})
+		return
+	}
+
+	requesterID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
+		return
+	}
+
+	var req createMemberRequest
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
+		OrganizationID: organizationID,
+		UserID:         requesterID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this organization"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get your role"})
+		return
+	}
+	if requesterRole != "owner" && requesterRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can add members"})
+		return
+	}
+
+	if req.Role == "owner" && requesterRole != "owner" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can make someone owner"})
+		return
+	}
+
+	_, err = h.queries.GetUserByEmail(c.Request.Context(), req.Email)
+	if err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "user with this email already exists"})
+		return
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this email"})
+		return
+	}
+
+	tempPassword, err := auth.GenerateTempPassword()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt generate password"})
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(tempPassword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong with hashing"})
+		return
+	}
+
+	user, err := h.queries.CreateUser(c.Request.Context(), sqlc.CreateUserParams{
+		Email:        req.Email,
+		PasswordHash: hashedPassword,
+		FullName:     req.FullName,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create user"})
+		return
+	}
+	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
+		OrganizationID: organizationID,
+		UserID:         user.ID,
+		Role:           req.Role,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "user created but couldnt add them to the organization"})
+		return
+	}
+	c.JSON(http.StatusCreated, createMemberResponse{
+		UserID:       user.ID.String(),
+		Email:        user.Email,
+		FullName:     user.FullName,
+		Role:         req.Role,
+		TempPassword: tempPassword,
+	})
+
 }
