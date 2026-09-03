@@ -60,6 +60,7 @@ func (h *Handler) Create(c *gin.Context) {
 	organizationID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organizatinID type"})
+		return
 	}
 
 	var req createProjectRequest
@@ -122,6 +123,7 @@ func (h *Handler) ListByOrganization(c *gin.Context) {
 	organizationID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organizatinID type"})
+		return
 	}
 	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
@@ -226,14 +228,17 @@ func (h *Handler) Update(c *gin.Context) {
 	isProjectAdminOwner, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, project.ID, uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
 	}
 
 	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+		return
 	}
 	if !isOrgAdmin && !isProjectAdminOwner {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+		return
 	}
 
 	updatedProject, err := h.queries.UpdateProject(c.Request.Context(), sqlc.UpdateProjectParams{
@@ -279,14 +284,17 @@ func (h *Handler) Delete(c *gin.Context) {
 	isProjectAdminOwner, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, project.ID, uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
 	}
 
 	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+		return
 	}
 	if !isOrgAdmin && !isProjectAdminOwner {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+		return
 	}
 
 	if err := h.queries.SoftDeleteProject(c.Request.Context(), projectID); err != nil {
@@ -385,14 +393,17 @@ func (h *Handler) AddMember(c *gin.Context) {
 	isProjectAdminOwner, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, project.ID, uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
 	}
 
 	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+		return
 	}
 	if !isOrgAdmin && !isProjectAdminOwner {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+		return
 	}
 
 	member, err := h.queries.AddProjectMember(c.Request.Context(), sqlc.AddProjectMemberParams{
@@ -444,14 +455,17 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	isProjectAdminOwner, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, projectID, uuid.UUID(requesterID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
 	}
 
 	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(requesterID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+		return
 	}
 	if !isOrgAdmin && !isProjectAdminOwner {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+		return
 	}
 	if targetID == uuid.UUID(requesterID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you cant remove yourself"})
