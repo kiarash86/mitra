@@ -58,6 +58,14 @@ func main() {
 		log.Fatalf("couldnt create user: %v", err)
 	}
 
+	err = queries.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
+		ID:           user.ID,
+		PasswordHash: hashedPassword,
+	})
+	if err != nil {
+		log.Fatalf("trick to decieve program for must_change_password failed: %v", err)
+	}
+
 }
 
 func getEnv(key string) string {
