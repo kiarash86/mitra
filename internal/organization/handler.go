@@ -52,6 +52,13 @@ type organizationMemberResponse struct {
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }
+type createMemberResponse struct {
+	UserID       string `json:"user_id"`
+	Email        string `json:"email"`
+	FullName     string `json:"full_name"`
+	Role         string `json:"role"`
+	TempPassword string `json:"temp_password"`
+}
 
 // func (h *Handler) Create(c *gin.Context) {
 // 	var req createOrganizationRequest
@@ -333,6 +340,7 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "user created but couldnt add them to the organization"})
 		return
 	}
+
 	// VALIDATE ROLE
 	// VALIDATE TARGET ROLE
 	// CHECK IF EXISTS
