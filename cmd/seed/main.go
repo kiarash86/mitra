@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kiarash86/mitra/internal/config"
 )
 
@@ -18,6 +21,14 @@ func main() {
 	ownerEmail := getEnv("OWNER_EMAIL")
 	ownerName := getEnv("OWNER_NAME")
 	ownerPassword := getEnv("OWNER_PASSWORD")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("couldnt connect to db: %v", err)
+	}
+	defer pool.Close()
 }
 
 func getEnv(key string) string {
