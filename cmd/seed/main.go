@@ -49,6 +49,15 @@ func main() {
 		log.Fatalf("couldnt hash admin password: %v", err)
 	}
 
+	user, err := queries.CreateUser(ctx, sqlc.CreateUserParams{
+		Email:        ownerEmail,
+		PasswordHash: hashedPassword,
+		FullName:     ownerName,
+	})
+	if err != nil {
+		log.Fatalf("couldnt create user: %v", err)
+	}
+
 }
 
 func getEnv(key string) string {
