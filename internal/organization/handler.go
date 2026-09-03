@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/kiarash86/mitra/internal/auth"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
 	"github.com/kiarash86/mitra/internal/rbac"
@@ -294,11 +295,23 @@ func (h *Handler) CreateMember(c *gin.Context) {
 
 	_, err = h.queries.GetUserByEmail(c.Request.Context(), req.Email)
 	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "a user with this email already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": "user with this email already exists"})
 		return
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this email"})
+		return
+	}
+
+	tempPassword, err := auth.GenerateTempPassword()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt generate password"})
+		return
+	}
+
+	passwordHash, err := auth.HashPassword(tempPassword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong with hashing"})
 		return
 	}
 	// VALIDATE ROLE
