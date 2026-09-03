@@ -347,10 +347,5 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		Role:         req.Role,
 		TempPassword: tempPassword,
 	})
-	// VALIDATE ROLE
-	// VALIDATE TARGET ROLE
-	// CHECK IF EXISTS
-	// CREATE TEMPpassword
-	//CREATE USER
-	//SEND USER
+
 }
