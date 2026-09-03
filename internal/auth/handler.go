@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
-	"github.com/kiarash86/mitra/internal/middleware"
 )
 
 type AuthHandler struct {
@@ -113,7 +112,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 }
 
 func (ah *AuthHandler) ChangePassword(c *gin.Context) {
-	userID, ok := middleware.CurrentUserID(c)
+	userID, ok := CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 		return
