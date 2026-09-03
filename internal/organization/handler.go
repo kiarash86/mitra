@@ -252,7 +252,11 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 }
 
 func (h *Handler) CreateMember(c *gin.Context) {
-	//TODO : ADMIN/OWNER CREATES MEMBER
+	organizationID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of organization_id"})
+		return
+	}
 	// VALIDATE ROLE
 	// VALIDATE TARGET ROLE
 	// CHECK IF EXISTS
