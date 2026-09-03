@@ -18,7 +18,7 @@ type Handler struct {
 }
 
 func NewHandler(queries *sqlc.Queries) *Handler {
-	return &Handler{}
+	return &Handler{queries: queries}
 }
 
 type createCommentRequest struct {
