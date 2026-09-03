@@ -324,6 +324,15 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create user"})
 		return
 	}
+	_, err = h.queries.AddOrganizationMember(c.Request.Context(), sqlc.AddOrganizationMemberParams{
+		OrganizationID: organizationID,
+		UserID:         user.ID,
+		Role:           req.Role,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "user created but couldnt add them to the organization"})
+		return
+	}
 	// VALIDATE ROLE
 	// VALIDATE TARGET ROLE
 	// CHECK IF EXISTS
