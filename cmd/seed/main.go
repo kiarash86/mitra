@@ -12,6 +12,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("couldnt load config: %v", err)
 	}
+
+	orgName := getEnv("ORG_NAME")
+	orgSlug := getEnv("ORG_SLUG")
+	ownerEmail := getEnv("OWNER_EMAIL")
+	ownerName := getEnv("OWNER_NAME")
+	ownerPassword := getEnv("OWNER_PASSWORD")
 }
 
 func getEnv(key string) string {
