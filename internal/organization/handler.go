@@ -309,9 +309,19 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		return
 	}
 
-	passwordHash, err := auth.HashPassword(tempPassword)
+	hashedPassword, err := auth.HashPassword(tempPassword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong with hashing"})
+		return
+	}
+
+	user, err := h.queries.CreateUser(c.Request.Context(), sqlc.CreateUserParams{
+		Email:        req.Email,
+		PasswordHash: hashedPassword,
+		FullName:     req.FullName,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create user"})
 		return
 	}
 	// VALIDATE ROLE
