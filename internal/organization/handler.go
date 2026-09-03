@@ -264,6 +264,12 @@ func (h *Handler) CreateMember(c *gin.Context) {
 		return
 	}
 
+	var req createMemberRequest
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	requesterRole, err := h.queries.GetOrganizationMemberRole(c.Request.Context(), sqlc.GetOrganizationMemberRoleParams{
 		OrganizationID: organizationID,
 		UserID:         requesterID,
