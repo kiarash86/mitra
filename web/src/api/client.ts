@@ -22,76 +22,17 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (err: unknown) => void;
-}> = [];
-
-const processQueue = (error: unknown, token: string | null) => {
-  failedQueue.forEach((prom) => {
-    if (error || !token) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
+// The API has no token-refresh endpoint (access tokens are short-lived by
+// design), so a 401 always means the session is over — clear it and send
+// the user back to /login rather than retrying.
 client.interceptors.response.use(
   (res) => res,
-  async (err) => {
-    const originalRequest = err.config;
-    if (err.response?.status !== 401 || originalRequest._retry) {
-      return Promise.reject(err);
-    }
-
-    if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      }).then((token) => {
-        originalRequest.headers.Authorization = `Bearer ${token}`;
-        return client(originalRequest);
-      });
-    }
-
-    originalRequest._retry = true;
-    isRefreshing = true;
-
-    try {
-      const raw = localStorage.getItem("auth-storage");
-      if (!raw) throw new Error("No auth storage");
-      const parsed = JSON.parse(raw);
-      if (!parsed.state?.refreshToken) throw new Error("No refresh token");
-
-      const { data } = await axios.post(
-        `${client.defaults.baseURL}/v1/auth/refresh`,
-        { refresh_token: parsed.state.refreshToken }
-      );
-
-      const newToken: string = data.access_token;
-      const newRefresh: string = data.refresh_token;
-
-      // Mutate and persist the SAME parsed object — a second, independent
-      // JSON.parse(raw) here would silently drop the refreshed tokens,
-      // since it would never see the mutation below.
-      parsed.state.accessToken = newToken;
-      parsed.state.refreshToken = newRefresh;
-      localStorage.setItem("auth-storage", JSON.stringify(parsed));
-
-      processQueue(null, newToken);
-
-      originalRequest.headers.Authorization = `Bearer ${newToken}`;
-      return client(originalRequest);
-    } catch (refreshError) {
-      processQueue(refreshError, null);
+  (err) => {
+    if (err.response?.status === 401) {
       localStorage.removeItem("auth-storage");
       window.location.href = "/login";
-      return Promise.reject(refreshError);
-    } finally {
-      isRefreshing = false;
     }
+    return Promise.reject(err);
   }
 );
 
