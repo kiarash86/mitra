@@ -1,10 +1,13 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -22,9 +25,19 @@ type Config struct {
 	JWTSecret          string        `env:"JWT_SECRET,required"`
 	JWTAccessTokenTTL  time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
 	JWTRefreshTokenTTL time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"720h"`
+
+	OrgName       string `env:"ORG_NAME" envDefault:"mitra"`
+	OrgSlug       string `env:"ORG_SLUG" envDefault:"mitra"`
+	OwnerEmail    string `env:"OWNER_EMAIL,required"`
+	OwnerName     string `env:"OWNER_NAME,required"`
+	OwnerPassword string `env:"OWNER_PASSWORD,required"`
 }
 
 func Load() (*Config, error) {
+	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("config: failed to load .env: %w", err)
+	}
+
 	cfg := &Config{}
 	if err := env.Parse(cfg); err != nil {
 		return nil, fmt.Errorf("config: failed to parse environment: %w", err)
