@@ -19,11 +19,11 @@ func main() {
 		log.Fatalf("couldnt load config: %v", err)
 	}
 
-	orgName := getEnv("ORG_NAME")
-	orgSlug := getEnv("ORG_SLUG")
-	ownerEmail := getEnv("OWNER_EMAIL")
-	ownerName := getEnv("OWNER_NAME")
-	ownerPassword := getEnv("OWNER_PASSWORD")
+	orgName := cfg.OrgName
+	orgSlug := cfg.OrgSlug
+	ownerEmail := cfg.OwnerEmail
+	ownerName := cfg.OwnerName
+	ownerPassword := cfg.OwnerPassword
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -86,13 +86,4 @@ func main() {
 	fmt.Printf("organization with %q (slug:%s) created succesfully\n", organization.Name, organization.Slug)
 	fmt.Printf("owner account: %s -> password: %s\n", user.Email, ownerPassword)
 	os.Exit(0)
-}
-
-func getEnv(key string) string {
-	env := os.Getenv(key)
-	if env == "" {
-		log.Fatalf("missing env parameter: %s", key)
-	}
-
-	return env
 }
