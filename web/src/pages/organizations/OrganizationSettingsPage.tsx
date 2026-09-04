@@ -1,98 +1,26 @@
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "../../i18n";
 import { useOrganizationStore } from "../../stores/organization";
-import { toast } from "../../stores/toast";
-import { validateSlug } from "../../lib/validators";
 import { formatDate, formatNumber } from "../../lib/formatters";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { RouteTabs } from "../../components/ui/RouteTabs";
 import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { Alert } from "../../components/ui/Alert";
-
-function slugify(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+import { Skeleton } from "../../components/ui/Skeleton";
 
 export default function OrganizationSettingsPage() {
   const { t, locale } = useI18n();
   const currentOrg = useOrganizationStore((s) => s.currentOrg);
   const members = useOrganizationStore((s) => s.members);
-  const fetchMembers = useOrganizationStore((s) => s.fetchMembers);
-  const createOrganization = useOrganizationStore((s) => s.createOrganization);
 
-  const [name, setName] = useState("");
-  const [manualSlug, setManualSlug] = useState<string | null>(null);
-  const slug = manualSlug ?? slugify(name);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  // slugify() only keeps a-z/0-9 — a name typed entirely in Persian (or any
-  // non-Latin script) collapses to an empty auto-slug. Flag that immediately
-  // instead of letting the user hit a generic error on submit.
-  const slugAutoEmpty = manualSlug === null && name.trim().length > 0 && slug.length === 0;
-
-  useEffect(() => {
-    if (currentOrg) fetchMembers(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
-  }, [currentOrg, fetchMembers, t]);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-    if (!validateSlug(slug)) {
-      setError(t.common.validation.invalidSlug);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await createOrganization(name.trim(), slug);
-    } catch {
-      setError(t.common.errorGeneric);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
+  // The organization is fetched once, automatically, by AppShell (there's
+  // no self-serve creation anymore — see ORG_SLUG in lib/constants.ts) —
+  // this page just waits for that to land.
   if (!currentOrg) {
     return (
-      <div className="mx-auto max-w-md">
-        <div className="mb-6 text-center">
-          <h1 className="text-xl font-bold text-ink-900">{t.organizations.createTitle}</h1>
-          <p className="mt-1 text-sm text-ink-500">{t.organizations.createDescription}</p>
-        </div>
-        <Card>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <Alert variant="error">{error}</Alert>}
-            <Input
-              label={t.organizations.nameLabel}
-              required
-              minLength={2}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <Input
-              label={t.organizations.slugLabel}
-              hint={slugAutoEmpty ? undefined : t.organizations.slugHint}
-              error={slugAutoEmpty ? t.organizations.slugHint : undefined}
-              required
-              dir="ltr"
-              value={slug}
-              onChange={(e) => {
-                setManualSlug(e.target.value);
-              }}
-            />
-            <Button type="submit" size="lg" className="w-full" loading={submitting}>
-              {t.organizations.submit}
-            </Button>
-          </form>
-        </Card>
+      <div>
+        <Skeleton className="mb-6 h-8 w-48" />
+        <Skeleton className="h-64 max-w-xl" />
       </div>
     );
   }

@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { UserPlus, Ellipsis } from "lucide-react";
+import { UserPlus, Ellipsis, Check } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
 import { useOrganizationStore } from "../../stores/organization";
 import { toast } from "../../stores/toast";
 import { ORG_ROLES } from "../../lib/constants";
-import { canManageOrg } from "../../lib/permissions";
-import type { OrganizationMember } from "../../types/organization";
+import { canManageOrg, canRemoveOrgMember } from "../../lib/permissions";
+import type { OrganizationMember, CreatedMember } from "../../types/organization";
 import type { OrgRoleName } from "../../types/rbac";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { RouteTabs } from "../../components/ui/RouteTabs";
@@ -30,17 +30,20 @@ export default function MembersPage() {
   const currentOrg = useOrganizationStore((s) => s.currentOrg);
   const members = useOrganizationStore((s) => s.members);
   const fetchMembers = useOrganizationStore((s) => s.fetchMembers);
-  const addMember = useOrganizationStore((s) => s.addMember);
+  const createMember = useOrganizationStore((s) => s.createMember);
   const removeMember = useOrganizationStore((s) => s.removeMember);
 
   const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
   const canManage = canManageOrg(myRole);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [userId, setUserId] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [role, setRole] = useState<OrgRoleName>("member");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [createdMember, setCreatedMember] = useState<CreatedMember | null>(null);
+  const [copied, setCopied] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<OrganizationMember | null>(null);
 
   useEffect(() => {
@@ -62,20 +65,39 @@ export default function MembersPage() {
     );
   }
 
+  const closeModal = () => {
+    setModalOpen(false);
+    setFullName("");
+    setEmail("");
+    setRole("member");
+    setCreatedMember(null);
+    setCopied(false);
+  };
+
   const handleAdd = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
     try {
-      await addMember(currentOrg.id, userId.trim(), role);
-      setModalOpen(false);
-      setUserId("");
-      setRole("member");
+      const created = await createMember(currentOrg.id, {
+        full_name: fullName.trim(),
+        email: email.trim(),
+        role,
+      });
+      setCreatedMember(created);
     } catch {
       setError(t.common.errorGeneric);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCopy = () => {
+    if (!createdMember) return;
+    navigator.clipboard.writeText(createdMember.temp_password).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   return (
@@ -138,7 +160,7 @@ export default function MembersPage() {
                     <RoleBadge role={member.role} />
                   </td>
                   <td className="px-5 py-3 text-end">
-                    {(canManage || member.user_id === currentUser?.id) && (
+                    {canRemoveOrgMember(myRole, member.user_id, member.role, currentUser?.id) && (
                       <Menu
                         trigger={
                           <button
@@ -167,40 +189,72 @@ export default function MembersPage() {
 
       <Modal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={t.members.addModalTitle}
+        onClose={closeModal}
+        title={createdMember ? t.members.createdTitle : t.members.addModalTitle}
         size="sm"
       >
-        <form onSubmit={handleAdd} className="space-y-4">
-          {error && <Alert variant="error">{error}</Alert>}
-          <Input
-            label={t.members.userIdLabel}
-            hint={t.members.userIdHint}
-            required
-            dir="ltr"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-          />
-          <Select
-            label={t.members.roleLabel}
-            value={role}
-            onChange={(e) => setRole(e.target.value as OrgRoleName)}
-          >
-            {ORG_ROLES.map((r) => (
-              <option key={r} value={r}>
-                {t.common.roles[r]}
-              </option>
-            ))}
-          </Select>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
-              {t.common.cancel}
-            </Button>
-            <Button type="submit" loading={submitting}>
-              {t.common.add}
-            </Button>
+        {createdMember ? (
+          <div className="space-y-4">
+            <Alert variant="success">{t.members.createdDescription(createdMember.full_name)}</Alert>
+            <div>
+              <p className="mb-1.5 text-sm font-medium text-ink-700">{t.members.tempPasswordLabel}</p>
+              <div className="flex items-center gap-2">
+                <code
+                  dir="ltr"
+                  className="flex-1 rounded-md border border-ink-200 bg-paper-50 px-3 py-2 text-sm font-medium text-ink-900"
+                >
+                  {createdMember.temp_password}
+                </code>
+                <Button type="button" variant="secondary" size="sm" onClick={handleCopy}>
+                  {copied ? <Check className="h-4 w-4" /> : t.common.copy}
+                </Button>
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button type="button" onClick={closeModal}>
+                {t.members.doneButton}
+              </Button>
+            </div>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleAdd} className="space-y-4">
+            {error && <Alert variant="error">{error}</Alert>}
+            <Input
+              label={t.members.fullNameLabel}
+              required
+              minLength={2}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+            <Input
+              type="email"
+              label={t.members.emailLabel}
+              required
+              dir="ltr"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Select
+              label={t.members.roleLabel}
+              value={role}
+              onChange={(e) => setRole(e.target.value as OrgRoleName)}
+            >
+              {ORG_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {t.common.roles[r]}
+                </option>
+              ))}
+            </Select>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="secondary" onClick={closeModal}>
+                {t.common.cancel}
+              </Button>
+              <Button type="submit" loading={submitting}>
+                {t.common.add}
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
 
       <ConfirmDialog

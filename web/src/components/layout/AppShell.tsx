@@ -1,6 +1,11 @@
+import { useEffect } from "react";
 import { Outlet, useNavigation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { useI18n } from "../../i18n";
+import { useOrganizationStore } from "../../stores/organization";
+import { toast } from "../../stores/toast";
+import { ORG_SLUG } from "../../lib/constants";
 
 /**
  * Layout route element for every authenticated page: sidebar + header
@@ -8,8 +13,20 @@ import { Header } from "./Header";
  * instead of being wrapped around each page individually.
  */
 export function AppShell() {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const isNavigating = navigation.state !== "idle";
+
+  const currentOrg = useOrganizationStore((s) => s.currentOrg);
+  const fetchBySlug = useOrganizationStore((s) => s.fetchBySlug);
+
+  // There's no "list my organizations" endpoint — the app is single-tenant
+  // per deployment, so the one organization is looked up by a known slug
+  // as soon as the authenticated shell mounts (unless already persisted
+  // from a previous session).
+  useEffect(() => {
+    if (!currentOrg) fetchBySlug(ORG_SLUG).catch(() => toast.error(t.common.errorGeneric));
+  }, [currentOrg, fetchBySlug, t]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-paper-50">

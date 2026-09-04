@@ -1,10 +1,8 @@
 import client from "./client";
-import type { Organization, OrganizationMember } from "../types/organization";
+import type { Organization, OrganizationMember, CreatedMember } from "../types/organization";
+import type { OrgRoleName } from "../types/rbac";
 
 export const organizationsApi = {
-  create: (data: { name: string; slug: string }) =>
-    client.post<Organization>("/v1/organizations", data).then((r) => r.data),
-
   getBySlug: (slug: string) =>
     client
       .get<Organization>(`/v1/organizations/by-slug/${slug}`)
@@ -15,9 +13,9 @@ export const organizationsApi = {
       .get<{ members: OrganizationMember[] }>(`/v1/organizations/${orgId}/members`)
       .then((r) => r.data.members),
 
-  addMember: (orgId: string, data: { user_id: string; role: string }) =>
+  createMember: (orgId: string, data: { full_name: string; email: string; role: OrgRoleName }) =>
     client
-      .post<OrganizationMember>(`/v1/organizations/${orgId}/members`, data)
+      .post<CreatedMember>(`/v1/organizations/${orgId}/members`, data)
       .then((r) => r.data),
 
   removeMember: (orgId: string, userId: string) =>
