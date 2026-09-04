@@ -2,6 +2,7 @@ export interface User {
   id: string;
   full_name: string;
   email: string;
+  must_change_password: boolean;
 }
 
 export interface AuthResponse {
@@ -15,8 +16,7 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface RegisterRequest {
-  full_name: string;
-  email: string;
-  password: string;
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
 }
