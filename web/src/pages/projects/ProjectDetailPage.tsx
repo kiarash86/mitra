@@ -254,8 +254,8 @@ export default function ProjectDetailPage() {
         <form onSubmit={handleAdd} className="space-y-4">
           {error && <Alert variant="error">{error}</Alert>}
           <Input
-            label={t.members.userIdLabel}
-            hint={t.members.userIdHint}
+            label={t.projects.memberUserIdLabel}
+            hint={t.projects.memberUserIdHint}
             required
             dir="ltr"
             value={userId}
