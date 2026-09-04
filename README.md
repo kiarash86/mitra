@@ -62,8 +62,9 @@ Redis and NATS/JetStream have been removed from the stack for now. Details and t
 
 ```bash
 cp .env.example .env
-# optionally set a real JWT_SECRET in .env — otherwise a fallback dev secret
-# baked into docker-compose.yaml is used (fine for localhost only)
+# JWT_SECRET is required — the api will fail to start if it's empty.
+# The placeholder value in .env.example works for localhost only;
+# replace it with a real random secret for anything beyond that.
 
 docker compose up --build
 ```

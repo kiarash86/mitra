@@ -62,8 +62,9 @@ Redis و NATS/JetStream فعلاً از استک حذف شده‌اند. جزئ�
 
 ```bash
 cp .env.example .env
-# اختیاری: یه JWT_SECRET واقعی توی .env بذار — وگرنه یه مقدار پیش‌فرض
-# برای dev که توی docker-compose.yaml هاردکد شده استفاده می‌شه (فقط برای localhost مناسبه)
+# JWT_SECRET الزامیه — اگه خالی بمونه، api اصلاً بالا نمی‌آد.
+# مقداری که توی .env.example هست فقط برای localhost مناسبه؛
+# برای هر چیزی فراتر از اون، حتماً با یه مقدار random واقعی جایگزینش کن.
 
 docker compose up --build
 ```
