@@ -62,21 +62,23 @@ client.interceptors.response.use(
     try {
       const raw = localStorage.getItem("auth-storage");
       if (!raw) throw new Error("No auth storage");
-      const { state } = JSON.parse(raw);
-      if (!state?.refreshToken) throw new Error("No refresh token");
+      const parsed = JSON.parse(raw);
+      if (!parsed.state?.refreshToken) throw new Error("No refresh token");
 
       const { data } = await axios.post(
         `${client.defaults.baseURL}/v1/auth/refresh`,
-        { refresh_token: state.refreshToken }
+        { refresh_token: parsed.state.refreshToken }
       );
 
       const newToken: string = data.access_token;
       const newRefresh: string = data.refresh_token;
 
-      const updated = JSON.parse(raw);
-      state.accessToken = newToken;
-      state.refreshToken = newRefresh;
-      localStorage.setItem("auth-storage", JSON.stringify(updated));
+      // Mutate and persist the SAME parsed object — a second, independent
+      // JSON.parse(raw) here would silently drop the refreshed tokens,
+      // since it would never see the mutation below.
+      parsed.state.accessToken = newToken;
+      parsed.state.refreshToken = newRefresh;
+      localStorage.setItem("auth-storage", JSON.stringify(parsed));
 
       processQueue(null, newToken);
 
