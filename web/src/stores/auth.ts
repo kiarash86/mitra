@@ -9,26 +9,23 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isLoading: boolean;
-  error: string | null;
 
   login: (email: string, password: string) => Promise<void>;
-  register: (fullName: string, email: string, password: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   updateProfile: (fullName: string) => Promise<void>;
   logout: () => void;
-  clearError: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
       isLoading: false,
-      error: null,
 
       login: async (email, password) => {
-        set({ isLoading: true, error: null });
+        set({ isLoading: true });
         try {
           const res = await authApi.login({ email, password });
           set({
@@ -37,36 +34,22 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: res.refresh_token,
             isLoading: false,
           });
-        } catch (err: unknown) {
-          const message =
-            (err as { response?: { data?: { error?: string } } })?.response?.data
-              ?.error ?? "Login failed";
-          set({ error: message, isLoading: false });
+        } catch (err) {
+          set({ isLoading: false });
           throw err;
         }
       },
 
-      register: async (fullName, email, password) => {
-        set({ isLoading: true, error: null });
-        try {
-          const res = await authApi.register({
-            full_name: fullName,
-            email,
-            password,
-          });
-          set({
-            user: res.user,
-            accessToken: res.access_token,
-            refreshToken: res.refresh_token,
-            isLoading: false,
-          });
-        } catch (err: unknown) {
-          const message =
-            (err as { response?: { data?: { error?: string } } })?.response?.data
-              ?.error ?? "Registration failed";
-          set({ error: message, isLoading: false });
-          throw err;
-        }
+      // Resolves the account's must_change_password flag on success — the
+      // API returns 204 with no body, so the user object is patched locally
+      // rather than re-fetched.
+      changePassword: async (currentPassword, newPassword) => {
+        await authApi.changePassword({
+          current_password: currentPassword,
+          new_password: newPassword,
+        });
+        const user = get().user;
+        if (user) set({ user: { ...user, must_change_password: false } });
       },
 
       logout: () => {
@@ -77,8 +60,6 @@ export const useAuthStore = create<AuthState>()(
         const user = await usersApi.updateProfile({ full_name: fullName });
         set({ user });
       },
-
-      clearError: () => set({ error: null }),
     }),
     { name: "auth-storage" }
   )

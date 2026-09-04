@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { useAuthStore } from "../../stores/auth";
 import { useI18n } from "../../i18n";
@@ -12,18 +12,22 @@ import { Alert } from "../../components/ui/Alert";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const { login, isLoading } = useAuthStore();
   const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError("");
     try {
       await login(email, password);
+      // If the account still needs a password change, AuthGuard redirects
+      // to /force-password-change on its own — this page doesn't need to know.
       navigate("/dashboard");
     } catch {
-      // error is set in store
+      setError(t.common.errorGeneric);
     }
   };
 
@@ -44,7 +48,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);
-            if (error) clearError();
+            if (error) setError("");
           }}
         />
         <PasswordInput
@@ -54,7 +58,7 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
-            if (error) clearError();
+            if (error) setError("");
           }}
         />
 
@@ -62,13 +66,6 @@ export default function LoginPage() {
           {isLoading ? t.auth.login.submitLoading : t.auth.login.submit}
         </Button>
       </form>
-
-      <p className="mt-6 text-center text-sm text-ink-500">
-        {t.auth.login.noAccount}{" "}
-        <Link to="/register" className="font-medium text-saffron-700 hover:text-saffron-800">
-          {t.auth.login.registerLink}
-        </Link>
-      </p>
     </AuthLayout>
   );
 }

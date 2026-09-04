@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import type { ComponentType } from "react";
-import { AuthGuard, GuestGuard } from "./components/guards/RouteGuards";
+import { AuthGuard, GuestGuard, ForcePasswordChangeGuard } from "./components/guards/RouteGuards";
 import { AppShell } from "./components/layout/AppShell";
 
 // Each page is loaded on demand instead of being bundled into the main
@@ -15,9 +15,12 @@ const page = (loader: () => Promise<{ default: ComponentType }>) => ({
 export const router = createBrowserRouter([
   {
     element: <GuestGuard />,
+    children: [{ path: "/login", ...page(() => import("./pages/auth/LoginPage")) }],
+  },
+  {
+    element: <ForcePasswordChangeGuard />,
     children: [
-      { path: "/login", ...page(() => import("./pages/auth/LoginPage")) },
-      { path: "/register", ...page(() => import("./pages/auth/RegisterPage")) },
+      { path: "/force-password-change", ...page(() => import("./pages/auth/ForcePasswordChangePage")) },
     ],
   },
   {
