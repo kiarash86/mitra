@@ -16,6 +16,8 @@ export interface Dictionary {
     add: string;
     close: string;
     showPassword: string;
+    copy: string;
+    copied: string;
     back: string;
     confirm: string;
     loading: string;
@@ -34,6 +36,7 @@ export interface Dictionary {
       required: string;
       invalidEmail: string;
       passwordTooShort: string;
+      passwordMismatch: string;
       invalidSlug: string;
     };
     roles: {
@@ -91,21 +94,12 @@ export interface Dictionary {
       password: string;
       submit: string;
       submitLoading: string;
-      noAccount: string;
-      registerLink: string;
     };
-    register: {
-      title: string;
-      subtitle: string;
-      fullName: string;
-      email: string;
-      password: string;
-      passwordHint: string;
-      submit: string;
-      submitLoading: string;
-      haveAccount: string;
-      loginLink: string;
-    };
+  };
+  forcePasswordChange: {
+    title: string;
+    description: string;
+    submit: string;
   };
   dashboard: {
     greeting: (name: string) => string;
@@ -125,12 +119,6 @@ export interface Dictionary {
   organizations: {
     tabOverview: string;
     tabMembers: string;
-    createTitle: string;
-    createDescription: string;
-    nameLabel: string;
-    slugLabel: string;
-    slugHint: string;
-    submit: string;
     overviewNameLabel: string;
     overviewSlugLabel: string;
     overviewCreatedLabel: string;
@@ -145,11 +133,15 @@ export interface Dictionary {
     tableEmail: string;
     tableRole: string;
     addModalTitle: string;
-    userIdLabel: string;
-    userIdHint: string;
+    fullNameLabel: string;
+    emailLabel: string;
     roleLabel: string;
     removeConfirm: (name: string) => string;
     empty: string;
+    createdTitle: string;
+    createdDescription: (name: string) => string;
+    tempPasswordLabel: string;
+    doneButton: string;
   };
   projects: {
     listTitle: string;
@@ -163,6 +155,8 @@ export interface Dictionary {
     emptyDescription: string;
     detailMembersTitle: string;
     addMemberButton: string;
+    memberUserIdLabel: string;
+    memberUserIdHint: string;
     goToBoardCta: string;
     deleteButton: string;
     deleteConfirm: (name: string) => string;
@@ -221,5 +215,12 @@ export interface Dictionary {
     saved: string;
     accountSection: string;
     logoutButton: string;
+    changePasswordTitle: string;
+    currentPasswordLabel: string;
+    newPasswordLabel: string;
+    confirmPasswordLabel: string;
+    changePasswordButton: string;
+    passwordChanged: string;
+    currentPasswordIncorrect: string;
   };
 }
