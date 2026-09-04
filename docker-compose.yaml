@@ -4,15 +4,15 @@ services:
     container_name: mitra-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: mitra
-      POSTGRES_PASSWORD: mitra
-      POSTGRES_DB: mitra
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - mitra_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U mitra -d mitra" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -25,7 +25,7 @@ services:
         condition: service_healthy
     volumes:
       - ./internal/db/migrations:/migrations
-    entrypoint: [ "migrate", "-path", "/migrations", "-database", "postgres://mitra:mitra@postgres:5432/mitra?sslmode=disable", "up" ]
+    entrypoint: [ "migrate", "-path", "/migrations", "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable", "up" ]
 
   api:
     build:
@@ -38,16 +38,14 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    env_file:
+      - .env
     environment:
       APP_ENV: production
       APP_PORT: 8080
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: mitra
-      DB_PASSWORD: mitra
-      DB_NAME: mitra
       DB_SSLMODE: disable
-      JWT_SECRET: ${JWT_SECRET:-1f002246d99dfcb07372c3963082a1c958fd15af59e984629a633792eeb5a43c}
       JWT_ACCESS_TOKEN_TTL: 15m
       JWT_REFRESH_TOKEN_TTL: 720h
     ports:
