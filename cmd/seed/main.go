@@ -25,6 +25,16 @@ func main() {
 	ownerName := cfg.OwnerName
 	ownerPassword := cfg.OwnerPassword
 
+	for name, value := range map[string]string{
+		"OWNER_EMAIL":    ownerEmail,
+		"OWNER_NAME":     ownerName,
+		"OWNER_PASSWORD": ownerPassword,
+	} {
+		if value == "" {
+			log.Fatalf("no env parameter: %s", name)
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
