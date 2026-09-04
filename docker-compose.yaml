@@ -57,6 +57,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ""
+        VITE_ORG_SLUG: ${ORG_SLUG}
     container_name: mitra-web
     restart: unless-stopped
     depends_on:
