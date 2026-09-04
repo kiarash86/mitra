@@ -11,6 +11,7 @@ export const fa: Dictionary = {
     create: "ایجاد",
     add: "افزودن",
     close: "بستن",
+    showPassword: "نمایش رمز عبور",
     back: "بازگشت",
     confirm: "تأیید",
     loading: "در حال بارگذاری…",

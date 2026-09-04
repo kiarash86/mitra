@@ -11,6 +11,7 @@ export const en: Dictionary = {
     create: "Create",
     add: "Add",
     close: "Close",
+    showPassword: "Show password",
     back: "Back",
     confirm: "Confirm",
     loading: "Loading…",

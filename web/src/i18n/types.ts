@@ -15,6 +15,7 @@ export interface Dictionary {
     create: string;
     add: string;
     close: string;
+    showPassword: string;
     back: string;
     confirm: string;
     loading: string;
