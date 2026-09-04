@@ -52,20 +52,3 @@ export function Avatar({ name, size = "md", className, ring }: AvatarProps) {
     </span>
   );
 }
-
-export function AvatarGroup({ names, max = 4 }: { names: string[]; max?: number }) {
-  const shown = names.slice(0, max);
-  const extra = names.length - shown.length;
-  return (
-    <div className="flex items-center -space-x-2">
-      {shown.map((name, i) => (
-        <Avatar key={`${name}-${i}`} name={name} size="sm" ring />
-      ))}
-      {extra > 0 && (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-100 text-xs font-semibold text-ink-500 ring-2 ring-white">
-          +{extra}
-        </span>
-      )}
-    </div>
-  );
-}

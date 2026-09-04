@@ -13,7 +13,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode;
 }
 
-export const BUTTON_BASE =
+const BUTTON_BASE =
   "inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 rounded-md disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap";
 
 const VARIANT_CLASSES: Record<Variant, string> = {

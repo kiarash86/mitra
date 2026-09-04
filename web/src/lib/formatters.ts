@@ -7,23 +7,6 @@ const dateFmt: Record<Locale, Intl.DateTimeFormat> = {
   en: new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", day: "numeric" }),
 };
 
-const dateTimeFmt: Record<Locale, Intl.DateTimeFormat> = {
-  fa: new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }),
-  en: new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }),
-};
-
 const shortDateFmt: Record<Locale, Intl.DateTimeFormat> = {
   fa: new Intl.DateTimeFormat("fa-IR", { month: "short", day: "numeric" }),
   en: new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }),
@@ -36,10 +19,6 @@ const timeFmt: Record<Locale, Intl.DateTimeFormat> = {
 
 export function formatDate(dateStr: string, locale: Locale): string {
   return dateFmt[locale].format(new Date(dateStr));
-}
-
-export function formatDateTime(dateStr: string, locale: Locale): string {
-  return dateTimeFmt[locale].format(new Date(dateStr));
 }
 
 export function formatShortDate(dateStr: string, locale: Locale): string {

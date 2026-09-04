@@ -6,9 +6,7 @@ interface TaskState {
   tasks: Task[];
   currentTask: Task | null;
   isLoading: boolean;
-  filters: { status?: TaskStatus; priority?: TaskPriority };
 
-  setFilters: (filters: { status?: TaskStatus; priority?: TaskPriority }) => void;
   fetchTasks: (projectId: string) => Promise<void>;
   fetchTask: (taskId: string) => Promise<void>;
   createTask: (
@@ -19,18 +17,14 @@ interface TaskState {
   deleteTask: (taskId: string) => Promise<void>;
 }
 
-export const useTaskStore = create<TaskState>()((set, get) => ({
+export const useTaskStore = create<TaskState>()((set) => ({
   tasks: [],
   currentTask: null,
   isLoading: false,
-  filters: {},
-
-  setFilters: (filters) => set({ filters }),
 
   fetchTasks: async (projectId) => {
     set({ isLoading: true });
-    const { filters } = get();
-    const tasks = await tasksApi.listByProject(projectId, { status: filters.status });
+    const tasks = await tasksApi.listByProject(projectId);
     set({ tasks, isLoading: false });
   },
 
