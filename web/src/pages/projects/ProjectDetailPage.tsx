@@ -3,10 +3,14 @@ import type { FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { UserPlus, Ellipsis, Trash2, Pencil, Kanban } from "lucide-react";
 import { useI18n } from "../../i18n";
+import { useAuthStore } from "../../stores/auth";
 import { useProjectStore } from "../../stores/project";
+import { toast } from "../../stores/toast";
 import { useOrgMemberDirectory } from "../../hooks/use-org-member-directory";
 import { PROJECT_ROLES } from "../../lib/constants";
+import { canManageProject } from "../../lib/permissions";
 import type { ProjectMember } from "../../types/project";
+import type { ProjectRoleName } from "../../types/rbac";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -27,6 +31,7 @@ export default function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const currentUser = useAuthStore((s) => s.user);
   const currentProject = useProjectStore((s) => s.currentProject);
   const members = useProjectStore((s) => s.members);
   const isLoading = useProjectStore((s) => s.isLoading);
@@ -39,22 +44,25 @@ export default function ProjectDetailPage() {
 
   const { byUserId } = useOrgMemberDirectory(currentProject?.organization_id);
 
+  const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
+  const canManage = canManageProject(myRole);
+
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [userId, setUserId] = useState("");
-  const [role, setRole] = useState<string>("member");
+  const [role, setRole] = useState<ProjectRoleName>("member");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [removeTarget, setRemoveTarget] = useState<ProjectMember | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
-    fetchProject(projectId).catch(() => {});
-    fetchMembers(projectId).catch(() => {});
-  }, [projectId, fetchProject, fetchMembers]);
+    fetchProject(projectId).catch(() => toast.error(t.common.errorGeneric));
+    fetchMembers(projectId).catch(() => toast.error(t.common.errorGeneric));
+  }, [projectId, fetchProject, fetchMembers, t]);
 
   const openEdit = () => {
     if (!currentProject) return;
@@ -118,14 +126,16 @@ export default function ProjectDetailPage() {
         title={currentProject.name}
         description={currentProject.description || t.projects.noDescription}
         actions={
-          <>
-            <Button variant="secondary" icon={<Pencil className="h-4 w-4" />} onClick={openEdit}>
-              {t.common.edit}
-            </Button>
-            <Button variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => setDeleteOpen(true)}>
-              {t.projects.deleteButton}
-            </Button>
-          </>
+          canManage ? (
+            <>
+              <Button variant="secondary" icon={<Pencil className="h-4 w-4" />} onClick={openEdit}>
+                {t.common.edit}
+              </Button>
+              <Button variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => setDeleteOpen(true)}>
+                {t.projects.deleteButton}
+              </Button>
+            </>
+          ) : undefined
         }
       />
 
@@ -142,14 +152,16 @@ export default function ProjectDetailPage() {
 
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-ink-800">{t.projects.detailMembersTitle}</h2>
-        <Button
-          size="sm"
-          variant="secondary"
-          icon={<UserPlus className="h-4 w-4" />}
-          onClick={() => setAddOpen(true)}
-        >
-          {t.projects.addMemberButton}
-        </Button>
+        {canManage && (
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<UserPlus className="h-4 w-4" />}
+            onClick={() => setAddOpen(true)}
+          >
+            {t.projects.addMemberButton}
+          </Button>
+        )}
       </div>
 
       {members.length === 0 ? (
@@ -187,19 +199,21 @@ export default function ProjectDetailPage() {
                       <RoleBadge role={member.role} />
                     </td>
                     <td className="px-5 py-3 text-end">
-                      <Menu
-                        trigger={
-                          <button
-                            aria-label={t.common.edit}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-700"
-                          >
-                            <Ellipsis className="h-4 w-4" />
-                          </button>
-                        }
-                        items={[
-                          { label: t.common.remove, danger: true, onClick: () => setRemoveTarget(member) },
-                        ]}
-                      />
+                      {(canManage || member.user_id === currentUser?.id) && (
+                        <Menu
+                          trigger={
+                            <button
+                              aria-label={t.common.edit}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-700"
+                            >
+                              <Ellipsis className="h-4 w-4" />
+                            </button>
+                          }
+                          items={[
+                            { label: t.common.remove, danger: true, onClick: () => setRemoveTarget(member) },
+                          ]}
+                        />
+                      )}
                     </td>
                   </tr>
                 );
@@ -247,7 +261,11 @@ export default function ProjectDetailPage() {
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
           />
-          <Select label={t.members.roleLabel} value={role} onChange={(e) => setRole(e.target.value)}>
+          <Select
+            label={t.members.roleLabel}
+            value={role}
+            onChange={(e) => setRole(e.target.value as ProjectRoleName)}
+          >
             {PROJECT_ROLES.map((r) => (
               <option key={r} value={r}>
                 {t.common.roles[r]}

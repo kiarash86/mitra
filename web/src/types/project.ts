@@ -1,3 +1,5 @@
+import type { ProjectRoleName } from "./rbac";
+
 export interface Project {
   id: string;
   organization_id: string;
@@ -11,6 +13,6 @@ export interface ProjectMember {
   id: string;
   project_id: string;
   user_id: string;
-  role: string;
+  role: ProjectRoleName;
   created_at: string;
 }

@@ -1,15 +1,7 @@
-export type Scope = "organization" | "project";
+import type { ORG_ROLES, PROJECT_ROLES } from "../lib/constants";
 
-export type RoleName = "owner" | "admin" | "manager" | "member" | "viewer";
+/** Organization-level role — see ORG_ROLES in lib/constants.ts. */
+export type OrgRoleName = (typeof ORG_ROLES)[number];
 
-export interface Role {
-  id: string;
-  name: RoleName;
-  scope: Scope;
-  scope_id: string;
-}
-
-export interface Permission {
-  resource: string;
-  action: string;
-}
+/** Project-level role — see PROJECT_ROLES in lib/constants.ts. */
+export type ProjectRoleName = (typeof PROJECT_ROLES)[number];

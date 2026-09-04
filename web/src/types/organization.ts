@@ -1,3 +1,5 @@
+import type { OrgRoleName } from "./rbac";
+
 export interface Organization {
   id: string;
   name: string;
@@ -10,7 +12,7 @@ export interface OrganizationMember {
   id: string;
   organization_id: string;
   user_id: string;
-  role: string;
+  role: OrgRoleName;
   created_at: string;
   email: string;
   full_name: string;

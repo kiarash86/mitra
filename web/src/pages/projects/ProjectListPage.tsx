@@ -3,8 +3,11 @@ import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FolderKanban, Plus } from "lucide-react";
 import { useI18n } from "../../i18n";
+import { useAuthStore } from "../../stores/auth";
 import { useOrganizationStore } from "../../stores/organization";
 import { useProjectStore } from "../../stores/project";
+import { toast } from "../../stores/toast";
+import { canManageOrg } from "../../lib/permissions";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -18,11 +21,17 @@ import { Skeleton } from "../../components/ui/Skeleton";
 export default function ProjectListPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const currentUser = useAuthStore((s) => s.user);
   const currentOrg = useOrganizationStore((s) => s.currentOrg);
+  const members = useOrganizationStore((s) => s.members);
+  const fetchOrgMembers = useOrganizationStore((s) => s.fetchMembers);
   const projects = useProjectStore((s) => s.projects);
   const isLoading = useProjectStore((s) => s.isLoading);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
   const createProject = useProjectStore((s) => s.createProject);
+
+  const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
+  const canManage = canManageOrg(myRole);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState("");
@@ -31,8 +40,11 @@ export default function ProjectListPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (currentOrg) fetchProjects(currentOrg.id).catch(() => {});
-  }, [currentOrg, fetchProjects]);
+    if (currentOrg) {
+      fetchProjects(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
+      fetchOrgMembers(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
+    }
+  }, [currentOrg, fetchProjects, fetchOrgMembers, t]);
 
   if (!currentOrg) {
     return (
@@ -71,9 +83,11 @@ export default function ProjectListPage() {
         title={t.projects.listTitle}
         description={t.projects.listSubtitle}
         actions={
-          <Button icon={<Plus className="h-4 w-4" />} onClick={() => setModalOpen(true)}>
-            {t.projects.createButton}
-          </Button>
+          canManage ? (
+            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setModalOpen(true)}>
+              {t.projects.createButton}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -88,7 +102,7 @@ export default function ProjectListPage() {
           icon={<FolderKanban className="h-6 w-6" />}
           title={t.projects.emptyTitle}
           description={t.projects.emptyDescription}
-          action={<Button onClick={() => setModalOpen(true)}>{t.projects.createButton}</Button>}
+          action={canManage ? <Button onClick={() => setModalOpen(true)}>{t.projects.createButton}</Button> : undefined}
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

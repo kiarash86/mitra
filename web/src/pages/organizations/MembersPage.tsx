@@ -5,8 +5,11 @@ import { UserPlus, Ellipsis } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
 import { useOrganizationStore } from "../../stores/organization";
+import { toast } from "../../stores/toast";
 import { ORG_ROLES } from "../../lib/constants";
+import { canManageOrg } from "../../lib/permissions";
 import type { OrganizationMember } from "../../types/organization";
+import type { OrgRoleName } from "../../types/rbac";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { RouteTabs } from "../../components/ui/RouteTabs";
 import { Card } from "../../components/ui/Card";
@@ -30,16 +33,19 @@ export default function MembersPage() {
   const addMember = useOrganizationStore((s) => s.addMember);
   const removeMember = useOrganizationStore((s) => s.removeMember);
 
+  const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
+  const canManage = canManageOrg(myRole);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [userId, setUserId] = useState("");
-  const [role, setRole] = useState<string>("member");
+  const [role, setRole] = useState<OrgRoleName>("member");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [removeTarget, setRemoveTarget] = useState<OrganizationMember | null>(null);
 
   useEffect(() => {
-    if (currentOrg) fetchMembers(currentOrg.id).catch(() => {});
-  }, [currentOrg, fetchMembers]);
+    if (currentOrg) fetchMembers(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
+  }, [currentOrg, fetchMembers, t]);
 
   if (!currentOrg) {
     return (
@@ -78,9 +84,11 @@ export default function MembersPage() {
         title={t.members.title}
         description={t.members.subtitle(currentOrg.name)}
         actions={
-          <Button icon={<UserPlus className="h-4 w-4" />} onClick={() => setModalOpen(true)}>
-            {t.members.addButton}
-          </Button>
+          canManage ? (
+            <Button icon={<UserPlus className="h-4 w-4" />} onClick={() => setModalOpen(true)}>
+              {t.members.addButton}
+            </Button>
+          ) : undefined
         }
       />
       <RouteTabs
@@ -94,7 +102,11 @@ export default function MembersPage() {
         <EmptyState
           icon={<UserPlus className="h-6 w-6" />}
           title={t.members.empty}
-          action={<Button onClick={() => setModalOpen(true)}>{t.members.addButton}</Button>}
+          action={
+            canManage ? (
+              <Button onClick={() => setModalOpen(true)}>{t.members.addButton}</Button>
+            ) : undefined
+          }
         />
       ) : (
         <Card padding="none" className="overflow-hidden">
@@ -126,23 +138,25 @@ export default function MembersPage() {
                     <RoleBadge role={member.role} />
                   </td>
                   <td className="px-5 py-3 text-end">
-                    <Menu
-                      trigger={
-                        <button
-                          aria-label={t.common.edit}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-700"
-                        >
-                          <Ellipsis className="h-4 w-4" />
-                        </button>
-                      }
-                      items={[
-                        {
-                          label: t.common.remove,
-                          danger: true,
-                          onClick: () => setRemoveTarget(member),
-                        },
-                      ]}
-                    />
+                    {(canManage || member.user_id === currentUser?.id) && (
+                      <Menu
+                        trigger={
+                          <button
+                            aria-label={t.common.edit}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-700"
+                          >
+                            <Ellipsis className="h-4 w-4" />
+                          </button>
+                        }
+                        items={[
+                          {
+                            label: t.common.remove,
+                            danger: true,
+                            onClick: () => setRemoveTarget(member),
+                          },
+                        ]}
+                      />
+                    )}
                   </td>
                 </tr>
               ))}
@@ -167,7 +181,11 @@ export default function MembersPage() {
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
           />
-          <Select label={t.members.roleLabel} value={role} onChange={(e) => setRole(e.target.value)}>
+          <Select
+            label={t.members.roleLabel}
+            value={role}
+            onChange={(e) => setRole(e.target.value as OrgRoleName)}
+          >
             {ORG_ROLES.map((r) => (
               <option key={r} value={r}>
                 {t.common.roles[r]}
