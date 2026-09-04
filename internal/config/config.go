@@ -28,9 +28,9 @@ type Config struct {
 
 	OrgName       string `env:"ORG_NAME" envDefault:"mitra"`
 	OrgSlug       string `env:"ORG_SLUG" envDefault:"mitra"`
-	OwnerEmail    string `env:"OWNER_EMAIL,required"`
-	OwnerName     string `env:"OWNER_NAME,required"`
-	OwnerPassword string `env:"OWNER_PASSWORD,required"`
+	OwnerEmail    string `env:"OWNER_EMAIL"`
+	OwnerName     string `env:"OWNER_NAME"`
+	OwnerPassword string `env:"OWNER_PASSWORD"`
 }
 
 func Load() (*Config, error) {
