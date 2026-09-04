@@ -5,6 +5,7 @@ import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
 import { useOrganizationStore } from "../../stores/organization";
 import { useProjectStore } from "../../stores/project";
+import { toast } from "../../stores/toast";
 import { formatTime } from "../../lib/formatters";
 import { cn } from "../../lib/cn";
 import { Badge } from "../../components/ui/Badge";
@@ -38,8 +39,8 @@ export default function ChatPage() {
   const [messagesByChannel, setMessagesByChannel] = useState<Record<string, LocalMessage[]>>({});
 
   useEffect(() => {
-    if (currentOrg) fetchProjects(currentOrg.id).catch(() => {});
-  }, [currentOrg, fetchProjects]);
+    if (currentOrg) fetchProjects(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
+  }, [currentOrg, fetchProjects, t]);
 
   const activeMessages = activeId ? (messagesByChannel[activeId] ?? []) : [];
   const activeProject = projects.find((p) => p.id === activeId);

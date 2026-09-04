@@ -5,6 +5,7 @@ import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
 import { useOrganizationStore } from "../../stores/organization";
 import { useProjectStore } from "../../stores/project";
+import { toast } from "../../stores/toast";
 import { tasksApi } from "../../api/tasks";
 import type { Task, TaskStatus } from "../../types/task";
 import { TASK_STATUS_ORDER, TASK_STATUS_DOT, TASK_STATUS_TEXT } from "../../lib/constants";
@@ -36,9 +37,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!currentOrg) return;
-    fetchOrgMembers(currentOrg.id).catch(() => {});
-    fetchProjects(currentOrg.id).catch(() => {});
-  }, [currentOrg, fetchOrgMembers, fetchProjects]);
+    fetchOrgMembers(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
+    fetchProjects(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
+  }, [currentOrg, fetchOrgMembers, fetchProjects, t]);
 
   useEffect(() => {
     if (!currentOrg || projects.length === 0) return;

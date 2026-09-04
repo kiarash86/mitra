@@ -6,6 +6,7 @@ import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
 import { useProjectStore } from "../../stores/project";
 import { useTaskStore } from "../../stores/task";
+import { toast } from "../../stores/toast";
 import { useOrgMemberDirectory } from "../../hooks/use-org-member-directory";
 import { commentsApi } from "../../api/comments";
 import { TASK_STATUS_ORDER, TASK_PRIORITY_ORDER } from "../../lib/constants";
@@ -61,14 +62,14 @@ export default function TaskDetailPage() {
   const [showSeal, setShowSeal] = useState(false);
 
   useEffect(() => {
-    if (taskId) fetchTask(taskId).catch(() => {});
-  }, [taskId, fetchTask]);
+    if (taskId) fetchTask(taskId).catch(() => toast.error(t.common.errorGeneric));
+  }, [taskId, fetchTask, t]);
 
   useEffect(() => {
     if (!currentTask) return;
-    fetchProject(currentTask.project_id).catch(() => {});
-    fetchProjectMembers(currentTask.project_id).catch(() => {});
-  }, [currentTask, fetchProject, fetchProjectMembers]);
+    fetchProject(currentTask.project_id).catch(() => toast.error(t.common.errorGeneric));
+    fetchProjectMembers(currentTask.project_id).catch(() => toast.error(t.common.errorGeneric));
+  }, [currentTask, fetchProject, fetchProjectMembers, t]);
 
   useEffect(() => {
     if (!taskId) return;

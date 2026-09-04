@@ -5,6 +5,7 @@ import { Plus, Calendar } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useProjectStore } from "../../stores/project";
 import { useTaskStore } from "../../stores/task";
+import { toast } from "../../stores/toast";
 import { useOrgMemberDirectory } from "../../hooks/use-org-member-directory";
 import { TASK_STATUS_ORDER, TASK_PRIORITY_ORDER } from "../../lib/constants";
 import { formatShortDate, isOverdue } from "../../lib/formatters";
@@ -57,10 +58,10 @@ export default function TaskBoardPage() {
 
   useEffect(() => {
     if (!projectId) return;
-    fetchProject(projectId).catch(() => {});
-    fetchProjectMembers(projectId).catch(() => {});
-    fetchTasks(projectId).catch(() => {});
-  }, [projectId, fetchProject, fetchProjectMembers, fetchTasks]);
+    fetchProject(projectId).catch(() => toast.error(t.common.errorGeneric));
+    fetchProjectMembers(projectId).catch(() => toast.error(t.common.errorGeneric));
+    fetchTasks(projectId).catch(() => toast.error(t.common.errorGeneric));
+  }, [projectId, fetchProject, fetchProjectMembers, fetchTasks, t]);
 
   const handleDrop = async (status: TaskStatus) => {
     setDragOverStatus(null);
@@ -74,7 +75,9 @@ export default function TaskBoardPage() {
       await updateTask(taskId, { status });
       if (status === "done" && wasNotDone) setJustCompletedId(taskId);
     } catch {
-      // update failed — task simply stays in its previous column
+      // Task visually stays in its previous column — the toast is the only
+      // signal the drop didn't actually take, so it needs to say so clearly.
+      toast.error(t.common.errorGeneric);
     }
   };
 

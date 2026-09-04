@@ -5,6 +5,7 @@ import { useI18n } from "../../i18n";
 import { useUiStore } from "../../stores/ui";
 import { useOrganizationStore } from "../../stores/organization";
 import { useNotificationStore } from "../../stores/notification";
+import { toast } from "../../stores/toast";
 import { IconButton } from "../ui/IconButton";
 import { LanguageSwitcher } from "../ui/LanguageSwitcher";
 import { formatNumber } from "../../lib/formatters";
@@ -19,8 +20,8 @@ export function Header() {
   const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
   useEffect(() => {
-    fetchNotifications().catch(() => {});
-  }, [fetchNotifications]);
+    fetchNotifications().catch(() => toast.error(t.common.errorGeneric));
+  }, [fetchNotifications, t]);
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-paper-200 bg-white px-5">

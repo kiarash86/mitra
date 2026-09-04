@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Bell, ListChecks, AtSign, Clock, MessageSquare, UserPlus, CheckCheck } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useNotificationStore } from "../../stores/notification";
+import { toast } from "../../stores/toast";
 import { formatRelativeTime } from "../../lib/formatters";
 import { cn } from "../../lib/cn";
 import type { NotificationType } from "../../types/notification";
@@ -37,8 +38,8 @@ export default function NotificationsPage() {
   const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);
 
   useEffect(() => {
-    fetchNotifications().catch(() => {});
-  }, [fetchNotifications]);
+    fetchNotifications().catch(() => toast.error(t.common.errorGeneric));
+  }, [fetchNotifications, t]);
 
   return (
     <div>
@@ -51,7 +52,7 @@ export default function NotificationsPage() {
               variant="secondary"
               size="sm"
               icon={<CheckCheck className="h-4 w-4" />}
-              onClick={() => markAllAsRead().catch(() => {})}
+              onClick={() => markAllAsRead().catch(() => toast.error(t.common.errorGeneric))}
             >
               {t.notifications.markAllRead}
             </Button>
@@ -79,7 +80,7 @@ export default function NotificationsPage() {
               <button
                 key={n.id}
                 onClick={() => {
-                  if (!n.read) markAsRead(n.id).catch(() => {});
+                  if (!n.read) markAsRead(n.id).catch(() => toast.error(t.common.errorGeneric));
                 }}
                 className={cn(
                   "flex w-full items-start gap-3.5 px-5 py-3.5 text-start transition-colors duration-150 hover:bg-paper-50",
