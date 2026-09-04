@@ -9,6 +9,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Alert } from "../../components/ui/Alert";
 import { Avatar } from "../../components/ui/Avatar";
+import { ChangePasswordForm } from "../../components/auth/ChangePasswordForm";
 
 export default function ProfilePage() {
   const { t } = useI18n();
@@ -73,6 +74,11 @@ export default function ProfilePage() {
             </Button>
           </div>
         </form>
+      </Card>
+
+      <Card className="mt-6">
+        <p className="mb-4 text-sm font-medium text-ink-800">{t.settings.changePasswordTitle}</p>
+        <ChangePasswordForm submitLabel={t.settings.changePasswordButton} />
       </Card>
 
       <Card className="mt-6 flex items-center justify-between">
