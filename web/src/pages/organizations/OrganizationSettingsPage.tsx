@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "../../i18n";
 import { useOrganizationStore } from "../../stores/organization";
+import { toast } from "../../stores/toast";
 import { validateSlug } from "../../lib/validators";
 import { formatDate, formatNumber } from "../../lib/formatters";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -33,9 +34,14 @@ export default function OrganizationSettingsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // slugify() only keeps a-z/0-9 — a name typed entirely in Persian (or any
+  // non-Latin script) collapses to an empty auto-slug. Flag that immediately
+  // instead of letting the user hit a generic error on submit.
+  const slugAutoEmpty = manualSlug === null && name.trim().length > 0 && slug.length === 0;
+
   useEffect(() => {
-    if (currentOrg) fetchMembers(currentOrg.id).catch(() => {});
-  }, [currentOrg, fetchMembers]);
+    if (currentOrg) fetchMembers(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
+  }, [currentOrg, fetchMembers, t]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -73,7 +79,8 @@ export default function OrganizationSettingsPage() {
             />
             <Input
               label={t.organizations.slugLabel}
-              hint={t.organizations.slugHint}
+              hint={slugAutoEmpty ? undefined : t.organizations.slugHint}
+              error={slugAutoEmpty ? t.organizations.slugHint : undefined}
               required
               dir="ltr"
               value={slug}
