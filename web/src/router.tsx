@@ -1,146 +1,44 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { AuthGuard } from "./components/guards/AuthGuard";
-import { GuestGuard } from "./components/guards/GuestGuard";
+import type { ComponentType } from "react";
+import { AuthGuard, GuestGuard } from "./components/guards/RouteGuards";
 import { AppShell } from "./components/layout/AppShell";
 
-import LoginPage from "./pages/auth/LoginPage";
-import RegisterPage from "./pages/auth/RegisterPage";
-import DashboardPage from "./pages/dashboard/DashboardPage";
-import OrganizationSettingsPage from "./pages/organizations/OrganizationSettingsPage";
-import MembersPage from "./pages/organizations/MembersPage";
-import ProjectListPage from "./pages/projects/ProjectListPage";
-import ProjectDetailPage from "./pages/projects/ProjectDetailPage";
-import TaskBoardPage from "./pages/tasks/TaskBoardPage";
-import TaskDetailPage from "./pages/tasks/TaskDetailPage";
-import ChatPage from "./pages/chat/ChatPage";
-import NotificationsPage from "./pages/notifications/NotificationsPage";
-import ProfilePage from "./pages/settings/ProfilePage";
+// Each page is loaded on demand instead of being bundled into the main
+// chunk, so `lazy` — not a static `import` — is what actually triggers the
+// code split. `.then((m) => ({ Component: m.default }))` adapts our
+// `export default function XxxPage()` pages to the route object shape
+// React Router expects.
+const page = (loader: () => Promise<{ default: ComponentType }>) => ({
+  lazy: () => loader().then((m) => ({ Component: m.default })),
+});
 
 export const router = createBrowserRouter([
   {
-    path: "/login",
-    element: (
-      <GuestGuard>
-        <LoginPage />
-      </GuestGuard>
-    ),
+    element: <GuestGuard />,
+    children: [
+      { path: "/login", ...page(() => import("./pages/auth/LoginPage")) },
+      { path: "/register", ...page(() => import("./pages/auth/RegisterPage")) },
+    ],
   },
   {
-    path: "/register",
-    element: (
-      <GuestGuard>
-        <RegisterPage />
-      </GuestGuard>
-    ),
-  },
-  {
-    path: "/",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <Navigate to="/dashboard" replace />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/dashboard",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <DashboardPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/organizations",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <OrganizationSettingsPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/organizations/members",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <MembersPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/projects",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <ProjectListPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/projects/:projectId",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <ProjectDetailPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/projects/:projectId/board",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <TaskBoardPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/tasks/:taskId",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <TaskDetailPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/chat",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <ChatPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/notifications",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <NotificationsPage />
-        </AppShell>
-      </AuthGuard>
-    ),
-  },
-  {
-    path: "/settings",
-    element: (
-      <AuthGuard>
-        <AppShell>
-          <ProfilePage />
-        </AppShell>
-      </AuthGuard>
-    ),
+    element: <AuthGuard />,
+    children: [
+      {
+        element: <AppShell />,
+        children: [
+          { index: true, element: <Navigate to="/dashboard" replace /> },
+          { path: "dashboard", ...page(() => import("./pages/dashboard/DashboardPage")) },
+          { path: "organizations", ...page(() => import("./pages/organizations/OrganizationSettingsPage")) },
+          { path: "organizations/members", ...page(() => import("./pages/organizations/MembersPage")) },
+          { path: "projects", ...page(() => import("./pages/projects/ProjectListPage")) },
+          { path: "projects/:projectId", ...page(() => import("./pages/projects/ProjectDetailPage")) },
+          { path: "projects/:projectId/board", ...page(() => import("./pages/tasks/TaskBoardPage")) },
+          { path: "tasks/:taskId", ...page(() => import("./pages/tasks/TaskDetailPage")) },
+          { path: "chat", ...page(() => import("./pages/chat/ChatPage")) },
+          { path: "notifications", ...page(() => import("./pages/notifications/NotificationsPage")) },
+          { path: "settings", ...page(() => import("./pages/settings/ProfilePage")) },
+        ],
+      },
+    ],
   },
 ]);
