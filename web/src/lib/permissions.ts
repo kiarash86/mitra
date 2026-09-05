@@ -28,7 +28,11 @@ export function canRemoveOrgMember(
   return true;
 }
 
-/** Project-level management actions (edit/delete project, manage members). */
+/**
+ * Project-level management actions (edit/delete project, manage members).
+ * Mirrors the API's IsProjectOwnerOrAdmin (internal/rbac/policy.go) — the
+ * backend never issues a "lead" role, only owner/admin/member/viewer.
+ */
 export function canManageProject(role: ProjectRoleName | undefined): boolean {
-  return role === "lead";
+  return role === "owner" || role === "admin";
 }

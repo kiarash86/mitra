@@ -8,7 +8,7 @@ import { useProjectStore } from "../../stores/project";
 import { toast } from "../../stores/toast";
 import { useOrgMemberDirectory } from "../../hooks/use-org-member-directory";
 import { PROJECT_ROLES } from "../../lib/constants";
-import { canManageProject } from "../../lib/permissions";
+import { canManageProject, canManageOrg } from "../../lib/permissions";
 import type { ProjectMember } from "../../types/project";
 import type { ProjectRoleName } from "../../types/rbac";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -50,7 +50,10 @@ export default function ProjectDetailPage() {
   const availableOrgMembers = orgMembers.filter((m) => !projectMemberIds.has(m.user_id));
 
   const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
-  const canManage = canManageProject(myRole);
+  const myOrgRole = currentUser ? byUserId[currentUser.id]?.role : undefined;
+  // Mirrors the backend: a project can be managed by its own owner/admin,
+  // OR by an org owner/admin even if they aren't an explicit project member.
+  const canManage = canManageProject(myRole) || canManageOrg(myOrgRole);
 
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);

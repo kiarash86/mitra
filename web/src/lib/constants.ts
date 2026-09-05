@@ -40,7 +40,7 @@ export const TASK_PRIORITY_COLORS: Record<TaskPriority, string> = {
 };
 
 export const ORG_ROLES = ["owner", "admin", "member", "viewer"] as const;
-export const PROJECT_ROLES = ["lead", "member", "viewer"] as const;
+export const PROJECT_ROLES = ["owner", "admin", "member", "viewer"] as const;
 
 // The API is single-tenant per deployment — exactly one organization is
 // ever created, by the backend's seed script (see cmd/seed), which reads
