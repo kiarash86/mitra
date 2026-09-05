@@ -1,5 +1,20 @@
-import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import {
+  useFloating,
+  useClick,
+  useDismiss,
+  useRole,
+  useInteractions,
+  useListNavigation,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  size,
+  FloatingPortal,
+  FloatingFocusManager,
+} from "@floating-ui/react";
+import { useRef, useState } from "react";
 import { cn } from "../../lib/cn";
 
 interface MenuItem {
@@ -17,52 +32,90 @@ interface MenuProps {
 
 export function Menu({ trigger, items, align = "end" }: MenuProps) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const listRef = useRef<Array<HTMLButtonElement | null>>([]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  // useFloating computes position relative to the viewport (not the
+  // nearest scroll/overflow ancestor), so an overflow-hidden Card can
+  // no longer clip the menu. flip/shift keep it on-screen near
+  // viewport edges, and autoUpdate keeps it aligned on scroll/resize.
+  const { refs, floatingStyles, context } = useFloating({
+    open,
+    onOpenChange: setOpen,
+    placement: align === "end" ? "bottom-end" : "bottom-start",
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(6),
+      flip({ fallbackPlacements: ["top-end", "top-start"] }),
+      shift({ padding: 8 }),
+      size({
+        apply({ availableHeight, elements }) {
+          Object.assign(elements.floating.style, {
+            maxHeight: `${Math.max(120, availableHeight)}px`,
+          });
+        },
+        padding: 8,
+      }),
+    ],
+  });
+
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: "menu" });
+  const listNav = useListNavigation(context, {
+    listRef,
+    activeIndex,
+    onNavigate: setActiveIndex,
+    loop: true,
+  });
+
+  const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions([
+    click,
+    dismiss,
+    role,
+    listNav,
+  ]);
 
   return (
-    <div className="relative" ref={ref}>
-      <div onClick={() => setOpen((o) => !o)}>{trigger}</div>
+    <>
+      <div ref={refs.setReference} {...getReferenceProps()}>
+        {trigger}
+      </div>
       {open && (
-        <div
-          className={cn(
-            "absolute top-full z-20 mt-1.5 min-w-[180px] animate-fade-up rounded-lg border border-paper-200 bg-white py-1.5 shadow-lg",
-            align === "end" ? "end-0" : "start-0",
-          )}
-        >
-          {items.map((item, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setOpen(false);
-                item.onClick();
-              }}
-              className={cn(
-                "flex w-full items-center gap-2.5 px-3.5 py-2 text-start text-sm transition-colors",
-                item.danger ? "text-cinnabar-600 hover:bg-cinnabar-50" : "text-ink-700 hover:bg-paper-100",
-              )}
+        <FloatingPortal>
+          <FloatingFocusManager context={context} modal={false} initialFocus={-1}>
+            <div
+              ref={refs.setFloating}
+              style={floatingStyles}
+              className="z-50 min-w-[180px] animate-fade-up overflow-y-auto rounded-lg border border-paper-200 bg-white py-1.5 shadow-lg"
+              {...getFloatingProps()}
             >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
-        </div>
+              {items.map((item, i) => (
+                <button
+                  key={i}
+                  ref={(node) => {
+                    listRef.current[i] = node;
+                  }}
+                  {...getItemProps({
+                    onClick: () => {
+                      setOpen(false);
+                      item.onClick();
+                    },
+                  })}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 px-3.5 py-2 text-start text-sm transition-colors",
+                    item.danger ? "text-cinnabar-600 hover:bg-cinnabar-50" : "text-ink-700 hover:bg-paper-100",
+                    activeIndex === i && (item.danger ? "bg-cinnabar-50" : "bg-paper-100"),
+                  )}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </FloatingFocusManager>
+        </FloatingPortal>
       )}
-    </div>
+    </>
   );
 }
