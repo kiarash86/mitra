@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -48,4 +49,20 @@ func PgtypeUUIDToStringPtr(u pgtype.UUID) *string {
 	}
 	s := uuid.UUID(u.Bytes).String()
 	return &s
+}
+
+func ParseDate(s *string) (*time.Time, error) {
+	if s == nil || *s == "" {
+		return nil, nil
+	}
+
+	if t, err := time.Parse(time.RFC3339, *s); err == nil {
+		return &t, nil
+	}
+
+	if t, err := time.Parse("2006-01-02", *s); err == nil {
+		return &t, nil
+	}
+
+	return nil, fmt.Errorf("invalid date %q: expected YYYY-MM-DD or RFC3339", *s)
 }
