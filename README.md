@@ -1,6 +1,6 @@
 <p align="center">
   <a href="./README.md"><img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English"></a>
-  <a href="./README.fa.md"><img src="https://img.shields.io/badge/lang-فارسی-green.svg" alt="فارسی"></a>
+  <a href="./README.fa.md"><img src="https://img.shields.io/badge/lang-فارسی-green.svg" alt="persian"></a>
 </p>
 
 # Mitra
@@ -17,18 +17,30 @@ This is a Phase 1 / MVP snapshot — see [Known Limitations](#known-limitations-
 
 ## Table of Contents
 
-- [Hierarchical Structure](#hierarchical-structure)
-- [Tech Stack](#tech-stack)
-- [Repository Layout](#repository-layout)
-- [Prerequisites](#prerequisites)
-- [Environment Variables](#environment-variables)
-- [Local Setup](#local-setup)
-- [API (Currently Implemented)](#api-currently-implemented)
-- [Frontend Overview](#frontend-overview)
-- [Roles & Permissions](#roles--permissions)
-- [Known Limitations (Phase 1)](#known-limitations-phase-1)
-- [Roadmap](#roadmap)
-- [License](#license)
+- [Mitra](#mitra)
+  - [Table of Contents](#table-of-contents)
+  - [Hierarchical Structure](#hierarchical-structure)
+  - [Tech Stack](#tech-stack)
+  - [Repository Layout](#repository-layout)
+  - [Prerequisites](#prerequisites)
+  - [Environment Variables](#environment-variables)
+  - [Local Setup](#local-setup)
+    - [Option A — Docker (all services)](#option-a--docker-all-services)
+    - [Option B — Manual (Backend)](#option-b--manual-backend)
+    - [Manual (Frontend)](#manual-frontend)
+  - [API (Currently Implemented)](#api-currently-implemented)
+    - [Health](#health)
+    - [Auth](#auth)
+    - [Organizations *(requires Authorization: Bearer)*](#organizations-requires-authorization-bearer)
+    - [Projects](#projects)
+    - [Tasks](#tasks)
+    - [Comments](#comments)
+    - [Requested by the frontend but not yet implemented on the backend](#requested-by-the-frontend-but-not-yet-implemented-on-the-backend)
+  - [Frontend Overview](#frontend-overview)
+  - [Roles \& Permissions](#roles--permissions)
+  - [Known Limitations (Phase 1)](#known-limitations-phase-1)
+  - [Roadmap](#roadmap)
+  - [License](#license)
 
 ---
 
