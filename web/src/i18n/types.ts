@@ -114,7 +114,6 @@ export interface Dictionary {
     statusBreakdownEmpty: string;
     noOrgTitle: string;
     noOrgDescription: string;
-    noOrgCta: string;
   };
   organizations: {
     tabOverview: string;

@@ -112,10 +112,9 @@ export const fa: Dictionary = {
     recentProjectsEmpty: "هنوز پروژه‌ای ایجاد نشده است.",
     statusBreakdownTitle: "وضعیت تسک‌ها",
     statusBreakdownEmpty: "هنوز تسکی ثبت نشده است.",
-    noOrgTitle: "هنوز سازمانی ندارید",
+    noOrgTitle: "سازمان در دسترس نیست",
     noOrgDescription:
-      "برای شروع، یک سازمان بسازید تا بتوانید پروژه‌ها و تسک‌ها را در آن مدیریت کنید.",
-    noOrgCta: "ساخت سازمان",
+      "بارگذاری سازمان طول کشیده یا با خطا مواجه شده؛ چند لحظه صبر کنید یا دوباره تلاش کنید.",
   },
   organizations: {
     tabOverview: "بررسی کلی",

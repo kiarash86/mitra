@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
 import { UserPlus, Ellipsis, Check } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
@@ -23,6 +22,7 @@ import { Avatar } from "../../components/ui/Avatar";
 import { RoleBadge } from "../../components/ui/Badge";
 import { Menu } from "../../components/ui/Menu";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { OrgGate } from "../../components/organizations/OrgGate";
 
 export default function MembersPage() {
   const { t } = useI18n();
@@ -51,18 +51,7 @@ export default function MembersPage() {
   }, [currentOrg, fetchMembers, t]);
 
   if (!currentOrg) {
-    return (
-      <EmptyState
-        icon={<UserPlus className="h-6 w-6" />}
-        title={t.dashboard.noOrgTitle}
-        description={t.dashboard.noOrgDescription}
-        action={
-          <Link to="/organizations">
-            <Button>{t.dashboard.noOrgCta}</Button>
-          </Link>
-        }
-      />
-    );
+    return <OrgGate />;
   }
 
   const closeModal = () => {

@@ -6,7 +6,7 @@ import { PageHeader } from "../../components/ui/PageHeader";
 import { RouteTabs } from "../../components/ui/RouteTabs";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
-import { Skeleton } from "../../components/ui/Skeleton";
+import { OrgGate } from "../../components/organizations/OrgGate";
 
 export default function OrganizationSettingsPage() {
   const { t, locale } = useI18n();
@@ -17,12 +17,7 @@ export default function OrganizationSettingsPage() {
   // no self-serve creation anymore — see ORG_SLUG in lib/constants.ts) —
   // this page just waits for that to land.
   if (!currentOrg) {
-    return (
-      <div>
-        <Skeleton className="mb-6 h-8 w-48" />
-        <Skeleton className="h-64 max-w-xl" />
-      </div>
-    );
+    return <OrgGate />;
   }
 
   return (

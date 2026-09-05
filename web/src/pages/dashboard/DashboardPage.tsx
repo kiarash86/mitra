@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { FolderKanban, ListChecks, Clock, Users, Building2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { FolderKanban, ListChecks, Clock, Users } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
 import { useOrganizationStore } from "../../stores/organization";
@@ -14,15 +14,14 @@ import { cn } from "../../lib/cn";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { StatCard } from "../../components/ui/StatCard";
 import { Card } from "../../components/ui/Card";
-import { Button } from "../../components/ui/Button";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { DonutChart } from "../../components/ui/DonutChart";
+import { OrgGate } from "../../components/organizations/OrgGate";
 
 const DUE_SOON_WINDOW_DAYS = 3;
 
 export default function DashboardPage() {
   const { t, locale } = useI18n();
-  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const currentOrg = useOrganizationStore((s) => s.currentOrg);
   const members = useOrganizationStore((s) => s.members);
@@ -55,18 +54,7 @@ export default function DashboardPage() {
   }, [currentOrg, projects]);
 
   if (!currentOrg) {
-    return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center text-center">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-100 text-saffron-600">
-          <Building2 className="h-8 w-8" />
-        </div>
-        <h1 className="text-xl font-bold text-ink-900">{t.dashboard.noOrgTitle}</h1>
-        <p className="mt-2 max-w-sm text-sm text-ink-500">{t.dashboard.noOrgDescription}</p>
-        <Button size="lg" className="mt-6" onClick={() => navigate("/organizations")}>
-          {t.dashboard.noOrgCta}
-        </Button>
-      </div>
-    );
+    return <OrgGate />;
   }
 
   const tasksLoading = projects.length > 0 && allTasks === null;

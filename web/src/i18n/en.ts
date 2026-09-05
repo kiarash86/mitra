@@ -112,10 +112,9 @@ export const en: Dictionary = {
     recentProjectsEmpty: "No projects created yet.",
     statusBreakdownTitle: "Task status",
     statusBreakdownEmpty: "No tasks logged yet.",
-    noOrgTitle: "You don't have an organization yet",
+    noOrgTitle: "Organization unavailable",
     noOrgDescription:
-      "Create an organization to start managing projects and tasks in one place.",
-    noOrgCta: "Create organization",
+      "Loading is taking longer than expected, or it failed — wait a moment or try again.",
   },
   organizations: {
     tabOverview: "Overview",

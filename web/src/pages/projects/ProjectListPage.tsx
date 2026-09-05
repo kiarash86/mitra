@@ -17,6 +17,7 @@ import { Modal } from "../../components/ui/Modal";
 import { Alert } from "../../components/ui/Alert";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Skeleton } from "../../components/ui/Skeleton";
+import { OrgGate } from "../../components/organizations/OrgGate";
 
 export default function ProjectListPage() {
   const { t } = useI18n();
@@ -47,18 +48,7 @@ export default function ProjectListPage() {
   }, [currentOrg, fetchProjects, fetchOrgMembers, t]);
 
   if (!currentOrg) {
-    return (
-      <EmptyState
-        icon={<FolderKanban className="h-6 w-6" />}
-        title={t.dashboard.noOrgTitle}
-        description={t.dashboard.noOrgDescription}
-        action={
-          <Link to="/organizations">
-            <Button>{t.dashboard.noOrgCta}</Button>
-          </Link>
-        }
-      />
-    );
+    return <OrgGate />;
   }
 
   const handleCreate = async (e: FormEvent) => {
