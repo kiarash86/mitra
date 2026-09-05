@@ -145,7 +145,7 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusFound, organizationResponse{
+	c.JSON(http.StatusOK, organizationResponse{
 		ID:        org.ID.String(),
 		Name:      org.Name,
 		Slug:      org.Slug,
