@@ -154,8 +154,8 @@ export interface Dictionary {
     emptyDescription: string;
     detailMembersTitle: string;
     addMemberButton: string;
-    memberUserIdLabel: string;
-    memberUserIdHint: string;
+    memberPickerLabel: string;
+    memberPickerEmpty: string;
     goToBoardCta: string;
     deleteButton: string;
     deleteConfirm: (name: string) => string;

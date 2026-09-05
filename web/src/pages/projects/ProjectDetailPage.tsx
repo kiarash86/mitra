@@ -42,7 +42,12 @@ export default function ProjectDetailPage() {
   const updateProject = useProjectStore((s) => s.updateProject);
   const deleteProject = useProjectStore((s) => s.deleteProject);
 
-  const { byUserId } = useOrgMemberDirectory(currentProject?.organization_id);
+  const { members: orgMembers, byUserId } = useOrgMemberDirectory(currentProject?.organization_id);
+
+  // Org members not already on this project — the only people it makes
+  // sense to offer in the "add member" picker.
+  const projectMemberIds = new Set(members.map((m) => m.user_id));
+  const availableOrgMembers = orgMembers.filter((m) => !projectMemberIds.has(m.user_id));
 
   const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
   const canManage = canManageProject(myRole);
@@ -84,6 +89,13 @@ export default function ProjectDetailPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const openAdd = () => {
+    setUserId(availableOrgMembers[0]?.user_id ?? "");
+    setRole("member");
+    setError("");
+    setAddOpen(true);
   };
 
   const handleAdd = async (e: FormEvent) => {
@@ -157,7 +169,7 @@ export default function ProjectDetailPage() {
             size="sm"
             variant="secondary"
             icon={<UserPlus className="h-4 w-4" />}
-            onClick={() => setAddOpen(true)}
+            onClick={openAdd}
           >
             {t.projects.addMemberButton}
           </Button>
@@ -253,14 +265,22 @@ export default function ProjectDetailPage() {
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title={t.members.addModalTitle} size="sm">
         <form onSubmit={handleAdd} className="space-y-4">
           {error && <Alert variant="error">{error}</Alert>}
-          <Input
-            label={t.projects.memberUserIdLabel}
-            hint={t.projects.memberUserIdHint}
-            required
-            dir="ltr"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-          />
+          {availableOrgMembers.length === 0 ? (
+            <Alert variant="info">{t.projects.memberPickerEmpty}</Alert>
+          ) : (
+            <Select
+              label={t.projects.memberPickerLabel}
+              required
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+            >
+              {availableOrgMembers.map((m) => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.full_name} ({m.email})
+                </option>
+              ))}
+            </Select>
+          )}
           <Select
             label={t.members.roleLabel}
             value={role}
@@ -276,7 +296,7 @@ export default function ProjectDetailPage() {
             <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
               {t.common.cancel}
             </Button>
-            <Button type="submit" loading={submitting}>
+            <Button type="submit" loading={submitting} disabled={availableOrgMembers.length === 0}>
               {t.common.add}
             </Button>
           </div>
