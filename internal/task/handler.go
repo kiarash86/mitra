@@ -25,17 +25,17 @@ func NewHandler(queries *sqlc.Queries) *Handler {
 }
 
 type createTaskRequest struct {
-	Title       string     `json:"title" binding:"required,min=2,max=255"`
-	Description string     `json:"description" binding:"max=10000"`
-	Priority    string     `json:"priority"`
-	DueDate     *time.Time `json:"due_date"`
+	Title       string  `json:"title" binding:"required,min=2,max=255"`
+	Description string  `json:"description" binding:"max=10000"`
+	Priority    string  `json:"priority"`
+	DueDate     *string `json:"due_date"`
 }
 
 type updateTaskRequest struct {
-	Title       string     `json:"title" binding:"required,min=2,max=255"`
-	Description string     `json:"description" binding:"max=10000"`
-	Priority    string     `json:"priority" binding:"required"`
-	DueDate     *time.Time `json:"due_date"`
+	Title       string  `json:"title" binding:"required,min=2,max=255"`
+	Description string  `json:"description" binding:"max=10000"`
+	Priority    string  `json:"priority" binding:"required"`
+	DueDate     *string `json:"due_date"`
 }
 
 type updateTaskStatusRequest struct {
@@ -116,6 +116,12 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	dueDate, err := convert.ParseDate(req.DueDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -141,7 +147,7 @@ func (h *Handler) Create(c *gin.Context) {
 		Title:       req.Title,
 		Description: convert.StringToText(req.Description),
 		Priority:    req.Priority,
-		DueDate:     convert.TimeToTimestamptz(req.DueDate),
+		DueDate:     convert.TimeToTimestamptz(dueDate),
 		CreatedBy:   userID,
 	})
 	if err != nil {
@@ -291,6 +297,12 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
+	dueDate, err := convert.ParseDate(req.DueDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	task, err := h.queries.GetTaskByID(c.Request.Context(), taskID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -326,7 +338,7 @@ func (h *Handler) Update(c *gin.Context) {
 		Title:       req.Title,
 		Description: convert.StringToText(req.Description),
 		Priority:    req.Priority,
-		DueDate:     convert.TimeToTimestamptz(req.DueDate),
+		DueDate:     convert.TimeToTimestamptz(dueDate),
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update task"})
