@@ -1,6 +1,6 @@
 <p align="center">
   <a href="./README.md"><img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English"></a>
-  <a href="./README.fa.md"><img src="https://img.shields.io/badge/lang-فارسی-green.svg" alt="persian"></a>
+  <a href="./README.fa.md"><img src="https://img.shields.io/badge/lang-persian-green.svg" alt="persian"></a>
 </p>
 
 # Mitra
