@@ -5,9 +5,11 @@
 
 # Mitra
 
-A **project-centric** organizational management and communication system: organizations create projects, projects have members and tasks, and tasks are assigned to users.
+A **project-centric** organizational management and communication system: an organization has projects, projects have members and tasks, and tasks are assigned to users.
 
 Backend: Go (Gin) · sqlc · PostgreSQL — Frontend: React + TypeScript (Vite)
+
+> **Single-organization model:** there is no self-serve sign-up or "create organization" flow. The one organization and its first owner account are created by a seed step (see [Local Setup](#local-setup)); from there the owner adds members through the API/UI. There is currently no `/auth/register` endpoint.
 
 ---
 
@@ -50,7 +52,7 @@ Redis and NATS/JetStream have been removed from the stack for now. Details and t
 ## Prerequisites
 
 - Docker + Docker Compose — for the all-in-one setup, or just to run PostgreSQL locally
-- Go 1.27+ — only needed for the manual (non-Docker) backend setup
+- Go 1.27+ — needed for the manual (non-Docker) backend setup, **and** for the one-time seed step even when running everything else via Docker (`cmd/seed` isn't built into the Docker image)
 - Node.js 20+ — only needed for the manual (non-Docker) frontend setup
 - [golang-migrate CLI](https://github.com/golang-migrate/migrate#installation) — only needed for the manual backend setup
 
@@ -65,6 +67,7 @@ cp .env.example .env
 # JWT_SECRET is required — the api will fail to start if it's empty.
 # The placeholder value in .env.example works for localhost only;
 # replace it with a real random secret for anything beyond that.
+# ORG_NAME / ORG_SLUG / OWNER_EMAIL / OWNER_NAME / OWNER_PASSWORD are used by the seed step below.
 
 docker compose up --build
 ```
@@ -72,6 +75,15 @@ docker compose up --build
 This starts everything: `postgres` → migrations run automatically via the `migrate` service → `api` on `http://localhost:8080` → `web` on `http://localhost:3000`.
 
 > `web`'s `VITE_API_URL` build arg is empty by default in `docker-compose.yaml`, so the frontend falls back to `http://localhost:8080` for the API at build time. If you're deploying `api` and `web` on different hosts, set `VITE_API_URL` accordingly before building.
+
+**Seed the first organization and owner account** (one-time, required before you can log in — there's no `docker-compose` service for this yet, so it's run locally against the Dockerized Postgres):
+
+```bash
+export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
+go run ./cmd/seed
+```
+
+This reads `ORG_NAME`, `ORG_SLUG`, `OWNER_EMAIL`, `OWNER_NAME`, and `OWNER_PASSWORD` from `.env` and creates the organization plus its owner. It's a no-op (prints a message and exits) if an organization already exists, so it's safe to re-run.
 
 ### Option B — Manual (Backend)
 
@@ -87,7 +99,10 @@ cp .env.example .env
 export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
 migrate -database "$DATABASE_URL" -path internal/db/migrations up
 
-# 4. Run the server
+# 4. Seed the first organization and owner account (one-time, required before you can log in)
+go run ./cmd/seed
+
+# 5. Run the server
 go run ./cmd/api
 # health check: curl http://localhost:8080/health
 ```
@@ -114,20 +129,24 @@ Base path: `/api/v1` (except `/health`, which is unversioned)
 | GET    | `/health` | Liveness/health check   |
 
 ### Auth
-| Method | Path             | Description |
-| ------ | ---------------- | ----------- |
-| POST   | `/auth/register` | Register    |
-| POST   | `/auth/login`    | Login       |
+| Method | Path                     | Description                                            |
+| ------ | ------------------------ | -------------------------------------------------------- |
+| POST   | `/auth/login`            | Login                                                    |
+| POST   | `/auth/change-password`  | Change own password *(requires Authorization: Bearer)*  |
+
+> There is no `/auth/register`. Accounts are created either by the seed step (the first owner) or by an org/project admin adding a member — see [Organizations](#organizations-requires-authorization-bearer). Login responses include `must_change_password`; the frontend routes users with that flag set to a forced password-change screen before letting them in.
 
 ### Organizations *(requires Authorization: Bearer)*
 | Method | Path                                   | Description                    |
 | ------ | --------------------------------------- | ------------------------------- |
-| POST   | `/organizations`                       | Create organization            |
 | GET    | `/organizations/by-slug/:slug`         | Get organization by slug       |
 | GET    | `/organizations/:id/members`           | List members                    |
+| POST   | `/organizations/:id/members`           | Add member                      |
 | DELETE | `/organizations/:id/members/:user_id`  | Remove member                   |
 | POST   | `/organizations/:id/projects`          | Create project in organization |
 | GET    | `/organizations/:id/projects`          | List organization's projects    |
+
+> No `POST /organizations` — self-serve organization creation was removed; the single organization is created by the seed step instead.
 
 ### Projects
 | Method | Path                              | Description             |
@@ -165,7 +184,9 @@ Base path: `/api/v1` (except `/health`, which is unversioned)
 ## Known Limitations (Phase 1)
 
 - **No `/auth/refresh` endpoint yet** — the frontend's axios client already has retry logic wired up to call it on a 401, but the backend doesn't implement this route yet, so an expired access token currently just logs the user out and requires a fresh login.
-- Presence/Realtime/Push notifications are not yet implemented (Phase 2).
+- **No self-serve registration or organization creation** — by design for now; see the note in [Organizations](#organizations-requires-authorization-bearer).
+- **Seeding isn't containerized** — `cmd/seed` has to be run with `go run` (locally or in CI), even in the Docker setup; there's no `docker-compose` service for it yet.
+- Presence/Realtime/Push notifications are not yet implemented (Phase 2), even though the frontend already has `Chat` and `Notifications` pages scaffolded.
 - No Redis/NATS — rationale and temporary workaround documented in `MITRA.md`.
 
 The full phasing roadmap and architectural decisions are documented in [`MITRA.md`](./MITRA.md).
