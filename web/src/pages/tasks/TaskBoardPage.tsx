@@ -36,7 +36,7 @@ export default function TaskBoardPage() {
   const isLoading = useTaskStore((s) => s.isLoading);
   const fetchTasks = useTaskStore((s) => s.fetchTasks);
   const createTask = useTaskStore((s) => s.createTask);
-  const updateTask = useTaskStore((s) => s.updateTask);
+  const updateTaskStatus = useTaskStore((s) => s.updateTaskStatus);
 
   const { byUserId } = useOrgMemberDirectory(currentProject?.organization_id);
   const assignableMembers = projectMembers
@@ -72,7 +72,7 @@ export default function TaskBoardPage() {
     if (!task || task.status === status) return;
     const wasNotDone = task.status !== "done";
     try {
-      await updateTask(taskId, { status });
+      await updateTaskStatus(taskId, status);
       if (status === "done" && wasNotDone) setJustCompletedId(taskId);
     } catch {
       // Task visually stays in its previous column — the toast is the only

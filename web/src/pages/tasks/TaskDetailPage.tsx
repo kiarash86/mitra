@@ -37,6 +37,9 @@ export default function TaskDetailPage() {
   const taskLoading = useTaskStore((s) => s.isLoading);
   const fetchTask = useTaskStore((s) => s.fetchTask);
   const updateTask = useTaskStore((s) => s.updateTask);
+  const updateTaskStatus = useTaskStore((s) => s.updateTaskStatus);
+  const assignTask = useTaskStore((s) => s.assignTask);
+  const unassignTask = useTaskStore((s) => s.unassignTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
 
   const currentProject = useProjectStore((s) => s.currentProject);
@@ -96,10 +99,28 @@ export default function TaskDetailPage() {
     );
   }
 
-  const patch = async (data: Parameters<typeof updateTask>[1]) => {
+  const changeStatus = async (status: TaskStatus) => {
     const wasNotDone = currentTask.status !== "done";
-    await updateTask(taskId!, data);
-    if (data.status === "done" && wasNotDone) setShowSeal(true);
+    await updateTaskStatus(taskId!, status);
+    if (status === "done" && wasNotDone) setShowSeal(true);
+  };
+
+  // The backend's PUT /tasks/:id is a full replace — title and priority
+  // are always required, and description defaults to empty if omitted —
+  // so priority/due-date edits must carry the task's current fields too.
+  const patch = async (data: Partial<{ priority: TaskPriority; due_date: string | null }>) => {
+    await updateTask(taskId!, {
+      title: currentTask.title,
+      description: currentTask.description ?? "",
+      priority: currentTask.priority,
+      due_date: currentTask.due_date,
+      ...data,
+    });
+  };
+
+  const changeAssignee = async (userId: string) => {
+    if (userId) await assignTask(taskId!, userId);
+    else await unassignTask(taskId!);
   };
 
   const openEdit = () => {
@@ -113,7 +134,12 @@ export default function TaskDetailPage() {
     setError("");
     setEditSubmitting(true);
     try {
-      await updateTask(taskId!, { title: editTitle.trim(), description: editDescription.trim() || null });
+      await updateTask(taskId!, {
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+        priority: currentTask.priority,
+        due_date: currentTask.due_date,
+      });
       setEditOpen(false);
     } catch {
       setError(t.common.errorGeneric);
@@ -235,7 +261,7 @@ export default function TaskDetailPage() {
             <Property label={t.tasks.statusLabel}>
               <Select
                 value={currentTask.status}
-                onChange={(e) => patch({ status: e.target.value as TaskStatus })}
+                onChange={(e) => changeStatus(e.target.value as TaskStatus)}
               >
                 {TASK_STATUS_ORDER.map((s) => (
                   <option key={s} value={s}>
@@ -259,7 +285,7 @@ export default function TaskDetailPage() {
             <Property label={t.tasks.assigneeLabel}>
               <Select
                 value={currentTask.assigned_to_user_id ?? ""}
-                onChange={(e) => patch({ assigned_to_user_id: e.target.value || null })}
+                onChange={(e) => changeAssignee(e.target.value)}
               >
                 <option value="">{t.tasks.unassigned}</option>
                 {assignableMembers.map((m) => (

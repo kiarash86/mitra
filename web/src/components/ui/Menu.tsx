@@ -43,6 +43,7 @@ export function Menu({ trigger, items, align = "end" }: MenuProps) {
     open,
     onOpenChange: setOpen,
     placement: align === "end" ? "bottom-end" : "bottom-start",
+    strategy: "fixed",
     whileElementsMounted: autoUpdate,
     middleware: [
       offset(6),

@@ -17,7 +17,7 @@ export const projectsApi = {
 
   update: (projectId: string, data: { name?: string; description?: string }) =>
     client
-      .patch<Project>(`/v1/projects/${projectId}`, data)
+      .put<Project>(`/v1/projects/${projectId}`, data)
       .then((r) => r.data),
 
   delete: (projectId: string) =>

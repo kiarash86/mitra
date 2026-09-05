@@ -14,7 +14,7 @@ export const commentsApi = {
 
   update: (commentId: string, data: { body: string }) =>
     client
-      .patch<Comment>(`/v1/comments/${commentId}`, data)
+      .put<Comment>(`/v1/comments/${commentId}`, data)
       .then((r) => r.data),
 
   delete: (commentId: string) =>

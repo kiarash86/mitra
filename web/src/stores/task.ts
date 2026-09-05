@@ -13,7 +13,13 @@ interface TaskState {
     projectId: string,
     data: { title: string; description?: string; priority?: TaskPriority; assigned_to_user_id?: string; due_date?: string }
   ) => Promise<Task>;
-  updateTask: (taskId: string, data: { title?: string; description?: string | null; status?: TaskStatus; priority?: TaskPriority; assigned_to_user_id?: string | null; due_date?: string | null }) => Promise<void>;
+  updateTask: (
+    taskId: string,
+    data: { title?: string; description?: string; priority?: TaskPriority; due_date?: string | null }
+  ) => Promise<void>;
+  updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
+  assignTask: (taskId: string, userId: string) => Promise<void>;
+  unassignTask: (taskId: string) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
 }
 
@@ -42,6 +48,30 @@ export const useTaskStore = create<TaskState>()((set) => ({
 
   updateTask: async (taskId, data) => {
     const updated = await tasksApi.update(taskId, data);
+    set((s) => ({
+      tasks: s.tasks.map((t) => (t.id === taskId ? updated : t)),
+      currentTask: s.currentTask?.id === taskId ? updated : s.currentTask,
+    }));
+  },
+
+  updateTaskStatus: async (taskId, status) => {
+    const updated = await tasksApi.updateStatus(taskId, status);
+    set((s) => ({
+      tasks: s.tasks.map((t) => (t.id === taskId ? updated : t)),
+      currentTask: s.currentTask?.id === taskId ? updated : s.currentTask,
+    }));
+  },
+
+  assignTask: async (taskId, userId) => {
+    const updated = await tasksApi.assign(taskId, userId);
+    set((s) => ({
+      tasks: s.tasks.map((t) => (t.id === taskId ? updated : t)),
+      currentTask: s.currentTask?.id === taskId ? updated : s.currentTask,
+    }));
+  },
+
+  unassignTask: async (taskId) => {
+    const updated = await tasksApi.unassign(taskId);
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === taskId ? updated : t)),
       currentTask: s.currentTask?.id === taskId ? updated : s.currentTask,
