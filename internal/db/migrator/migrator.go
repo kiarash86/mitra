@@ -104,3 +104,19 @@ func Steps(databaseUrl string, num int) error {
 	}
 	return nil
 }
+
+func Version(databaseUrl string) (version uint, dirty bool, err error) {
+	m, closeFn, err := New(databaseUrl)
+	if err != nil {
+		return 0, false, fmt.Errorf("migrator: version: %w", err)
+	}
+	defer closeFn()
+
+	version, dirty, err = m.Version()
+
+	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
+		return 0, false, fmt.Errorf("migrator: version: %w", err)
+
+	}
+	return version, dirty, nil
+}
