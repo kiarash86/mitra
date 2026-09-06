@@ -72,3 +72,19 @@ func Down(databaseUrl string) error {
 	}
 	return nil
 }
+
+func Force(databaseUrl string, version int) error {
+	m, closeFn, err := New(databaseUrl)
+	if err != nil {
+		return err
+	}
+	defer closeFn()
+
+	err = m.Force(version)
+
+	if err != nil {
+		return fmt.Errorf("migrator: force: %w", err)
+
+	}
+	return nil
+}
