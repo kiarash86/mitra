@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -38,4 +39,20 @@ func New(databaseUrl string) (m *migrate.Migrate, closeFn func() error, err erro
 		return nil, nil, fmt.Errorf("migrator: creating migrate instance: %w", err)
 	}
 	return m, db.Close, nil
+}
+
+func Up(databaseUrl string) error {
+	m, closeFn, err := New(databaseUrl)
+	if err != nil {
+		return err
+	}
+	defer closeFn()
+
+	err = m.Up()
+
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("migrator: up: %w", err)
+
+	}
+	return nil
 }
