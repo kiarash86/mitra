@@ -56,3 +56,19 @@ func Up(databaseUrl string) error {
 	}
 	return nil
 }
+
+func Down(databaseUrl string) error {
+	m, closeFn, err := New(databaseUrl)
+	if err != nil {
+		return err
+	}
+	defer closeFn()
+
+	err = m.Down()
+
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("migrator: down: %w", err)
+
+	}
+	return nil
+}
