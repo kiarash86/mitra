@@ -88,3 +88,19 @@ func Force(databaseUrl string, version int) error {
 	}
 	return nil
 }
+
+func Steps(databaseUrl string, num int) error {
+	m, closeFn, err := New(databaseUrl)
+	if err != nil {
+		return err
+	}
+	defer closeFn()
+
+	err = m.Steps(num)
+
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("migrator: steps: %w", err)
+
+	}
+	return nil
+}
