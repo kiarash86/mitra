@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/kiarash86/mitra/internal/db/migrator"
 	"github.com/spf13/cobra"
@@ -37,6 +38,25 @@ var migrateDownCmd = &cobra.Command{
 
 		}
 		fmt.Println("migrations rolled back successfully")
+
+	},
+}
+
+var migrateStepsCmd = &cobra.Command{
+	Use:   "steps <n>",
+	Short: "Apply n migrations (n can be negative to roll back)",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		num, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalf("invalid steps count %q: %v", args[0], err)
+		}
+		err = migrator.Steps(cfg.DatabaseURL, num)
+		if err != nil {
+			log.Fatalf("migrate steps: %v", err)
+
+		}
+		fmt.Println("migration steps applied successfully")
 
 	},
 }
