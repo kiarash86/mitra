@@ -17,16 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  migrate:
-    image: migrate/migrate:v4.18.1
-    container_name: mitra-migrate
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./internal/db/migrations:/migrations
-    entrypoint: [ "migrate", "-path", "/migrations", "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable", "up" ]
-
   api:
     build:
       context: .
@@ -36,8 +26,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     env_file:
       - .env
     environment:
