@@ -60,3 +60,22 @@ var migrateStepsCmd = &cobra.Command{
 
 	},
 }
+
+var migrateForceCmd = &cobra.Command{
+	Use:   "force <version>",
+	Short: "Set the migration version without running it (recover from a dirty state)",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		version, err := strconv.Atoi(args[0])
+		if err != nil {
+			log.Fatalf("invalid version %q: %v", args[0], err)
+		}
+		err = migrator.Force(cfg.DatabaseURL, version)
+		if err != nil {
+			log.Fatalf("migrate force: %v", err)
+
+		}
+		fmt.Println("migration version forced successfully")
+
+	},
+}
