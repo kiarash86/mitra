@@ -79,3 +79,16 @@ var migrateForceCmd = &cobra.Command{
 
 	},
 }
+
+var migrateVersionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the current migration version",
+	Run: func(cmd *cobra.Command, args []string) {
+		v, dirty, err := migrator.Version(cfg.DatabaseURL)
+		if err != nil {
+			log.Fatalf("migrate version: %v", err)
+		}
+		fmt.Printf("version: %d, dirty: %v\n", v, dirty)
+
+	},
+}
