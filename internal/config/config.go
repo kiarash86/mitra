@@ -22,6 +22,8 @@ type Config struct {
 	DBName      string `env:"DB_NAME" envDefault:"mitra"`
 	DBSSLMode   string `env:"DB_SSLMODE" envDefault:"disable"`
 
+	AutoMigrate bool `env:"AUTO_MIGRATE" envDefault:"true"`
+
 	JWTSecret          string        `env:"JWT_SECRET,required"`
 	JWTAccessTokenTTL  time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
 	JWTRefreshTokenTTL time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"720h"`
