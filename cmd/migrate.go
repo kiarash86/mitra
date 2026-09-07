@@ -92,3 +92,8 @@ var migrateVersionCmd = &cobra.Command{
 
 	},
 }
+
+func init() {
+	migrateCmd.AddCommand(migrateUpCmd, migrateDownCmd, migrateStepsCmd, migrateForceCmd, migrateVersionCmd)
+	rootCmd.AddCommand(migrateCmd)
+}
