@@ -26,3 +26,17 @@ var migrateUpCmd = &cobra.Command{
 
 	},
 }
+
+var migrateDownCmd = &cobra.Command{
+	Use:   "down",
+	Short: "Roll back all migrations",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := migrator.Down(cfg.DatabaseURL)
+		if err != nil {
+			log.Fatalf("migrate down: %v", err)
+
+		}
+		fmt.Println("migrations rolled back successfully")
+
+	},
+}
