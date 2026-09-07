@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"os"
 
 	"github.com/kiarash86/mitra/internal/config"
 	"github.com/spf13/cobra"
@@ -19,4 +20,11 @@ var rootCmd = &cobra.Command{
 		}
 		cfg = config
 	},
+}
+
+func Excute() {
+	err := rootCmd.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
 }
