@@ -21,6 +21,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_ORG_SLUG: ${ORG_SLUG}
     container_name: mitra-api
     restart: unless-stopped
     depends_on:
@@ -38,20 +40,6 @@ services:
       JWT_REFRESH_TOKEN_TTL: 720h
     ports:
       - "8080:8080"
-
-  web:
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ""
-        VITE_ORG_SLUG: ${ORG_SLUG}
-    container_name: mitra-web
-    restart: unless-stopped
-    depends_on:
-      - api
-    ports:
-      - "3000:80"
 
 volumes:
   mitra_postgres_data:
