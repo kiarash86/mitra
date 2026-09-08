@@ -253,12 +253,12 @@ func (h *Handler) Delete(c *gin.Context) {
 			return
 		}
 		if !pAdmin {
-			orgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, userID)
+			admin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, userID)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 				return
 			}
-			if !orgAdmin {
+			if !admin {
 				c.JSON(http.StatusForbidden, gin.H{"error": "not enough permission for deleting comment"})
 				return
 			}
