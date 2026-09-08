@@ -1,7 +1,17 @@
 -- name: CreateUser :one 
-INSERT INTO users (email , password_hash , full_name)
-VALUES ($1 ,$2 , $3)
+INSERT INTO users (email , password_hash , full_name, role)
+VALUES ($1 ,$2 , $3, $4)
 RETURNING *;
+
+
+-- name: AnyUserExists :one
+SELECT EXISTS (SELECT 1 FROM users);
+
+
+-- name: ListUsers :many
+SELECT * FROM users
+WHERE deleted_at IS NULL
+ORDER BY created_at ASC;
 
 
 -- name: GetUserByEmail :one
