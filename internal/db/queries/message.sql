@@ -20,3 +20,10 @@ ORDER BY m.created_at DESC
 LIMIT $3;
 
 
+-- name: UpdateMessage :one
+UPDATE messages
+SET body = $2 , updated_at = now()
+WHERE id = $1
+RETURNING *;
+
+
