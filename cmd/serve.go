@@ -21,9 +21,9 @@ import (
 	"github.com/kiarash86/mitra/internal/db/migrator"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
-	"github.com/kiarash86/mitra/internal/organization"
 	"github.com/kiarash86/mitra/internal/project"
 	"github.com/kiarash86/mitra/internal/task"
+	"github.com/kiarash86/mitra/internal/users"
 	"github.com/kiarash86/mitra/web"
 )
 
@@ -91,10 +91,10 @@ func runServe() error {
 	tokens := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTAccessTokenTTL, cfg.JWTRefreshTokenTTL)
 
 	authHandler := auth.NewAuthHandler(queries, tokens)
-	orgHandler := organization.NewHandler(queries)
 	projectHandler := project.NewHandler(queries)
 	taskHandler := task.NewHandler(queries)
 	commentHandler := comment.NewHandler(queries)
+	usersHandler := users.NewHandler(queries)
 
 	api := router.Group("/api/v1")
 	authGroup := api.Group("/auth")
@@ -105,15 +105,16 @@ func runServe() error {
 
 	protected.POST("/auth/change-password", authHandler.ChangePassword)
 
-	orgGroup := protected.Group("/organizations")
-	orgGroup.GET("/by-slug/:slug", orgHandler.GetBySlug)
-	orgGroup.GET("/:id/members", orgHandler.ListMembers)
-	orgGroup.POST("/:id/members", orgHandler.CreateMember)
-	orgGroup.DELETE("/:id/members/:user_id", orgHandler.RemoveMember)
-	orgGroup.POST("/:id/projects", projectHandler.Create)
-	orgGroup.GET("/:id/projects", projectHandler.ListByOrganization)
+	usersGroup := protected.Group("/users")
+	usersGroup.GET("/me", usersHandler.Me)
+	usersGroup.PATCH("/me", usersHandler.UpdateMe)
+	usersGroup.GET("", usersHandler.List)
+	usersGroup.POST("", usersHandler.Create)
+	usersGroup.DELETE("/:id", usersHandler.Delete)
 
 	projectGroup := protected.Group("/projects")
+	projectGroup.POST("", projectHandler.Create)
+	projectGroup.GET("", projectHandler.List)
 	projectGroup.GET("/:id", projectHandler.GetByID)
 	projectGroup.PUT("/:id", projectHandler.Update)
 	projectGroup.DELETE("/:id", projectHandler.Delete)
