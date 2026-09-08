@@ -1,6 +1,6 @@
 -- name: CreateProject :one
-INSERT INTO projects (organization_id , name , description)
-VALUES ($1 , $2 , $3)
+INSERT INTO projects (name , description)
+VALUES ($1 , $2)
 RETURNING *;
 
 
@@ -16,9 +16,8 @@ WHERE id = $1
 RETURNING *;
 
 
--- name: ListProjectsByOrganization :many
+-- name: ListProjects :many
 SELECT * FROM projects 
-WHERE organization_id = $1 
 ORDER BY created_at DESC;
 
 
