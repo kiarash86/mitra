@@ -51,4 +51,5 @@ COPY --from=builder /app/bin/mitra .
 
 EXPOSE 8080
 
-ENTRYPOINT ["./mitra", "serve"]
+ENTRYPOINT ["./mitra"]
+CMD ["serve"]
