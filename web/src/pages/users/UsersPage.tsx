@@ -3,14 +3,13 @@ import type { FormEvent } from "react";
 import { UserPlus, Ellipsis, Check } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
-import { useOrganizationStore } from "../../stores/organization";
+import { useUsersStore } from "../../stores/users";
 import { toast } from "../../stores/toast";
 import { ORG_ROLES } from "../../lib/constants";
-import { canManageOrg, canRemoveOrgMember } from "../../lib/permissions";
-import type { OrganizationMember, CreatedMember } from "../../types/organization";
-import type { OrgRoleName } from "../../types/rbac";
+import { canManageUsers, canRemoveUser } from "../../lib/permissions";
+import type { User, CreatedUser } from "../../types/auth";
+import type { UserRoleName } from "../../types/rbac";
 import { PageHeader } from "../../components/ui/PageHeader";
-import { RouteTabs } from "../../components/ui/RouteTabs";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -22,44 +21,37 @@ import { Avatar } from "../../components/ui/Avatar";
 import { RoleBadge } from "../../components/ui/Badge";
 import { Menu } from "../../components/ui/Menu";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { OrgGate } from "../../components/organizations/OrgGate";
 
-export default function MembersPage() {
+export default function UsersPage() {
   const { t } = useI18n();
   const currentUser = useAuthStore((s) => s.user);
-  const currentOrg = useOrganizationStore((s) => s.currentOrg);
-  const members = useOrganizationStore((s) => s.members);
-  const fetchMembers = useOrganizationStore((s) => s.fetchMembers);
-  const createMember = useOrganizationStore((s) => s.createMember);
-  const removeMember = useOrganizationStore((s) => s.removeMember);
+  const users = useUsersStore((s) => s.users);
+  const fetchUsers = useUsersStore((s) => s.fetchUsers);
+  const createUser = useUsersStore((s) => s.createUser);
+  const removeUser = useUsersStore((s) => s.removeUser);
 
-  const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
-  const canManage = canManageOrg(myRole);
+  const canManage = canManageUsers(currentUser?.role);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<OrgRoleName>("member");
+  const [role, setRole] = useState<UserRoleName>("member");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [createdMember, setCreatedMember] = useState<CreatedMember | null>(null);
+  const [createdUser, setCreatedUser] = useState<CreatedUser | null>(null);
   const [copied, setCopied] = useState(false);
-  const [removeTarget, setRemoveTarget] = useState<OrganizationMember | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<User | null>(null);
 
   useEffect(() => {
-    if (currentOrg) fetchMembers(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
-  }, [currentOrg, fetchMembers, t]);
-
-  if (!currentOrg) {
-    return <OrgGate />;
-  }
+    fetchUsers().catch(() => toast.error(t.common.errorGeneric));
+  }, [fetchUsers, t]);
 
   const closeModal = () => {
     setModalOpen(false);
     setFullName("");
     setEmail("");
     setRole("member");
-    setCreatedMember(null);
+    setCreatedUser(null);
     setCopied(false);
   };
 
@@ -68,12 +60,12 @@ export default function MembersPage() {
     setError("");
     setSubmitting(true);
     try {
-      const created = await createMember(currentOrg.id, {
+      const created = await createUser({
         full_name: fullName.trim(),
         email: email.trim(),
         role,
       });
-      setCreatedMember(created);
+      setCreatedUser(created);
     } catch {
       setError(t.common.errorGeneric);
     } finally {
@@ -82,8 +74,8 @@ export default function MembersPage() {
   };
 
   const handleCopy = () => {
-    if (!createdMember) return;
-    navigator.clipboard.writeText(createdMember.temp_password).then(() => {
+    if (!createdUser) return;
+    navigator.clipboard.writeText(createdUser.temp_password).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -93,7 +85,7 @@ export default function MembersPage() {
     <div>
       <PageHeader
         title={t.members.title}
-        description={t.members.subtitle(currentOrg.name)}
+        description={t.members.subtitle}
         actions={
           canManage ? (
             <Button icon={<UserPlus className="h-4 w-4" />} onClick={() => setModalOpen(true)}>
@@ -102,14 +94,8 @@ export default function MembersPage() {
           ) : undefined
         }
       />
-      <RouteTabs
-        tabs={[
-          { label: t.organizations.tabOverview, to: "/organizations", end: true },
-          { label: t.organizations.tabMembers, to: "/organizations/members" },
-        ]}
-      />
 
-      {members.length === 0 ? (
+      {users.length === 0 ? (
         <EmptyState
           icon={<UserPlus className="h-6 w-6" />}
           title={t.members.empty}
@@ -131,25 +117,25 @@ export default function MembersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-paper-100">
-              {members.map((member) => (
-                <tr key={member.id} className="transition-colors duration-150 hover:bg-paper-50">
+              {users.map((user) => (
+                <tr key={user.id} className="transition-colors duration-150 hover:bg-paper-50">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2.5">
-                      <Avatar name={member.full_name} size="sm" />
-                      <span className="font-medium text-ink-800">{member.full_name}</span>
-                      {member.user_id === currentUser?.id && (
+                      <Avatar name={user.full_name} size="sm" />
+                      <span className="font-medium text-ink-800">{user.full_name}</span>
+                      {user.id === currentUser?.id && (
                         <span className="text-xs text-ink-400">({t.common.you})</span>
                       )}
                     </div>
                   </td>
                   <td className="px-5 py-3 text-ink-500" dir="ltr">
-                    {member.email}
+                    {user.email}
                   </td>
                   <td className="px-5 py-3">
-                    <RoleBadge role={member.role} />
+                    <RoleBadge role={user.role} />
                   </td>
                   <td className="px-5 py-3 text-end">
-                    {canRemoveOrgMember(myRole, member.user_id, member.role, currentUser?.id) && (
+                    {canRemoveUser(currentUser?.role, user.id, user.role, currentUser?.id) && (
                       <Menu
                         trigger={
                           <button
@@ -163,7 +149,7 @@ export default function MembersPage() {
                           {
                             label: t.common.remove,
                             danger: true,
-                            onClick: () => setRemoveTarget(member),
+                            onClick: () => setRemoveTarget(user),
                           },
                         ]}
                       />
@@ -179,12 +165,12 @@ export default function MembersPage() {
       <Modal
         open={modalOpen}
         onClose={closeModal}
-        title={createdMember ? t.members.createdTitle : t.members.addModalTitle}
+        title={createdUser ? t.members.createdTitle : t.members.addModalTitle}
         size="sm"
       >
-        {createdMember ? (
+        {createdUser ? (
           <div className="space-y-4">
-            <Alert variant="success">{t.members.createdDescription(createdMember.full_name)}</Alert>
+            <Alert variant="success">{t.members.createdDescription(createdUser.full_name)}</Alert>
             <div>
               <p className="mb-1.5 text-sm font-medium text-ink-700">{t.members.tempPasswordLabel}</p>
               <div className="flex items-center gap-2">
@@ -192,7 +178,7 @@ export default function MembersPage() {
                   dir="ltr"
                   className="flex-1 rounded-md border border-ink-200 bg-paper-50 px-3 py-2 text-sm font-medium text-ink-900"
                 >
-                  {createdMember.temp_password}
+                  {createdUser.temp_password}
                 </code>
                 <Button type="button" variant="secondary" size="sm" onClick={handleCopy}>
                   {copied ? <Check className="h-4 w-4" /> : t.common.copy}
@@ -226,7 +212,7 @@ export default function MembersPage() {
             <Select
               label={t.members.roleLabel}
               value={role}
-              onChange={(e) => setRole(e.target.value as OrgRoleName)}
+              onChange={(e) => setRole(e.target.value as UserRoleName)}
             >
               {ORG_ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -252,7 +238,7 @@ export default function MembersPage() {
         title={t.common.deleteTitle}
         description={removeTarget ? t.members.removeConfirm(removeTarget.full_name) : ""}
         onConfirm={async () => {
-          if (removeTarget) await removeMember(currentOrg.id, removeTarget.user_id);
+          if (removeTarget) await removeUser(removeTarget.id);
         }}
       />
     </div>
