@@ -31,8 +31,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: "dashboard", ...page(() => import("./pages/dashboard/DashboardPage")) },
-          { path: "organizations", ...page(() => import("./pages/organizations/OrganizationSettingsPage")) },
-          { path: "organizations/members", ...page(() => import("./pages/organizations/MembersPage")) },
+          { path: "team", ...page(() => import("./pages/users/UsersPage")) },
           { path: "projects", ...page(() => import("./pages/projects/ProjectListPage")) },
           { path: "projects/:projectId", ...page(() => import("./pages/projects/ProjectDetailPage")) },
           { path: "projects/:projectId/board", ...page(() => import("./pages/tasks/TaskBoardPage")) },
