@@ -4,4 +4,9 @@ Values ($1 , $2 , $3)
 RETURNING *;
 
 
+-- name: GetMessageByID :one
+SELECT * FROM messages
+WHERE id = $1;
+
+
 
