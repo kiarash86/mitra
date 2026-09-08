@@ -7,9 +7,6 @@ RUN npm ci
 
 COPY web/ .
 
-ARG VITE_ORG_SLUG
-ENV VITE_ORG_SLUG=$VITE_ORG_SLUG
-
 RUN npm run build
 
 FROM golang:1.27-alpine AS builder

@@ -11,9 +11,6 @@ COPY . .
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
-ARG VITE_ORG_SLUG
-ENV VITE_ORG_SLUG=$VITE_ORG_SLUG
-
 RUN npm run build
 
 # --- runtime stage ---
