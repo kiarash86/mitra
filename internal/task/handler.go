@@ -582,13 +582,13 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 	if !isprojectAdminOrOwner {
-		orgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, userID)
+		admin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, userID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 			return
 		}
-		if !orgAdmin {
-			c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an org owner/admin can delete a task"})
+		if !admin {
+			c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can delete a task"})
 			return
 		}
 	}
