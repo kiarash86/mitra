@@ -1,28 +1,28 @@
-import type { OrgRoleName, ProjectRoleName } from "../types/rbac";
+import type { UserRoleName, ProjectRoleName } from "../types/rbac";
 
 /**
- * Organization-level management actions (invite/remove members, create
- * projects). Backend is the source of truth and rejects unauthorized
- * requests regardless — this only decides what the UI offers, so a
- * lower-privilege member doesn't see controls that would just error out.
+ * Global user-management actions (add/remove users). Backend is the source
+ * of truth and rejects unauthorized requests regardless — this only
+ * decides what the UI offers, so a lower-privilege user doesn't see
+ * controls that would just error out.
  */
-export function canManageOrg(role: OrgRoleName | undefined): boolean {
+export function canManageUsers(role: UserRoleName | undefined): boolean {
   return role === "owner" || role === "admin";
 }
 
 /**
- * Whether the current viewer can remove this specific org member — mirrors
- * the API's own rules exactly (RemoveMember in internal/organization):
- * only an owner/admin can remove members, nobody can remove themselves,
- * and only an owner can remove another owner.
+ * Whether the current viewer can remove this specific user — mirrors the
+ * API's own rules exactly (Delete in internal/users): only an owner/admin
+ * can remove users, nobody can remove themselves, and only an owner can
+ * remove another owner.
  */
-export function canRemoveOrgMember(
-  myRole: OrgRoleName | undefined,
+export function canRemoveUser(
+  myRole: UserRoleName | undefined,
   targetUserId: string,
-  targetRole: OrgRoleName,
+  targetRole: UserRoleName,
   myUserId: string | undefined,
 ): boolean {
-  if (!canManageOrg(myRole)) return false;
+  if (!canManageUsers(myRole)) return false;
   if (targetUserId === myUserId) return false;
   if (targetRole === "owner" && myRole !== "owner") return false;
   return true;
