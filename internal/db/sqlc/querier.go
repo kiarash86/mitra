@@ -12,30 +12,25 @@ import (
 )
 
 type Querier interface {
-	AddOrganizationMember(ctx context.Context, arg AddOrganizationMemberParams) (OrganizationMember, error)
 	AddProjectMember(ctx context.Context, arg AddProjectMemberParams) (ProjectMember, error)
-	AnyOrganizationExists(ctx context.Context) (bool, error)
+	AnyUserExists(ctx context.Context) (bool, error)
 	AssignTaskToUser(ctx context.Context, arg AssignTaskToUserParams) (Task, error)
 	CreateComment(ctx context.Context, arg CreateCommentParams) (Comment, error)
-	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetCommentByID(ctx context.Context, id uuid.UUID) (Comment, error)
-	GetOrganizationBySlug(ctx context.Context, slug string) (Organization, error)
-	GetOrganizationMemberRole(ctx context.Context, arg GetOrganizationMemberRoleParams) (string, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectMemberRole(ctx context.Context, arg GetProjectMemberRoleParams) (string, error)
 	GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	ListCommentsByTask(ctx context.Context, taskID uuid.UUID) ([]ListCommentsByTaskRow, error)
-	ListOrganizationMembers(ctx context.Context, organizationID uuid.UUID) ([]ListOrganizationMembersRow, error)
 	ListProjectMembers(ctx context.Context, projectID uuid.UUID) ([]ListProjectMembersRow, error)
-	ListProjectsByOrganization(ctx context.Context, organizationID uuid.UUID) ([]Project, error)
+	ListProjects(ctx context.Context) ([]Project, error)
 	ListTasksAssignedToUser(ctx context.Context, assignedToUserID pgtype.UUID) ([]Task, error)
 	ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]Task, error)
-	RemoveOrganizationMember(ctx context.Context, arg RemoveOrganizationMemberParams) error
+	ListUsers(ctx context.Context) ([]User, error)
 	RemoveProjectMember(ctx context.Context, arg RemoveProjectMemberParams) error
 	SoftDeleteComment(ctx context.Context, id uuid.UUID) error
 	SoftDeleteProject(ctx context.Context, id uuid.UUID) error

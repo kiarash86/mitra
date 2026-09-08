@@ -11,20 +11,37 @@ import (
 	"github.com/google/uuid"
 )
 
+const anyUserExists = `-- name: AnyUserExists :one
+SELECT EXISTS (SELECT 1 FROM users)
+`
+
+func (q *Queries) AnyUserExists(ctx context.Context) (bool, error) {
+	row := q.db.QueryRow(ctx, anyUserExists)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (email , password_hash , full_name)
-VALUES ($1 ,$2 , $3)
-RETURNING id, full_name, email, password_hash, must_change_password, created_at, updated_at, deleted_at
+INSERT INTO users (email , password_hash , full_name, role)
+VALUES ($1 ,$2 , $3, $4)
+RETURNING id, full_name, email, password_hash, must_change_password, role, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
 	Email        string `json:"email"`
 	PasswordHash string `json:"password_hash"`
 	FullName     string `json:"full_name"`
+	Role         string `json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.PasswordHash, arg.FullName)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Email,
+		arg.PasswordHash,
+		arg.FullName,
+		arg.Role,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -32,6 +49,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.PasswordHash,
 		&i.MustChangePassword,
+		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -40,7 +58,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, full_name, email, password_hash, must_change_password, created_at, updated_at, deleted_at FROM  users 
+SELECT id, full_name, email, password_hash, must_change_password, role, created_at, updated_at, deleted_at FROM  users 
 WHERE email=$1
 `
 
@@ -53,6 +71,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.PasswordHash,
 		&i.MustChangePassword,
+		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -61,7 +80,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, full_name, email, password_hash, must_change_password, created_at, updated_at, deleted_at FROM  users 
+SELECT id, full_name, email, password_hash, must_change_password, role, created_at, updated_at, deleted_at FROM  users 
 WHERE id=$1
 `
 
@@ -74,11 +93,48 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Email,
 		&i.PasswordHash,
 		&i.MustChangePassword,
+		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT id, full_name, email, password_hash, must_change_password, role, created_at, updated_at, deleted_at FROM users
+WHERE deleted_at IS NULL
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.Email,
+			&i.PasswordHash,
+			&i.MustChangePassword,
+			&i.Role,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const softDeleteUser = `-- name: SoftDeleteUser :exec
@@ -112,7 +168,7 @@ const updateUserProfile = `-- name: UpdateUserProfile :one
 UPDATE users
 SET full_name = $2, updated_at = now()
 WHERE id = $1
-RETURNING id, full_name, email, password_hash, must_change_password, created_at, updated_at, deleted_at
+RETURNING id, full_name, email, password_hash, must_change_password, role, created_at, updated_at, deleted_at
 `
 
 type UpdateUserProfileParams struct {
@@ -129,6 +185,7 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 		&i.Email,
 		&i.PasswordHash,
 		&i.MustChangePassword,
+		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

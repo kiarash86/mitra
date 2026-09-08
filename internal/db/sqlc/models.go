@@ -21,31 +21,13 @@ type Comment struct {
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
-type Organization struct {
-	ID        uuid.UUID          `json:"id"`
-	Name      string             `json:"name"`
-	Slug      string             `json:"slug"`
-	CreatedAt time.Time          `json:"created_at"`
-	UpdatedAt time.Time          `json:"updated_at"`
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
-}
-
-type OrganizationMember struct {
-	ID             uuid.UUID `json:"id"`
-	OrganizationID uuid.UUID `json:"organization_id"`
-	UserID         uuid.UUID `json:"user_id"`
-	Role           string    `json:"role"`
-	CreatedAt      time.Time `json:"created_at"`
-}
-
 type Project struct {
-	ID             uuid.UUID          `json:"id"`
-	OrganizationID uuid.UUID          `json:"organization_id"`
-	Name           string             `json:"name"`
-	Description    pgtype.Text        `json:"description"`
-	CreatedAt      time.Time          `json:"created_at"`
-	UpdatedAt      time.Time          `json:"updated_at"`
-	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type ProjectMember struct {
@@ -77,6 +59,7 @@ type User struct {
 	Email              string             `json:"email"`
 	PasswordHash       string             `json:"password_hash"`
 	MustChangePassword bool               `json:"must_change_password"`
+	Role               string             `json:"role"`
 	CreatedAt          time.Time          `json:"created_at"`
 	UpdatedAt          time.Time          `json:"updated_at"`
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`

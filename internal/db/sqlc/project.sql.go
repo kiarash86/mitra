@@ -13,23 +13,21 @@ import (
 )
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO projects (organization_id , name , description)
-VALUES ($1 , $2 , $3)
-RETURNING id, organization_id, name, description, created_at, updated_at, deleted_at
+INSERT INTO projects (name , description)
+VALUES ($1 , $2)
+RETURNING id, name, description, created_at, updated_at, deleted_at
 `
 
 type CreateProjectParams struct {
-	OrganizationID uuid.UUID   `json:"organization_id"`
-	Name           string      `json:"name"`
-	Description    pgtype.Text `json:"description"`
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
-	row := q.db.QueryRow(ctx, createProject, arg.OrganizationID, arg.Name, arg.Description)
+	row := q.db.QueryRow(ctx, createProject, arg.Name, arg.Description)
 	var i Project
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
@@ -40,7 +38,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 }
 
 const getProjectByID = `-- name: GetProjectByID :one
-SELECT id, organization_id, name, description, created_at, updated_at, deleted_at FROM projects 
+SELECT id, name, description, created_at, updated_at, deleted_at FROM projects 
 WHERE id = $1
 `
 
@@ -49,7 +47,6 @@ func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, er
 	var i Project
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
@@ -59,14 +56,13 @@ func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, er
 	return i, err
 }
 
-const listProjectsByOrganization = `-- name: ListProjectsByOrganization :many
-SELECT id, organization_id, name, description, created_at, updated_at, deleted_at FROM projects 
-WHERE organization_id = $1 
+const listProjects = `-- name: ListProjects :many
+SELECT id, name, description, created_at, updated_at, deleted_at FROM projects 
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListProjectsByOrganization(ctx context.Context, organizationID uuid.UUID) ([]Project, error) {
-	rows, err := q.db.Query(ctx, listProjectsByOrganization, organizationID)
+func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
+	rows, err := q.db.Query(ctx, listProjects)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +72,6 @@ func (q *Queries) ListProjectsByOrganization(ctx context.Context, organizationID
 		var i Project
 		if err := rows.Scan(
 			&i.ID,
-			&i.OrganizationID,
 			&i.Name,
 			&i.Description,
 			&i.CreatedAt,
@@ -108,7 +103,7 @@ const updateProject = `-- name: UpdateProject :one
 UPDATE projects 
 SET name = $2 , description = $3 , updated_at = now()
 WHERE id = $1
-RETURNING id, organization_id, name, description, created_at, updated_at, deleted_at
+RETURNING id, name, description, created_at, updated_at, deleted_at
 `
 
 type UpdateProjectParams struct {
@@ -122,7 +117,6 @@ func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (P
 	var i Project
 	err := row.Scan(
 		&i.ID,
-		&i.OrganizationID,
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
