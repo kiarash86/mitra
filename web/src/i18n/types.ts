@@ -77,7 +77,7 @@ export interface Dictionary {
   };
   nav: {
     dashboard: string;
-    organization: string;
+    team: string;
     projects: string;
     chat: string;
     notifications: string;
@@ -112,21 +112,10 @@ export interface Dictionary {
     recentProjectsEmpty: string;
     statusBreakdownTitle: string;
     statusBreakdownEmpty: string;
-    noOrgTitle: string;
-    noOrgDescription: string;
-  };
-  organizations: {
-    tabOverview: string;
-    tabMembers: string;
-    overviewNameLabel: string;
-    overviewSlugLabel: string;
-    overviewCreatedLabel: string;
-    overviewMembersLabel: string;
-    viewMembersCta: string;
   };
   members: {
     title: string;
-    subtitle: (orgName: string) => string;
+    subtitle: string;
     addButton: string;
     tableName: string;
     tableEmail: string;
