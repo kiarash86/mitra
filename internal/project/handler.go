@@ -40,11 +40,10 @@ type addProjectMemberRequest struct {
 	Role   string `json:"role" binding:"required,min=2,max=50"`
 }
 type projectResponse struct {
-	ID             string    `json:"id"`
-	OrganizationID string    `json:"organization_id"`
-	Name           string    `json:"name"`
-	Description    string    `json:"description,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type projectMemberResponse struct {
@@ -56,12 +55,6 @@ type projectMemberResponse struct {
 }
 
 func (h *Handler) Create(c *gin.Context) {
-
-	organizationID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organizatinID type"})
-		return
-	}
 
 	var req createProjectRequest
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
@@ -75,9 +68,9 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	isAdminOrOwner, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, organizationID, uuid.UUID(userID))
+	isAdminOrOwner, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(userID))
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
 
@@ -88,9 +81,8 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	project, err := h.queries.CreateProject(c.Request.Context(), sqlc.CreateProjectParams{
-		OrganizationID: organizationID,
-		Name:           req.Name,
-		Description:    convert.StringToText(req.Description),
+		Name:        req.Name,
+		Description: convert.StringToText(req.Description),
 	})
 
 	if err != nil {
@@ -110,48 +102,34 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, projectResponse{
-		ID:             project.ID.String(),
-		OrganizationID: project.OrganizationID.String(),
-		Name:           project.Name,
-		Description:    convert.TextToString(project.Description),
-		CreatedAt:      project.CreatedAt,
+		ID:          project.ID.String(),
+		Name:        project.Name,
+		Description: convert.TextToString(project.Description),
+		CreatedAt:   project.CreatedAt,
 	})
 
 }
 
-func (h *Handler) ListByOrganization(c *gin.Context) {
-	organizationID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid organizatinID type"})
-		return
-	}
-	userID, ok := middleware.CurrentUserID(c)
+func (h *Handler) List(c *gin.Context) {
+	_, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
 	}
 
-	isMemberOfOrganization, err := rbac.IsOrganizationMember(c.Request.Context(), h.queries, organizationID, uuid.UUID(userID))
-
+	list, err := h.queries.ListProjects(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "couldnt check your role"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list projects"})
 		return
 	}
-	if !isMemberOfOrganization {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
-		return
-	}
-
-	list, err := h.queries.ListProjectsByOrganization(c.Request.Context(), organizationID)
 
 	projects := make([]projectResponse, 0, len(list))
 	for _, project := range list {
 		projects = append(projects, projectResponse{
-			ID:             project.ID.String(),
-			OrganizationID: project.OrganizationID.String(),
-			Name:           project.Name,
-			Description:    project.Description.String,
-			CreatedAt:      project.CreatedAt,
+			ID:          project.ID.String(),
+			Name:        project.Name,
+			Description: project.Description.String,
+			CreatedAt:   project.CreatedAt,
 		})
 	}
 
@@ -166,7 +144,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	userID, ok := middleware.CurrentUserID(c)
+	_, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
@@ -178,17 +156,6 @@ func (h *Handler) GetByID(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-
-	isMemberOfOrganization, err := rbac.IsOrganizationMember(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
-
-	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "couldnt check your role"})
-		return
-	}
-	if !isMemberOfOrganization {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
 		return
 	}
 
@@ -231,13 +198,15 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(userID))
+	if err != nil
+	 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
-	if !isOrgAdmin && !isProjectAdminOwner {
-		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+	if !isAdmin && !isProjectAdminOwner {
+		c.JSON(http.S
+			tatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
 		return
 	}
 
@@ -252,11 +221,10 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, projectResponse{
-		ID:             updatedProject.ID.String(),
-		OrganizationID: updatedProject.OrganizationID.String(),
-		Name:           updatedProject.Name,
-		Description:    convert.TextToString(updatedProject.Description),
-		CreatedAt:      updatedProject.CreatedAt})
+		ID:          updatedProject.ID.String(),
+		Name:        updatedProject.Name,
+		Description: convert.TextToString(updatedProject.Description),
+		CreatedAt:   updatedProject.CreatedAt})
 
 }
 
@@ -287,13 +255,15 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(userID))
+	if err != nil
+	 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
-	if !isOrgAdmin && !isProjectAdminOwner {
-		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+	if !isAdmin && !isProjectAdminOwner {
+		c.JSON(http.S
+			tatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
 		return
 	}
 
@@ -312,30 +282,19 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
-	userID, ok := middleware.CurrentUserID(c)
+	_, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 		return
 	}
 
-	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	_, err = h.queries.GetProjectByID(c.Request.Context(), projectID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "project wasnt there"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-
-	isMemberOfOrganization, err := rbac.IsOrganizationMember(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
-
-	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "couldnt check your role"})
-		return
-	}
-	if !isMemberOfOrganization {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not member of this organization"})
 		return
 	}
 
@@ -396,13 +355,15 @@ func (h *Handler) AddMember(c *gin.Context) {
 		return
 	}
 
-	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(userID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(userID))
+	if err != nil
+	 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
-	if !isOrgAdmin && !isProjectAdminOwner {
-		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+	if !isAdmin && !isProjectAdminOwner {
+		c.JSON(http.S
+			tatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
 		return
 	}
 
@@ -442,7 +403,7 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	_, err = h.queries.GetProjectByID(c.Request.Context(), projectID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
@@ -458,13 +419,15 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	isOrgAdmin, err := rbac.IsOrganizationOwnerOrAdmin(c.Request.Context(), h.queries, project.OrganizationID, uuid.UUID(requesterID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your organization role"})
+	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(requesterID))
+	if err != nil
+	 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
-	if !isOrgAdmin && !isProjectAdminOwner {
-		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or an organization owner/admin can do this"})
+	if !isAdmin && !isProjectAdminOwner {
+		c.JSON(http.S
+			tatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
 		return
 	}
 	if targetID == uuid.UUID(requesterID) {
