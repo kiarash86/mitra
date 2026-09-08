@@ -17,27 +17,18 @@ services:
       timeout: 5s
       retries: 5
 
-  migrate:
-    image: migrate/migrate:v4.18.1
-    container_name: mitra-migrate
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./internal/db/migrations:/migrations
-    entrypoint: [ "migrate", "-path", "/migrations", "-database", "postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable", "up" ]
-
   api:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_ORG_SLUG: ${ORG_SLUG}
+        GIT_COMMIT: ${GIT_COMMIT:-dev}
     container_name: mitra-api
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     env_file:
       - .env
     environment:
@@ -50,20 +41,6 @@ services:
       JWT_REFRESH_TOKEN_TTL: 720h
     ports:
       - "8080:8080"
-
-  web:
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ""
-        VITE_ORG_SLUG: ${ORG_SLUG}
-    container_name: mitra-web
-    restart: unless-stopped
-    depends_on:
-      - api
-    ports:
-      - "3000:80"
 
 volumes:
   mitra_postgres_data:

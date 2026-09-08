@@ -1,6 +1,7 @@
 .git
-web
 .env
 .env.example
 *.md
 docker-compose.yaml
+web/node_modules
+web/dist

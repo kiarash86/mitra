@@ -27,6 +27,7 @@ This is a Phase 1 / MVP snapshot — see [Known Limitations](#known-limitations-
   - [Local Setup](#local-setup)
     - [Option A — Docker (all services)](#option-a--docker-all-services)
     - [Option B — Manual (Backend)](#option-b--manual-backend)
+      - [Frontend is embedded](#frontend-is-embedded)
     - [Manual (Frontend)](#manual-frontend)
   - [API (Currently Implemented)](#api-currently-implemented)
     - [Health](#health)
@@ -86,9 +87,8 @@ Redis and NATS/JetStream have been removed from the stack for now. Details and t
 
 ```
 mitra/
-├── cmd/
-│   ├── api/            # HTTP server entrypoint (routes, wiring) — main.go
-│   └── seed/           # One-time seed: creates the organization + owner account
+├── main.go             # Single entrypoint — delegates to cmd.Execute()
+├── cmd/                # Cobra CLI: `mitra serve` (API server), `mitra migrate` (up/down/steps/force/version), `mitra seed`
 ├── internal/
 │   ├── auth/           # Login, change-password, JWT issuing/parsing, password hashing
 │   ├── organization/   # Organization + organization-member handlers
@@ -100,12 +100,13 @@ mitra/
 │   ├── config/         # Env loading (caarlos0/env + godotenv)
 │   ├── convert/        # Shared helpers (e.g. flexible date parsing)
 │   └── db/
-│       ├── migrations/ # golang-migrate SQL migrations (001–007)
+│       ├── migrations/ # golang-migrate SQL migrations (001–007), embedded into the binary
+│       ├── migrator/    # golang-migrate wrapper used by both `mitra serve` (auto-migrate) and `mitra migrate`
 │       ├── queries/    # Hand-written SQL used by sqlc
 │       └── sqlc/       # Generated, type-safe Go from sqlc.yaml
-├── web/                # React + TypeScript frontend (see Frontend Overview)
-├── docker-compose.yaml # postgres + migrate + api + web
-├── Dockerfile          # Builds cmd/api only (cmd/seed is not containerized)
+├── web/                # React + TypeScript frontend (see Frontend Overview) + embed.go, which embeds web/dist into the mitra binary
+├── docker-compose.yaml # postgres + api (builds the frontend and embeds it; no separate web service/port)
+├── Dockerfile          # Multi-stage: builds web/dist, then embeds it into the single `mitra` binary (serve/migrate/seed all included)
 ├── sqlc.yaml
 ├── MITRA.md            # Full architecture proposal & phased roadmap (Persian)
 ├── README.md / README.fa.md
@@ -117,32 +118,32 @@ mitra/
 ## Prerequisites
 
 - Docker + Docker Compose — for the all-in-one setup, or just to run PostgreSQL locally
-- Go 1.27+ — needed for the manual (non-Docker) backend setup, **and** for the one-time seed step even when running everything else via Docker (`cmd/seed` isn't built into the Docker image)
-- Node.js 20+ — only needed for the manual (non-Docker) frontend setup
-- [golang-migrate CLI](https://github.com/golang-migrate/migrate#installation) — only needed for the manual backend setup
+- Go 1.27+ — only needed for the manual (non-Docker) backend setup; migrations and seeding are both subcommands of the same `mitra` binary now, so there's nothing extra to install for them
+- Node.js 20+ — needed for frontend dev (`npm run dev`), and at least once for any local (non-Docker) `go run . serve`/`go build`, since it embeds `web/dist` (see [Frontend is embedded](#frontend-is-embedded))
 
 ---
 
 ## Environment Variables
 
-All variables live in `.env` (copy from `.env.example`). The `api` and `seed` binaries both read this file via `internal/config`.
+All variables live in `.env` (copy from `.env.example`). Every `mitra` subcommand (`serve`, `migrate`, `seed`) reads this file via `internal/config`.
 
 | Variable                | Used by      | Description                                                                 |
 | ------------------------ | ------------ | ----------------------------------------------------------------------------- |
-| `APP_ENV`                | api          | `development`, `production`, or `test` — controls Gin's mode                  |
-| `APP_PORT`               | api          | Port the API listens on (default `8080`)                                      |
-| `DATABASE_URL`           | api, seed    | Full Postgres connection string; takes priority when set                      |
-| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` / `DB_SSLMODE` | api, docker-compose | Used to build the connection string / to configure the `postgres` container |
-| `JWT_SECRET`             | api          | **Required** — the API refuses to start if this is empty                      |
-| `JWT_ACCESS_TOKEN_TTL`   | api          | Access token lifetime (e.g. `15m`)                                            |
-| `JWT_REFRESH_TOKEN_TTL`  | api          | Refresh token lifetime (e.g. `720h`) — issued today, but there's no `/auth/refresh` route yet to redeem it |
+| `APP_ENV`                | serve        | `development`, `production`, or `test` — controls Gin's mode                  |
+| `APP_PORT`               | serve        | Port the API listens on (default `8080`)                                      |
+| `DATABASE_URL`           | serve, migrate, seed | Full Postgres connection string; takes priority when set              |
+| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` / `DB_SSLMODE` | serve, migrate, seed, docker-compose | Used to build the connection string / to configure the `postgres` container |
+| `AUTO_MIGRATE`           | serve        | Default `true` — `mitra serve` applies pending migrations itself on startup before accepting requests. Set to `false` to manage migrations only via `mitra migrate` |
+| `JWT_SECRET`             | serve        | **Required** — the API refuses to start if this is empty                      |
+| `JWT_ACCESS_TOKEN_TTL`   | serve        | Access token lifetime (e.g. `15m`)                                            |
+| `JWT_REFRESH_TOKEN_TTL`  | serve        | Refresh token lifetime (e.g. `720h`) — issued today, but there's no `/auth/refresh` route yet to redeem it |
 | `ORG_NAME`               | seed         | Display name of the single organization created on first run                  |
 | `ORG_SLUG`               | seed, web build | Organization slug; also passed as `VITE_ORG_SLUG` to the frontend build     |
 | `OWNER_EMAIL`            | seed         | Login email for the seeded owner account                                      |
 | `OWNER_NAME`             | seed         | Full name for the seeded owner account                                        |
 | `OWNER_PASSWORD`         | seed         | Initial password for the seeded owner account — change it after first login   |
 
-> `seed` fails fast if `OWNER_EMAIL`, `OWNER_NAME`, or `OWNER_PASSWORD` are empty. It's a no-op (prints a message and exits 0) if an organization already exists, so it's safe to re-run.
+> `mitra seed` fails fast if `OWNER_EMAIL`, `OWNER_NAME`, or `OWNER_PASSWORD` are empty. It's a no-op (prints a message and exits 0) if an organization already exists, so it's safe to re-run.
 
 ---
 
@@ -160,18 +161,17 @@ cp .env.example .env
 docker compose up --build
 ```
 
-This starts everything: `postgres` → migrations run automatically via the `migrate` service → `api` on `http://localhost:8080` → `web` on `http://localhost:3000`.
+This starts everything: `postgres` → `api` runs pending migrations itself on startup (see `AUTO_MIGRATE`), builds the frontend, and serves both the API and the UI from `http://localhost:8080`.
 
-> `web`'s `VITE_API_URL` build arg is empty by default in `docker-compose.yaml`, so the frontend falls back to `http://localhost:8080` for the API at build time. If you're deploying `api` and `web` on different hosts, set `VITE_API_URL` accordingly before building.
+> The frontend is embedded into the `mitra` binary at build time (see `web/embed.go`) and served by the same process that serves the API — there's no separate frontend container or port anymore. `web/Dockerfile` and `web/nginx.conf` still exist for the rare case you'd want to host the frontend standalone (e.g. behind a CDN), but the default Docker flow above doesn't use them.
 
-**Seed the first organization and owner account** (one-time, required before you can log in — there's no `docker-compose` service for this yet, so it's run locally against the Dockerized Postgres):
+**Seed the first organization and owner account** (one-time, required before you can log in). Since `seed` is just a subcommand of the same binary as `api`, run it against the running container — no separate `go` install needed:
 
 ```bash
-export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
-go run ./cmd/seed
+docker compose run --rm api ./mitra seed
 ```
 
-This reads `ORG_NAME`, `ORG_SLUG`, `OWNER_EMAIL`, `OWNER_NAME`, and `OWNER_PASSWORD` from `.env` and creates the organization plus its owner.
+This reads `ORG_NAME`, `ORG_SLUG`, `OWNER_EMAIL`, `OWNER_NAME`, and `OWNER_PASSWORD` from `.env` and creates the organization plus its owner. Every value can also be passed as a flag instead (`--org-name`, `--org-slug`, `--owner-email`, `--owner-name`, `--owner-password`), which takes priority over the env var when given — handy for scripting/CI without touching `.env`. Prefer the env var for the password where you can, since flag values are visible in shell history and `ps`.
 
 ### Option B — Manual (Backend)
 
@@ -185,17 +185,29 @@ cp .env.example .env
 
 # 3. Run migrations
 export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
-migrate -database "$DATABASE_URL" -path internal/db/migrations up
+go run . migrate up
 
 # 4. Seed the first organization and owner account (one-time, required before you can log in)
-go run ./cmd/seed
+go run . seed
 
-# 5. Run the server
-go run ./cmd/api
-# health check: curl http://localhost:8080/health
+# 5. Build the frontend — required at least once, since `go run . serve`
+# embeds whatever is currently in web/dist (see "Frontend is embedded" below)
+cd web && npm install && npm run build && cd ..
+
+# 6. Run the server
+go run . serve
+# UI: http://localhost:8080  ·  health check: curl http://localhost:8080/health
 ```
 
+> `go run . migrate up` is optional here — by default `mitra serve` (step 6) applies pending migrations itself on startup. Run it explicitly if you'd rather control migrations separately (set `AUTO_MIGRATE=false` in that case). Other migration subcommands: `go run . migrate down`, `migrate steps <n>`, `migrate force <version>`, `migrate version`.
+
+#### Frontend is embedded
+
+`web/embed.go` embeds `web/dist` into the `mitra` binary via `go:embed`, and `mitra serve` serves it directly — that's how `docker compose up` gives you both API and UI on one port. This has one consequence for local (non-Docker) development: **`web/dist` has to contain a real build before `go build`/`go run` in this module serves real UI files.** `web/dist` is git-ignored (only a `.gitkeep` placeholder is tracked), so on a fresh clone the package still compiles fine, it just has nothing real to serve until you run step 5 above. Re-run `npm run build` any time you change the frontend and want `go run . serve` to reflect it — there's no live-reload here, that's what `npm run dev` below is for.
+
 ### Manual (Frontend)
+
+For active frontend development, run Vite's dev server instead of rebuilding on every change:
 
 ```bash
 cd web
@@ -203,7 +215,7 @@ npm install
 npm run dev
 ```
 
-By default the frontend talks to `http://localhost:8080`. Set `VITE_API_URL` in `web/.env` to point elsewhere, and `VITE_ORG_SLUG` to match `ORG_SLUG` from the backend `.env`.
+This proxies `/api` to `http://localhost:8080` (see `vite.config.ts`) and gives you hot reload — it doesn't touch `web/dist` or the embedded build. Set `VITE_ORG_SLUG` in `web/.env` to match `ORG_SLUG` from the backend `.env` if it's not the default.
 
 ---
 
@@ -285,7 +297,7 @@ None of these have a corresponding Go handler yet — see [Known Limitations](#k
 
 ## Frontend Overview
 
-React 19 + TypeScript app in `web/`, built with Vite and styled with Tailwind CSS 4.
+React 19 + TypeScript app in `web/`, built with Vite and styled with Tailwind CSS 4. In production it's embedded into the `mitra` Go binary and served by the same process as the API (see [Frontend is embedded](#frontend-is-embedded)) — there's no separate frontend server/container to run.
 
 - **Routing** (`src/router.tsx`): auth pages (`login`, forced password change), dashboard, project list/detail with a task board, task detail, organization members/settings, profile, chat, and notifications. `components/guards/RouteGuards.tsx` gates routes on auth state; `components/organizations/OrgGate.tsx` gates on organization membership.
 - **State** (`src/stores/`): one Zustand store per domain — `auth`, `organization`, `project`, `task`, `notification`, `toast`, `ui`.
@@ -316,7 +328,7 @@ Roles are free-form `VARCHAR` values (no DB-level enum), but the app treats thes
 
 - **No `/auth/refresh` endpoint yet** — the frontend's axios client already has retry logic wired up to call it on a 401, but the backend doesn't implement this route yet, so an expired access token currently just logs the user out and requires a fresh login.
 - **No self-serve registration or organization creation** — by design for now; see the note under [Organizations](#organizations-requires-authorization-bearer).
-- **Seeding isn't containerized** — `cmd/seed` has to be run with `go run` (locally or in CI), even in the Docker setup; there's no `docker-compose` service for it yet.
+- **Seeding requires a manual step** — `mitra seed` has to be run once explicitly (via `docker compose run --rm api ./mitra seed` or `go run . seed`); it's not triggered automatically since it depends on org/owner env vars you set per-deployment.
 - **Frontend/backend gap** — the web app already has UI, stores, and API calls for a user profile endpoint, notifications, and a WebSocket connection (chat), none of which exist on the backend yet. See the table in [API](#api-currently-implemented).
 - **Presence/Realtime/Push notifications** are not yet implemented (Phase 2).
 - **No Redis/NATS** — removed for cost control in Phase 1; rationale and temporary in-process workaround documented in `MITRA.md`.
