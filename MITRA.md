@@ -30,6 +30,8 @@
 
 > **بازبینی (ساختار سازمانی):** مفهوم Team به‌طور کامل از سیستم حذف شد. سلسله‌مراتب حالا `Organization → Project` است، نه `Organization → Team → Project`. عضویت و نقش کاربر مستقیماً در سطح Organization و سطح Project تعریف می‌شود؛ تخصیص تسک هم فقط به کاربر انجام می‌شود (نه به تیم).
 
+> **بازبینی (حذف Organization):** مفهوم `Organization` هم به‌طور کامل از سیستم حذف شد. پروژه از اول تک‌مستأجری بوده و قرار نیست این تغییر کند، پس سلسله‌مراتب دیگر `Organization → Project` نیست — پروژه‌ها مستقیم زیر دیپلوی هستند: `Project`. نقشی که قبلاً روی `OrganizationMember.role` بود، حالا مستقیم روی `users.role` نگه داشته می‌شود (نقش سراسری کاربر). بخش‌های ۵، ۷ و ۸ که در ادامه از `organization_id`/`Organization` به‌عنوان بخشی از مدل داده یاد می‌کنند، توضیح تاریخی همان تصمیم اولیه‌اند؛ وضعیت فعلی و پیاده‌شده همین بازبینی دوم است.
+
 ### چرا فرانت‌اند به دو کدبیس تقسیم شد
 - **Flutter برای موبایل (Android + iOS):** جایی که Flutter واقعاً بالغه — کامپایل native، عملکرد بالا، UI یکسان روی هر دو پلتفرم موبایل با یک کدبیس.
 - **React برای وب و دسکتاپ:** به‌جای سه کدبیس جدا، همون اپ React یک‌بار نوشته می‌شود؛ در مرورگر به‌عنوان وب سرو می‌شود و داخل **Tauri** بسته‌بندی می‌شود برای دسکتاپ. این یعنی در عمل فقط **دو کدبیس فرانت** وجود دارد، نه سه تا.
@@ -42,7 +44,7 @@
 | ماژول | توضیح |
 |---|---|
 | Auth Module | ورود، مدیریت سشن، refresh token |
-| Organization Module | مدیریت سازمان، اعضا |
+| Users Module | مدیریت کاربرها (بدون سطح Organization — تک‌مستأجری) |
 | Project & Task Module | پروژه‌ها، تسک‌ها، وضعیت‌ها، تخصیص |
 | Chat Module | چت داخلی (متصل به WebSocket) |
 | Notification Module | اعلان‌های Push و درون‌برنامه‌ای |
@@ -78,7 +80,7 @@
 | Migration | **golang-migrate / Atlas / using docker(curent) not sure which way**  | مدیریت schema مستقل از sqlc |
 | صف پیام | ~~NATS + JetStream~~ → **حذف شد (فاز ۱)** | هزینه‌ی زیرساخت؛ جایگزین موقت: in-process fan-out (پایین را ببینید) |
 | Realtime | **gorilla/websocket** | کنترل کامل روی connection lifecycle، بدون overhead فریم‌ورک آماده |
-| RBAC | **پیاده‌سازی دستی، scope-aware** | به‌جای یک مدل تخت Organization-level، نقش‌ها روی دو سطح تعریف می‌شوند: Organization / Project — تا یک کاربر بتواند Admin یک پروژه و Member پروژه‌ی دیگر باشد، یا permission سطح پروژه override شود |
+| RBAC | **پیاده‌سازی دستی، scope-aware** | نقش‌ها روی دو سطح تعریف می‌شوند: نقش سراسری کاربر (`users.role`) / Project — تا یک کاربر بتواند Admin یک پروژه و Member پروژه‌ی دیگر باشد، یا permission سطح پروژه override شود. سطح Organization (که در نسخه‌ی اول این پروپوزال بود) بعداً حذف شد — به بازبینی بالا نگاه کنید |
 
 ### زیرساخت
 - **دیتابیس اصلی:** PostgreSQL
@@ -180,8 +182,8 @@ ActivityLog (append-only، شبه event-sourcing)
 ## ۸. فازبندی پروژه (Roadmap)
 
 ### فاز ۱ — MVP هسته‌ای
-- [ ] Auth (ثبت‌نام، ورود، مدیریت سازمان)
-- [ ] مدیریت اعضای سازمان
+- [ ] Auth (ورود، بدون ثبت‌نام خودکار — تک‌مستأجری)
+- [ ] مدیریت کاربرها (بدون سطح Organization)
 - [ ] مدیریت پروژه (CRUD)
 - [ ] مدیریت تسک (ایجاد، تخصیص، وضعیت)
 - [ ] کامنت روی تسک (REST، بدون realtime)
@@ -219,7 +221,7 @@ ActivityLog (append-only، شبه event-sourcing)
 | Migration | golang-migrate / Atlas |
 | Realtime | gorilla/websocket + in-process hub (بدون NATS، فاز ۱) |
 | صف پیام | حذف‌شده در فاز ۱ (کنترل هزینه) — کاندید بازگشت: NATS/JetStream |
-| RBAC | پیاده‌سازی دستی، scope-aware (org/project) |
+| RBAC | پیاده‌سازی دستی، scope-aware (نقش سراسری کاربر / project — بدون سطح Organization) |
 | Database | PostgreSQL |
 | Cache/Presence | حذف‌شده در فاز ۱ (کنترل هزینه) — in-memory داخل پروسه؛ کاندید بازگشت: Redis |
 | فایل/پیوست | S3-compatible Object Storage |

@@ -5,11 +5,11 @@
 
 # Mitra
 
-سامانه‌ی مدیریت و ارتباطات سازمانی — **پروژه‌محور**: یک سازمان پروژه دارد، پروژه‌ها عضو و تسک دارند، تسک‌ها به کاربر تخصیص داده می‌شوند.
+سامانه‌ی مدیریت کار و ارتباطات — **پروژه‌محور**: دیپلوی تک‌مستأجری است (بدون مفهوم سازمان/tenant)، پروژه‌ها عضو و تسک دارند، تسک‌ها به کاربر تخصیص داده می‌شوند.
 
 Backend: Go (Gin) · sqlc · PostgreSQL — Frontend: React + TypeScript (Vite)
 
-> **مدل تک‌سازمانی:** هیچ فرآیند ثبت‌نام خودکار یا «ساخت سازمان» وجود ندارد. تنها سازمان و اکانت owner اولیه‌اش با یک مرحله‌ی seed ساخته می‌شوند (بخش [راه‌اندازی محلی](#راه-اندازی-محلی) را ببینید)؛ از آن به بعد owner اعضا را از طریق API/UI اضافه می‌کند. فعلاً endpoint‌ای به اسم `/auth/register` وجود ندارد.
+> **مدل تک‌مستأجری:** هیچ فرآیند ثبت‌نام خودکار یا مفهوم چندمستأجری وجود ندارد — این اپ فقط برای یک دیپلوی ساخته شده. اکانت owner اولیه با یک مرحله‌ی seed ساخته می‌شود (بخش [راه‌اندازی محلی](#راه-اندازی-محلی) را ببینید)؛ از آن به بعد owner کاربرها را از طریق API/UI اضافه می‌کند. فعلاً endpoint‌ای به اسم `/auth/register` وجود ندارد.
 
 این یک snapshot از فاز ۱ / MVP است — برای چیزهایی که عمداً هنوز ساخته نشده‌اند به [محدودیت‌های شناخته‌شده](#محدودیت-های-شناخته-شده-فاز-۱) نگاه کن، و برای معماری کامل و roadmap به [`MITRA.md`](./MITRA.md).
 
@@ -32,7 +32,7 @@ Backend: Go (Gin) · sqlc · PostgreSQL — Frontend: React + TypeScript (Vite)
   - [API (فعلاً پیاده‌سازی‌شده)](#api-فعلاً-پیادهسازیشده)
     - [Health](#health)
     - [Auth](#auth)
-    - [Organizations *(نیازمند Authorization: Bearer)*](#organizations-نیازمند-authorization-bearer)
+    - [Users *(نیازمند Authorization: Bearer)*](#users-نیازمند-authorization-bearer)
     - [Projects](#projects)
     - [Tasks](#tasks)
     - [Comments](#comments)
@@ -48,11 +48,10 @@ Backend: Go (Gin) · sqlc · PostgreSQL — Frontend: React + TypeScript (Vite)
 ## ساختار سلسله‌مراتبی
 
 ```
-Organization
-  └── OrganizationMember (نقش: owner / admin / member / viewer)
+User (نقش سراسری: owner / admin / member / viewer)
 
 Project
-  ├── belongs to Organization
+  ├── مستقیم زیر دیپلوی است (تک‌مستأجری، بدون سطح Organization)
   ├── ProjectMember (نقش در سطح پروژه: owner / admin / member / viewer)
   └── Task
         ├── assigned to یک User (نه Team — این سیستم فاقد مفهوم Team است)
@@ -61,7 +60,7 @@ Project
         └── Comment
 ```
 
-> این پروژه عمداً بدون سطح «Team» طراحی شده؛ RBAC فقط در دو سطح `organization` و `project` تعریف می‌شود — یک کاربر می‌تواند در یک پروژه admin و در پروژه‌ی دیگر member ساده باشد.
+> این پروژه عمداً بدون سطح «Team» یا «Organization» طراحی شده؛ RBAC فقط در دو سطح `user` (سراسری) و `project` تعریف می‌شود — یک کاربر می‌تواند در یک پروژه admin و در پروژه‌ی دیگر member ساده باشد، مستقل از نقش سراسری‌اش.
 
 ---
 
@@ -91,11 +90,11 @@ mitra/
 ├── cmd/                # CLI با Cobra: `mitra serve` (سرور API)، `mitra migrate` (up/down/steps/force/version)، `mitra seed`
 ├── internal/
 │   ├── auth/           # login، change-password، صدور/پارس JWT، هش پسورد
-│   ├── organization/   # هندلرهای سازمان + عضو سازمان
+│   ├── users/          # دایرکتوری کاربرها (list/create/delete)، پروفایل (me/update-me)
 │   ├── project/        # CRUD پروژه + هندلرهای عضو پروژه
 │   ├── task/           # CRUD تسک، وضعیت، تخصیص
 │   ├── comment/        # کامنت روی تسک
-│   ├── rbac/           # چک نقش scope-aware (owner|admin در سطح organization/project)
+│   ├── rbac/           # چک نقش scope-aware (نقش سراسری کاربر / owner|admin در سطح project)
 │   ├── middleware/     # میدل‌ور auth (توکن Bearer → context کاربر)
 │   ├── config/         # لود env (caarlos0/env + godotenv)
 │   ├── convert/        # هلپرهای مشترک (مثلاً پارس تاریخ با چند فرمت)
@@ -137,13 +136,11 @@ mitra/
 | `JWT_SECRET` | serve | **الزامی** — اگه خالی باشه API اصلاً بالا نمی‌آد |
 | `JWT_ACCESS_TOKEN_TTL` | serve | طول عمر access token (مثلاً `15m`) |
 | `JWT_REFRESH_TOKEN_TTL` | serve | طول عمر refresh token (مثلاً `720h`) — امروز صادر می‌شه ولی هنوز endpoint ‌ی به اسم `/auth/refresh` برای استفاده ازش وجود نداره |
-| `ORG_NAME` | seed | نام نمایشی همون یک سازمانی که در اجرای اول ساخته می‌شه |
-| `ORG_SLUG` | seed, بیلد web | اسلاگ سازمان؛ به‌عنوان `VITE_ORG_SLUG` به بیلد فرانت‌اند هم پاس داده می‌شه |
 | `OWNER_EMAIL` | seed | ایمیل login برای اکانت owner سیدشده |
 | `OWNER_NAME` | seed | نام کامل اکانت owner سیدشده |
 | `OWNER_PASSWORD` | seed | پسورد اولیه‌ی اکانت owner سیدشده — بعد از اولین login عوضش کن |
 
-> اگه `OWNER_EMAIL`، `OWNER_NAME` یا `OWNER_PASSWORD` خالی باشن، `mitra seed` فوراً fail می‌کنه. اگه از قبل سازمانی وجود داشته باشه، فقط یک پیام چاپ می‌کنه و با کد ۰ خارج می‌شه (یعنی اجرای دوباره‌ش بی‌خطره).
+> اگه `OWNER_EMAIL`، `OWNER_NAME` یا `OWNER_PASSWORD` خالی باشن، `mitra seed` فوراً fail می‌کنه. اگه از قبل یوزری وجود داشته باشه، فقط یک پیام چاپ می‌کنه و با کد ۰ خارج می‌شه (یعنی اجرای دوباره‌ش بی‌خطره).
 
 ---
 
@@ -156,7 +153,7 @@ cp .env.example .env
 # JWT_SECRET الزامیه — اگه خالی بمونه، api اصلاً بالا نمی‌آد.
 # مقداری که توی .env.example هست فقط برای localhost مناسبه؛
 # برای هر چیزی فراتر از اون، حتماً با یه مقدار random واقعی جایگزینش کن.
-# ORG_NAME / ORG_SLUG / OWNER_EMAIL / OWNER_NAME / OWNER_PASSWORD توسط مرحله‌ی seed زیر استفاده می‌شن.
+# OWNER_EMAIL / OWNER_NAME / OWNER_PASSWORD توسط مرحله‌ی seed زیر استفاده می‌شن.
 
 docker compose up --build
 ```
@@ -165,13 +162,13 @@ docker compose up --build
 
 > فرانت‌اند موقع build داخل باینری `mitra` embed می‌شه (`web/embed.go` رو ببین) و توسط همون پروسه‌ای که API رو سرو می‌کنه، سرو می‌شه — دیگه کانتینر یا پورت جدایی برای فرانت وجود نداره. `web/Dockerfile` و `web/nginx.conf` هنوز موجودن برای حالت نادری که بخوای فرانت رو مستقل هاست کنی (مثلاً پشت CDN)، ولی روند پیش‌فرض Docker بالا ازشون استفاده نمی‌کنه.
 
-**سازمان و اکانت owner اولیه رو seed کن** (یک‌بار، قبل از هر login لازمه). چون `seed` فقط یه ساب‌کامند از همون باینری `api`ست، مستقیم روی کانتینر در حال اجرا بزنش — نیازی به نصب Go هم نداری:
+**اکانت owner اولیه رو seed کن** (یک‌بار، قبل از هر login لازمه). چون `seed` فقط یه ساب‌کامند از همون باینری `api`ست، مستقیم روی کانتینر در حال اجرا بزنش — نیازی به نصب Go هم نداری:
 
 ```bash
 docker compose run --rm api ./mitra seed
 ```
 
-این دستور `ORG_NAME`، `ORG_SLUG`، `OWNER_EMAIL`، `OWNER_NAME` و `OWNER_PASSWORD` رو از `.env` می‌خونه و سازمان به‌همراه owner‌ش رو می‌سازه. هر کدوم از این مقادیر رو می‌تونی به‌جای env، به‌صورت flag هم پاس بدی (`--org-name`، `--org-slug`، `--owner-email`، `--owner-name`، `--owner-password`) که در صورت دادن، اولویت با flag ـه — برای اسکریپت‌نویسی/CI بدون دست‌زدن به `.env` مفیده. برای پسورد ترجیحاً همون env رو استفاده کن، چون مقدار flag تو تاریخچه‌ی shell و `ps` قابل دیدنه.
+این دستور `OWNER_EMAIL`، `OWNER_NAME` و `OWNER_PASSWORD` رو از `.env` می‌خونه و اکانت owner رو می‌سازه. هر کدوم از این مقادیر رو می‌تونی به‌جای env، به‌صورت flag هم پاس بدی (`--owner-email`، `--owner-name`، `--owner-password`) که در صورت دادن، اولویت با flag ـه — برای اسکریپت‌نویسی/CI بدون دست‌زدن به `.env` مفیده. برای پسورد ترجیحاً همون env رو استفاده کن، چون مقدار flag تو تاریخچه‌ی shell و `ps` قابل دیدنه.
 
 ### روش ب — دستی (Backend)
 
@@ -187,7 +184,7 @@ cp .env.example .env
 export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
 go run . migrate up
 
-# ۴. سازمان و اکانت owner اولیه رو seed کن (یک‌بار، قبل از هر login لازمه)
+# ۴. اکانت owner اولیه رو seed کن (یک‌بار، قبل از هر login لازمه)
 go run . seed
 
 # ۵. فرانت‌اند رو build کن — حداقل یه‌بار لازمه، چون `go run . serve`
@@ -215,7 +212,7 @@ npm install
 npm run dev
 ```
 
-این کار `/api` رو به `http://localhost:8080` پروکسی می‌کنه (طبق `vite.config.ts`) و hot reload هم داری — دست به `web/dist` یا build embedشده نمی‌زنه. اگه `VITE_ORG_SLUG` پیش‌فرض مناسبت نیست، تو `web/.env` مطابق `ORG_SLUG` بک‌اند تنظیمش کن.
+این کار `/api` رو به `http://localhost:8080` پروکسی می‌کنه (طبق `vite.config.ts`) و hot reload هم داری — دست به `web/dist` یا build embedشده نمی‌زنه.
 
 ---
 
@@ -234,23 +231,24 @@ npm run dev
 | POST | `/auth/login` | ورود |
 | POST | `/auth/change-password` | تغییر پسورد خودم *(نیازمند Authorization: Bearer)* |
 
-> `/auth/register` وجود نداره. اکانت‌ها یا با مرحله‌ی seed ساخته می‌شن (owner اول) یا توسط ادمین سازمان/پروژه به‌عنوان عضو اضافه می‌شن — بخش [Organizations](#organizations-نیازمند-authorization-bearer) رو ببین. پاسخ login فیلد `must_change_password` رو هم برمی‌گردونه؛ فرانت‌اند کاربرهایی که این فلگ روشنه رو قبل از ورود به صفحه‌ی تغییر اجباری پسورد می‌فرسته.
+> `/auth/register` وجود نداره. اکانت‌ها یا با مرحله‌ی seed ساخته می‌شن (owner اول) یا توسط owner/admin به‌عنوان کاربر جدید اضافه می‌شن — بخش [Users](#users-نیازمند-authorization-bearer) رو ببین. پاسخ login فیلد `must_change_password` رو هم برمی‌گردونه؛ فرانت‌اند کاربرهایی که این فلگ روشنه رو قبل از ورود به صفحه‌ی تغییر اجباری پسورد می‌فرسته.
 
-### Organizations *(نیازمند Authorization: Bearer)*
+### Users *(نیازمند Authorization: Bearer)*
 | Method | مسیر | توضیح |
 |---|---|---|
-| GET | `/organizations/by-slug/:slug` | گرفتن سازمان با slug |
-| GET | `/organizations/:id/members` | لیست اعضا |
-| POST | `/organizations/:id/members` | افزودن عضو |
-| DELETE | `/organizations/:id/members/:user_id` | حذف عضو |
-| POST | `/organizations/:id/projects` | ساخت پروژه در سازمان |
-| GET | `/organizations/:id/projects` | لیست پروژه‌های سازمان |
+| GET | `/users/me` | گرفتن پروفایل خودم |
+| PATCH | `/users/me` | ویرایش پروفایل خودم (`full_name`) |
+| GET | `/users` | لیست همه‌ی کاربرها |
+| POST | `/users` | ساخت کاربر جدید (فقط owner/admin؛ فقط owner می‌تونه owner دیگه بسازه) — یک `temp_password` برمی‌گردونه |
+| DELETE | `/users/:id` | حذف (soft) یک کاربر (فقط owner/admin؛ نمی‌تونی خودتو حذف کنی؛ فقط owner می‌تونه owner دیگه رو حذف کنه) |
 
-> `POST /organizations` وجود نداره — ساخت خودکار سازمان حذف شده؛ تنها سازمان توسط مرحله‌ی seed ساخته می‌شه.
+> منبع جدایی به اسم «سازمان» وجود نداره — دیپلوی تک‌مستأجریه، پس این لیست دقیقاً همه‌ی اکانت‌های کاربریه. نقش سراسری (`owner`/`admin`/`member`/`viewer`) مستقیم روی `users.role` نگه داشته می‌شه.
 
 ### Projects
 | Method | مسیر | توضیح |
 |---|---|---|
+| POST | `/projects` | ساخت پروژه (فقط owner/admin) |
+| GET | `/projects` | لیست همه‌ی پروژه‌ها |
 | GET | `/projects/:id` | جزئیات پروژه |
 | PUT | `/projects/:id` | ویرایش پروژه |
 | DELETE | `/projects/:id` | حذف (soft) پروژه |
@@ -284,8 +282,6 @@ npm run dev
 
 | Method | مسیر | استفاده‌شده در (فرانت‌اند) |
 |---|---|---|
-| GET | `/v1/users/me` | `api/users.ts` (صفحه‌ی پروفایل) |
-| PATCH | `/v1/users/me` | `api/users.ts` (صفحه‌ی پروفایل) |
 | GET | `/v1/notifications` | `api/notifications.ts`، استور notifications |
 | PATCH | `/v1/notifications/:id/read` | `api/notifications.ts` |
 | PATCH | `/v1/notifications/read-all` | `api/notifications.ts` |
@@ -299,13 +295,13 @@ npm run dev
 
 اپ React 19 + TypeScript توی `web/`، با Vite بیلد می‌شه و استایلش با Tailwind CSS 4 هست. تو محیط production، داخل باینری `mitra` embed می‌شه و توسط همون پروسه‌ای که API رو سرو می‌کنه، سرو می‌شه (بخش «فرانت‌اند embed می‌شه» رو ببین) — دیگه سرور/کانتینر جدایی برای فرانت اجرا نمی‌کنی.
 
-- **Routing** (`src/router.tsx`): صفحات auth (`login`، تغییر اجباری پسورد)، داشبورد، لیست/جزئیات پروژه با یک تسک‌بورد، جزئیات تسک، اعضا/تنظیمات سازمان، پروفایل، چت، و اعلان‌ها. `components/guards/RouteGuards.tsx` روی وضعیت auth گیت می‌ذاره؛ `components/organizations/OrgGate.tsx` روی عضویت در سازمان.
-- **State** (`src/stores/`): یک store مجزای Zustand به‌ازای هر دامنه — `auth`، `organization`، `project`، `task`، `notification`، `toast`، `ui`.
-- **لایه‌ی API** (`src/api/`): یک axios client سبک (`client.ts`) به‌همراه یک ماژول برای هر منبع (`auth`، `organizations`، `projects`، `tasks`، `comments`، `notifications`، `users`). ماژول‌های `notifications` و `users` endpoint‌هایی رو صدا می‌زنن که بک‌اند هنوز نداره (جدول بالا رو ببین).
+- **Routing** (`src/router.tsx`): صفحات auth (`login`، تغییر اجباری پسورد)، داشبورد، لیست/جزئیات پروژه با یک تسک‌بورد، جزئیات تسک، تیم (دایرکتوری/مدیریت کاربرها، روی `/team`)، پروفایل، چت، و اعلان‌ها. `components/guards/RouteGuards.tsx` روی وضعیت auth گیت می‌ذاره.
+- **State** (`src/stores/`): یک store مجزای Zustand به‌ازای هر دامنه — `auth`، `users`، `project`، `task`، `notification`، `toast`، `ui`.
+- **لایه‌ی API** (`src/api/`): یک axios client سبک (`client.ts`) به‌همراه یک ماژول برای هر منبع (`auth`، `projects`، `tasks`، `comments`، `notifications`، `users`). ماژول `notifications` endpoint‌هایی رو صدا می‌زنه که بک‌اند هنوز نداره (جدول بالا رو ببین).
 - **Realtime**: `hooks/use-websocket.ts` یک hook عمومیِ WebSocket با reconnect خودکاره که توی صفحه‌ی چت استفاده می‌شه — بک‌اند هنوز سرور WebSocket نداره (فاز ۲، به [`MITRA.md`](./MITRA.md) نگاه کن).
 - **i18n**: `src/i18n/` دیکشنری فارسی (`fa.ts`) و انگلیسی (`en.ts`) رو پشت یک context در React ارائه می‌ده، با کامپوننت‌های هماهنگ با RTL (`DirectionalIcon`، `LanguageSwitcher`) و فونت متغیر Vazirmatn برای فارسی.
 - **UI kit**: یک کتابخانه‌ی کامپوننت محلی و کوچیک توی `src/components/ui/` (Button، Card، Modal، Toaster، DonutChart، StatCard و...) به‌جای یک design system بیرونی.
-- **Permissions**: `src/lib/permissions.ts` همون چک‌های owner-or-admin بک‌اند (در سطح org/project) رو توی فرانت تکرار می‌کنه تا UI اکشن‌هایی که API ردشون می‌کنه رو مخفی نگه داره.
+- **Permissions**: `src/lib/permissions.ts` همون چک‌های owner-or-admin بک‌اند (نقش سراسری و سطح project — `canManageUsers`، `canRemoveUser`، `canManageProject`) رو توی فرانت تکرار می‌کنه تا UI اکشن‌هایی که API ردشون می‌کنه رو مخفی نگه داره.
 
 ---
 
@@ -313,22 +309,22 @@ npm run dev
 
 نقش‌ها مقادیر آزاد `VARCHAR` هستن (بدون enum در سطح دیتابیس)، ولی اپ این‌ها رو به‌عنوان مجموعه‌ی معتبر در هر دو سطح در نظر می‌گیره:
 
-| نقش | سطح Organization | سطح Project |
+| نقش | سطح سراسری (`users.role`) | سطح Project |
 |---|---|---|
 | `owner` | کنترل کامل؛ یک‌بار توسط مرحله‌ی seed تعیین می‌شه | کنترل کامل روی همون پروژه |
-| `admin` | مدیریت اعضا/پروژه‌ها، در اکثر چک‌ها معادل owner | مدیریت اعضا/تسک‌ها، در اکثر چک‌ها معادل project owner |
-| `member` | نقش پیش‌فرض هر کسی که به سازمان اضافه بشه | نقش پیش‌فرض هر کسی که به یک پروژه اضافه بشه |
+| `admin` | مدیریت کاربرها/پروژه‌ها، در اکثر چک‌ها معادل owner | مدیریت اعضا/تسک‌ها، در اکثر چک‌ها معادل project owner |
+| `member` | نقش پیش‌فرض هر کسی که توسط یک owner/admin اضافه بشه | نقش پیش‌فرض هر کسی که به یک پروژه اضافه بشه |
 | `viewer` | فقط‌خواندنی (طبق دیاگرام سلسله‌مراتب) | فقط‌خواندنی (طبق دیاگرام سلسله‌مراتب) |
 
-`internal/rbac/policy.go` چک‌هایی رو که واقعاً امروز اجرا می‌شن پیاده کرده: `IsOrganizationMember`، `IsOrganizationOwnerOrAdmin`، `IsProjectMember`، `IsProjectOwnerOrAdmin` — یعنی اکثر اکشن‌های نوشتنی فعلاً فقط نیاز به «عضو بودن» یا «owner/admin بودن» دارن، نه یک مدل permission کاملاً دانه‌ریز (اون فاز ۳ توی `MITRA.md` هست).
+`internal/rbac/policy.go` چک‌هایی رو که واقعاً امروز اجرا می‌شن پیاده کرده: `GetUserRole`/`IsOwnerOrAdmin` (نقش سراسری، مستقیم از `users.role` خونده می‌شه — دیگه جدول عضویت جدایی وجود نداره)، `IsProjectMember`، `IsProjectOwnerOrAdmin` — یعنی اکثر اکشن‌های نوشتنی فعلاً فقط نیاز به «عضو بودن» یا «owner/admin بودن» دارن، نه یک مدل permission کاملاً دانه‌ریز (اون فاز ۳ توی `MITRA.md` هست).
 
 ---
 
 ## محدودیت‌های شناخته‌شده (فاز ۱)
 
 - **هنوز endpoint مربوط به `/auth/refresh` وجود نداره** — سمت فرانت‌اند، axios client از قبل منطق retry برای صدا زدنش روی خطای ۴۰۱ رو داره، ولی بک‌اند این مسیر رو پیاده نکرده؛ یعنی الان با منقضی‌شدن access token، کاربر مستقیم logout می‌شه و باید دوباره login کنه.
-- **بدون ثبت‌نام یا ساخت سازمان به‌صورت خودکار** — فعلاً عمدیه؛ توضیح در بخش [Organizations](#organizations-نیازمند-authorization-bearer).
-- **مرحله‌ی seed نیاز به اجرای دستی داره** — `mitra seed` باید یک‌بار صریح اجرا بشه (با `docker compose run --rm api ./mitra seed` یا `go run . seed`)؛ خودکار trigger نمی‌شه چون به env varهای org/owner که هر دیپلوی متفاوته وابسته‌ست.
+- **بدون ثبت‌نام خودکار** — فعلاً عمدیه، چون دیپلوی تک‌مستأجریه؛ توضیح در بخش [Users](#users-نیازمند-authorization-bearer).
+- **مرحله‌ی seed نیاز به اجرای دستی داره** — `mitra seed` باید یک‌بار صریح اجرا بشه (با `docker compose run --rm api ./mitra seed` یا `go run . seed`)؛ خودکار trigger نمی‌شه چون به env varهای `OWNER_*` که هر دیپلوی متفاوته وابسته‌ست.
 - **فاصله‌ی فرانت‌اند/بک‌اند** — فرانت از قبل UI، store و API call برای پروفایل کاربر، اعلان‌ها و یک اتصال WebSocket (چت) داره که هیچ‌کدوم هنوز روی بک‌اند وجود ندارن. جدول توی بخش [API](#api-فعلا-پیاده-سازی-شده) رو ببین.
 - **Presence/Realtime/Push notification** هنوز پیاده نشده‌اند (فاز ۲).
 - **بدون Redis/NATS** — برای کنترل هزینه در فاز ۱ حذف شده؛ دلیل و جایگزین موقت درون‌پروسه‌ای در `MITRA.md`.
@@ -340,7 +336,7 @@ npm run dev
 
 خلاصه‌شده از [`MITRA.md`](./MITRA.md) (جزئیات و دلیل کامل همون‌جاست):
 
-1. **فاز ۱ — MVP هسته‌ای** *(فعلی)*: auth، CRUD سازمان/پروژه/تسک، کامنت تسک، داشبورد ساده، RBAC scope-aware. ✅ اکثراً تمومه، خلاءهاش بالا لیست شده.
+1. **فاز ۱ — MVP هسته‌ای** *(فعلی)*: auth، CRUD کاربر/پروژه/تسک، کامنت تسک، داشبورد ساده، RBAC scope-aware. ✅ اکثراً تمومه، خلاءهاش بالا لیست شده.
 2. **فاز ۲ — ارتباطات و Realtime**: چت داخلی روی WebSocket (hub درون‌پروسه، بدون NATS)، push notification (صدا زدن مستقیم FCM، بدون صف)، آپدیت زنده‌ی وضعیت تسک‌ها.
 3. **فاز ۳ — دسترسی پیشرفته و گزارش‌گیری**: RBAC کامل با override سطح پروژه، گزارش‌گیری مبتنی بر activity log، فیلتر و جستجوی پیشرفته.
 4. **فاز ۴ — دسکتاپ و بهینه‌سازی**: بسته‌بندی دسکتاپ با Tauri روی همون کدبیس React، offline mode کامل برای اپ موبایل Flutter (برنامه‌ریزی‌شده)، بازبینی برگشت Redis/NATS در صورت نیاز واقعی به مقیاس افقی.

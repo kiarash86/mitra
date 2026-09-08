@@ -5,11 +5,11 @@
 
 # Mitra
 
-A **project-centric** organizational management and communication system: an organization has projects, projects have members and tasks, and tasks are assigned to users.
+A **project-centric** work management and communication system: the deployment is single-tenant (no organizations/tenants), projects have members and tasks, and tasks are assigned to users.
 
 Backend: Go (Gin) · sqlc · PostgreSQL — Frontend: React + TypeScript (Vite)
 
-> **Single-organization model:** there is no self-serve sign-up or "create organization" flow. The one organization and its first owner account are created by a seed step (see [Local Setup](#local-setup)); from there the owner adds members through the API/UI. There is currently no `/auth/register` endpoint.
+> **Single-tenant model:** there is no self-serve sign-up or multi-tenant concept — the app was built for one deployment only. The first owner account is created by a seed step (see [Local Setup](#local-setup)); from there the owner adds users through the API/UI. There is currently no `/auth/register` endpoint.
 
 This is a Phase 1 / MVP snapshot — see [Known Limitations](#known-limitations-phase-1) for what's intentionally not built yet, and [`MITRA.md`](./MITRA.md) for the full architecture proposal and roadmap (in Persian).
 
@@ -32,7 +32,7 @@ This is a Phase 1 / MVP snapshot — see [Known Limitations](#known-limitations-
   - [API (Currently Implemented)](#api-currently-implemented)
     - [Health](#health)
     - [Auth](#auth)
-    - [Organizations *(requires Authorization: Bearer)*](#organizations-requires-authorization-bearer)
+    - [Users *(requires Authorization: Bearer)*](#users-requires-authorization-bearer)
     - [Projects](#projects)
     - [Tasks](#tasks)
     - [Comments](#comments)
@@ -48,11 +48,10 @@ This is a Phase 1 / MVP snapshot — see [Known Limitations](#known-limitations-
 ## Hierarchical Structure
 
 ```
-Organization
-  └── OrganizationMember (role: owner / admin / member / viewer)
+User (global role: owner / admin / member / viewer)
 
 Project
-  ├── belongs to Organization
+  ├── belongs directly to the deployment (single-tenant, no Organization level)
   ├── ProjectMember (project-level role: owner / admin / member / viewer)
   └── Task
         ├── assigned to a single User (not a Team — this system has no Team concept)
@@ -61,7 +60,7 @@ Project
         └── Comment
 ```
 
-> This project is intentionally designed without a "Team" level; RBAC is defined only at the `organization` and `project` levels — a user can be an admin on one project and a plain member on another.
+> This project is intentionally designed without a "Team" or "Organization" level; RBAC is defined only at the `user` (global) and `project` levels — a user can be an admin on one project and a plain member on another, on top of their global role.
 
 ---
 
@@ -91,11 +90,11 @@ mitra/
 ├── cmd/                # Cobra CLI: `mitra serve` (API server), `mitra migrate` (up/down/steps/force/version), `mitra seed`
 ├── internal/
 │   ├── auth/           # Login, change-password, JWT issuing/parsing, password hashing
-│   ├── organization/   # Organization + organization-member handlers
+│   ├── users/          # User directory (list/create/delete), profile (me/update-me)
 │   ├── project/        # Project CRUD + project-member handlers
 │   ├── task/           # Task CRUD, status, assignment
 │   ├── comment/        # Task comments
-│   ├── rbac/           # Scope-aware role checks (organization/project owner|admin)
+│   ├── rbac/           # Scope-aware role checks (global user role / project owner|admin)
 │   ├── middleware/     # Auth middleware (Bearer token → user context)
 │   ├── config/         # Env loading (caarlos0/env + godotenv)
 │   ├── convert/        # Shared helpers (e.g. flexible date parsing)
@@ -137,13 +136,11 @@ All variables live in `.env` (copy from `.env.example`). Every `mitra` subcomman
 | `JWT_SECRET`             | serve        | **Required** — the API refuses to start if this is empty                      |
 | `JWT_ACCESS_TOKEN_TTL`   | serve        | Access token lifetime (e.g. `15m`)                                            |
 | `JWT_REFRESH_TOKEN_TTL`  | serve        | Refresh token lifetime (e.g. `720h`) — issued today, but there's no `/auth/refresh` route yet to redeem it |
-| `ORG_NAME`               | seed         | Display name of the single organization created on first run                  |
-| `ORG_SLUG`               | seed, web build | Organization slug; also passed as `VITE_ORG_SLUG` to the frontend build     |
 | `OWNER_EMAIL`            | seed         | Login email for the seeded owner account                                      |
 | `OWNER_NAME`             | seed         | Full name for the seeded owner account                                        |
 | `OWNER_PASSWORD`         | seed         | Initial password for the seeded owner account — change it after first login   |
 
-> `mitra seed` fails fast if `OWNER_EMAIL`, `OWNER_NAME`, or `OWNER_PASSWORD` are empty. It's a no-op (prints a message and exits 0) if an organization already exists, so it's safe to re-run.
+> `mitra seed` fails fast if `OWNER_EMAIL`, `OWNER_NAME`, or `OWNER_PASSWORD` are empty. It's a no-op (prints a message and exits 0) if a user already exists, so it's safe to re-run.
 
 ---
 
@@ -156,7 +153,7 @@ cp .env.example .env
 # JWT_SECRET is required — the api will fail to start if it's empty.
 # The placeholder value in .env.example works for localhost only;
 # replace it with a real random secret for anything beyond that.
-# ORG_NAME / ORG_SLUG / OWNER_EMAIL / OWNER_NAME / OWNER_PASSWORD are used by the seed step below.
+# OWNER_EMAIL / OWNER_NAME / OWNER_PASSWORD are used by the seed step below.
 
 docker compose up --build
 ```
@@ -165,13 +162,13 @@ This starts everything: `postgres` → `api` runs pending migrations itself on s
 
 > The frontend is embedded into the `mitra` binary at build time (see `web/embed.go`) and served by the same process that serves the API — there's no separate frontend container or port anymore. `web/Dockerfile` and `web/nginx.conf` still exist for the rare case you'd want to host the frontend standalone (e.g. behind a CDN), but the default Docker flow above doesn't use them.
 
-**Seed the first organization and owner account** (one-time, required before you can log in). Since `seed` is just a subcommand of the same binary as `api`, run it against the running container — no separate `go` install needed:
+**Seed the owner account** (one-time, required before you can log in). Since `seed` is just a subcommand of the same binary as `api`, run it against the running container — no separate `go` install needed:
 
 ```bash
 docker compose run --rm api ./mitra seed
 ```
 
-This reads `ORG_NAME`, `ORG_SLUG`, `OWNER_EMAIL`, `OWNER_NAME`, and `OWNER_PASSWORD` from `.env` and creates the organization plus its owner. Every value can also be passed as a flag instead (`--org-name`, `--org-slug`, `--owner-email`, `--owner-name`, `--owner-password`), which takes priority over the env var when given — handy for scripting/CI without touching `.env`. Prefer the env var for the password where you can, since flag values are visible in shell history and `ps`.
+This reads `OWNER_EMAIL`, `OWNER_NAME`, and `OWNER_PASSWORD` from `.env` and creates the owner account. Every value can also be passed as a flag instead (`--owner-email`, `--owner-name`, `--owner-password`), which takes priority over the env var when given — handy for scripting/CI without touching `.env`. Prefer the env var for the password where you can, since flag values are visible in shell history and `ps`.
 
 ### Option B — Manual (Backend)
 
@@ -187,7 +184,7 @@ cp .env.example .env
 export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
 go run . migrate up
 
-# 4. Seed the first organization and owner account (one-time, required before you can log in)
+# 4. Seed the owner account (one-time, required before you can log in)
 go run . seed
 
 # 5. Build the frontend — required at least once, since `go run . serve`
@@ -215,7 +212,7 @@ npm install
 npm run dev
 ```
 
-This proxies `/api` to `http://localhost:8080` (see `vite.config.ts`) and gives you hot reload — it doesn't touch `web/dist` or the embedded build. Set `VITE_ORG_SLUG` in `web/.env` to match `ORG_SLUG` from the backend `.env` if it's not the default.
+This proxies `/api` to `http://localhost:8080` (see `vite.config.ts`) and gives you hot reload — it doesn't touch `web/dist` or the embedded build.
 
 ---
 
@@ -234,23 +231,24 @@ Base path: `/api/v1` (except `/health`, which is unversioned)
 | POST   | `/auth/login`            | Login                                                    |
 | POST   | `/auth/change-password`  | Change own password *(requires Authorization: Bearer)*  |
 
-> There is no `/auth/register`. Accounts are created either by the seed step (the first owner) or by an org/project admin adding a member — see [Organizations](#organizations-requires-authorization-bearer). Login responses include `must_change_password`; the frontend routes users with that flag set to a forced password-change screen before letting them in.
+> There is no `/auth/register`. Accounts are created either by the seed step (the first owner) or by an owner/admin adding a user — see [Users](#users-requires-authorization-bearer). Login responses include `must_change_password`; the frontend routes users with that flag set to a forced password-change screen before letting them in.
 
-### Organizations *(requires Authorization: Bearer)*
-| Method | Path                                   | Description                    |
-| ------ | --------------------------------------- | ------------------------------- |
-| GET    | `/organizations/by-slug/:slug`         | Get organization by slug       |
-| GET    | `/organizations/:id/members`           | List members                    |
-| POST   | `/organizations/:id/members`           | Add member                      |
-| DELETE | `/organizations/:id/members/:user_id`  | Remove member                   |
-| POST   | `/organizations/:id/projects`          | Create project in organization |
-| GET    | `/organizations/:id/projects`          | List organization's projects    |
+### Users *(requires Authorization: Bearer)*
+| Method | Path         | Description                                                   |
+| ------ | ------------ | --------------------------------------------------------------- |
+| GET    | `/users/me`  | Get your own profile                                            |
+| PATCH  | `/users/me`  | Update your own profile (`full_name`)                           |
+| GET    | `/users`     | List all users                                                  |
+| POST   | `/users`     | Create a user (owner/admin only; only an owner can create another owner) — returns a `temp_password` |
+| DELETE | `/users/:id` | Remove (soft-delete) a user (owner/admin only; can't remove yourself; only an owner can remove another owner) |
 
-> No `POST /organizations` — self-serve organization creation was removed; the single organization is created by the seed step instead.
+> There's no separate "organization" resource — the deployment is single-tenant, so this list is simply every user account. Global role (`owner`/`admin`/`member`/`viewer`) lives directly on `users.role`.
 
 ### Projects
 | Method | Path                              | Description             |
 | ------ | ---------------------------------- | ------------------------ |
+| POST   | `/projects`                       | Create project (owner/admin only) |
+| GET    | `/projects`                       | List all projects        |
 | GET    | `/projects/:id`                   | Project details          |
 | PUT    | `/projects/:id`                   | Edit project              |
 | DELETE | `/projects/:id`                   | Delete (soft) project     |
@@ -284,8 +282,6 @@ The web client already has API/store/hook code for these — they currently 404 
 
 | Method | Path                          | Used by (frontend)                          |
 | ------ | ------------------------------ | ---------------------------------------------- |
-| GET    | `/v1/users/me`                | `api/users.ts` (profile page)                  |
-| PATCH  | `/v1/users/me`                | `api/users.ts` (profile page)                  |
 | GET    | `/v1/notifications`           | `api/notifications.ts`, notifications store    |
 | PATCH  | `/v1/notifications/:id/read`  | `api/notifications.ts`                         |
 | PATCH  | `/v1/notifications/read-all`  | `api/notifications.ts`                         |
@@ -299,13 +295,13 @@ None of these have a corresponding Go handler yet — see [Known Limitations](#k
 
 React 19 + TypeScript app in `web/`, built with Vite and styled with Tailwind CSS 4. In production it's embedded into the `mitra` Go binary and served by the same process as the API (see [Frontend is embedded](#frontend-is-embedded)) — there's no separate frontend server/container to run.
 
-- **Routing** (`src/router.tsx`): auth pages (`login`, forced password change), dashboard, project list/detail with a task board, task detail, organization members/settings, profile, chat, and notifications. `components/guards/RouteGuards.tsx` gates routes on auth state; `components/organizations/OrgGate.tsx` gates on organization membership.
-- **State** (`src/stores/`): one Zustand store per domain — `auth`, `organization`, `project`, `task`, `notification`, `toast`, `ui`.
-- **API layer** (`src/api/`): a thin axios client (`client.ts`) plus one module per resource (`auth`, `organizations`, `projects`, `tasks`, `comments`, `notifications`, `users`). The `notifications` and `users` modules call endpoints the backend doesn't expose yet (see the table above).
+- **Routing** (`src/router.tsx`): auth pages (`login`, forced password change), dashboard, project list/detail with a task board, task detail, team (user directory/management, at `/team`), profile, chat, and notifications. `components/guards/RouteGuards.tsx` gates routes on auth state.
+- **State** (`src/stores/`): one Zustand store per domain — `auth`, `users`, `project`, `task`, `notification`, `toast`, `ui`.
+- **API layer** (`src/api/`): a thin axios client (`client.ts`) plus one module per resource (`auth`, `projects`, `tasks`, `comments`, `notifications`, `users`). The `notifications` module calls endpoints the backend doesn't expose yet (see the table above).
 - **Realtime**: `hooks/use-websocket.ts` is a generic reconnecting-WebSocket hook, used by the chat page — there's no WebSocket server on the backend yet (Phase 2, see [`MITRA.md`](./MITRA.md)).
 - **i18n**: `src/i18n/` provides Persian (`fa.ts`) and English (`en.ts`) dictionaries behind a React context, with RTL-aware components (`DirectionalIcon`, `LanguageSwitcher`) and a Vazirmatn variable font for Persian.
 - **UI kit**: a small local component library in `src/components/ui/` (Button, Card, Modal, Toaster, DonutChart, StatCard, etc.) rather than a third-party design system.
-- **Permissions**: `src/lib/permissions.ts` mirrors the backend's org/project owner-or-admin checks so the UI can hide actions the API would reject.
+- **Permissions**: `src/lib/permissions.ts` mirrors the backend's global-role/project owner-or-admin checks (`canManageUsers`, `canRemoveUser`, `canManageProject`) so the UI can hide actions the API would reject.
 
 ---
 
@@ -313,22 +309,22 @@ React 19 + TypeScript app in `web/`, built with Vite and styled with Tailwind CS
 
 Roles are free-form `VARCHAR` values (no DB-level enum), but the app treats these as the valid set at both scopes:
 
-| Role     | Organization scope                          | Project scope                          |
+| Role     | Global scope (`users.role`)                 | Project scope                          |
 | -------- | --------------------------------------------- | ----------------------------------------- |
 | `owner`  | Full control; set once by the seed step       | Full control over that project            |
-| `admin`  | Manage members/projects, same as owner for most checks | Manage members/tasks, same as project owner for most checks |
-| `member` | Default role for anyone added to the organization | Default role for anyone added to a project |
+| `admin`  | Manage users/projects, same as owner for most checks | Manage members/tasks, same as project owner for most checks |
+| `member` | Default role for anyone added by an owner/admin | Default role for anyone added to a project |
 | `viewer` | Read-only (per the hierarchy diagram)         | Read-only (per the hierarchy diagram)     |
 
-`internal/rbac/policy.go` implements the checks actually enforced today: `IsOrganizationMember`, `IsOrganizationOwnerOrAdmin`, `IsProjectMember`, `IsProjectOwnerOrAdmin` — i.e. most write actions currently just require "member" or "owner/admin", not a fully granular per-permission model yet (that's Phase 3 in `MITRA.md`).
+`internal/rbac/policy.go` implements the checks actually enforced today: `GetUserRole`/`IsOwnerOrAdmin` (global role, read straight off `users.role` — no separate membership table anymore), `IsProjectMember`, `IsProjectOwnerOrAdmin` — i.e. most write actions currently just require "member" or "owner/admin", not a fully granular per-permission model yet (that's Phase 3 in `MITRA.md`).
 
 ---
 
 ## Known Limitations (Phase 1)
 
 - **No `/auth/refresh` endpoint yet** — the frontend's axios client already has retry logic wired up to call it on a 401, but the backend doesn't implement this route yet, so an expired access token currently just logs the user out and requires a fresh login.
-- **No self-serve registration or organization creation** — by design for now; see the note under [Organizations](#organizations-requires-authorization-bearer).
-- **Seeding requires a manual step** — `mitra seed` has to be run once explicitly (via `docker compose run --rm api ./mitra seed` or `go run . seed`); it's not triggered automatically since it depends on org/owner env vars you set per-deployment.
+- **No self-serve registration** — by design for now, single-tenant deployment; see the note under [Users](#users-requires-authorization-bearer).
+- **Seeding requires a manual step** — `mitra seed` has to be run once explicitly (via `docker compose run --rm api ./mitra seed` or `go run . seed`); it's not triggered automatically since it depends on the `OWNER_*` env vars you set per-deployment.
 - **Frontend/backend gap** — the web app already has UI, stores, and API calls for a user profile endpoint, notifications, and a WebSocket connection (chat), none of which exist on the backend yet. See the table in [API](#api-currently-implemented).
 - **Presence/Realtime/Push notifications** are not yet implemented (Phase 2).
 - **No Redis/NATS** — removed for cost control in Phase 1; rationale and temporary in-process workaround documented in `MITRA.md`.
@@ -340,7 +336,7 @@ Roles are free-form `VARCHAR` values (no DB-level enum), but the app treats thes
 
 Summarized from [`MITRA.md`](./MITRA.md) (full detail and rationale there, in Persian):
 
-1. **Phase 1 — Core MVP** *(current)*: auth, organization/project/task CRUD, task comments, basic dashboard, scope-aware RBAC. ✅ mostly done, gaps listed above.
+1. **Phase 1 — Core MVP** *(current)*: auth, user/project/task CRUD, task comments, basic dashboard, scope-aware RBAC. ✅ mostly done, gaps listed above.
 2. **Phase 2 — Communication & Realtime**: in-app chat over WebSocket (in-process hub, no NATS yet), push notifications (direct FCM calls, no queue yet), live task-status updates.
 3. **Phase 3 — Advanced access & reporting**: full RBAC with project-level overrides, activity-log-based reporting, advanced filtering/search.
 4. **Phase 4 — Desktop & optimization**: Tauri desktop packaging around the same React codebase, full offline mode for the (planned) Flutter mobile app, revisit bringing Redis/NATS back if horizontal scaling is actually needed.
