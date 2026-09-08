@@ -4,10 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { FolderKanban, Plus } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
-import { useOrganizationStore } from "../../stores/organization";
 import { useProjectStore } from "../../stores/project";
 import { toast } from "../../stores/toast";
-import { canManageOrg } from "../../lib/permissions";
+import { canManageUsers } from "../../lib/permissions";
 import { PageHeader } from "../../components/ui/PageHeader";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -17,22 +16,17 @@ import { Modal } from "../../components/ui/Modal";
 import { Alert } from "../../components/ui/Alert";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Skeleton } from "../../components/ui/Skeleton";
-import { OrgGate } from "../../components/organizations/OrgGate";
 
 export default function ProjectListPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
-  const currentOrg = useOrganizationStore((s) => s.currentOrg);
-  const members = useOrganizationStore((s) => s.members);
-  const fetchOrgMembers = useOrganizationStore((s) => s.fetchMembers);
   const projects = useProjectStore((s) => s.projects);
   const isLoading = useProjectStore((s) => s.isLoading);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
   const createProject = useProjectStore((s) => s.createProject);
 
-  const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
-  const canManage = canManageOrg(myRole);
+  const canManage = canManageUsers(currentUser?.role);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [name, setName] = useState("");
@@ -41,22 +35,15 @@ export default function ProjectListPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (currentOrg) {
-      fetchProjects(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
-      fetchOrgMembers(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
-    }
-  }, [currentOrg, fetchProjects, fetchOrgMembers, t]);
-
-  if (!currentOrg) {
-    return <OrgGate />;
-  }
+    fetchProjects().catch(() => toast.error(t.common.errorGeneric));
+  }, [fetchProjects, t]);
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
     try {
-      const project = await createProject(currentOrg.id, name.trim(), description.trim() || undefined);
+      const project = await createProject(name.trim(), description.trim() || undefined);
       setModalOpen(false);
       setName("");
       setDescription("");

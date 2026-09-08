@@ -6,7 +6,7 @@ import { useI18n } from "../../i18n";
 import { useProjectStore } from "../../stores/project";
 import { useTaskStore } from "../../stores/task";
 import { toast } from "../../stores/toast";
-import { useOrgMemberDirectory } from "../../hooks/use-org-member-directory";
+import { useUserDirectory } from "../../hooks/use-user-directory";
 import { TASK_STATUS_ORDER, TASK_PRIORITY_ORDER } from "../../lib/constants";
 import { formatShortDate, isOverdue } from "../../lib/formatters";
 import { cn } from "../../lib/cn";
@@ -38,7 +38,7 @@ export default function TaskBoardPage() {
   const createTask = useTaskStore((s) => s.createTask);
   const updateTaskStatus = useTaskStore((s) => s.updateTaskStatus);
 
-  const { byUserId } = useOrgMemberDirectory(currentProject?.organization_id);
+  const { byUserId } = useUserDirectory();
   const assignableMembers = projectMembers
     .map((pm) => byUserId[pm.user_id])
     .filter((m): m is NonNullable<typeof m> => !!m);
@@ -229,7 +229,7 @@ export default function TaskBoardPage() {
           >
             <option value="">{t.tasks.unassigned}</option>
             {assignableMembers.map((m) => (
-              <option key={m.user_id} value={m.user_id}>
+              <option key={m.id} value={m.id}>
                 {m.full_name}
               </option>
             ))}

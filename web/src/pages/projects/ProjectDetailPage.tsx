@@ -6,9 +6,9 @@ import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
 import { useProjectStore } from "../../stores/project";
 import { toast } from "../../stores/toast";
-import { useOrgMemberDirectory } from "../../hooks/use-org-member-directory";
+import { useUserDirectory } from "../../hooks/use-user-directory";
 import { PROJECT_ROLES } from "../../lib/constants";
-import { canManageProject, canManageOrg } from "../../lib/permissions";
+import { canManageProject, canManageUsers } from "../../lib/permissions";
 import type { ProjectMember } from "../../types/project";
 import type { ProjectRoleName } from "../../types/rbac";
 import { PageHeader } from "../../components/ui/PageHeader";
@@ -42,18 +42,17 @@ export default function ProjectDetailPage() {
   const updateProject = useProjectStore((s) => s.updateProject);
   const deleteProject = useProjectStore((s) => s.deleteProject);
 
-  const { members: orgMembers, byUserId } = useOrgMemberDirectory(currentProject?.organization_id);
+  const { members: allUsers, byUserId } = useUserDirectory();
 
-  // Org members not already on this project — the only people it makes
-  // sense to offer in the "add member" picker.
+  // Users not already on this project — the only people it makes sense to
+  // offer in the "add member" picker.
   const projectMemberIds = new Set(members.map((m) => m.user_id));
-  const availableOrgMembers = orgMembers.filter((m) => !projectMemberIds.has(m.user_id));
+  const availableOrgMembers = allUsers.filter((u) => !projectMemberIds.has(u.id));
 
   const myRole = members.find((m) => m.user_id === currentUser?.id)?.role;
-  const myOrgRole = currentUser ? byUserId[currentUser.id]?.role : undefined;
   // Mirrors the backend: a project can be managed by its own owner/admin,
-  // OR by an org owner/admin even if they aren't an explicit project member.
-  const canManage = canManageProject(myRole) || canManageOrg(myOrgRole);
+  // OR by a global owner/admin even if they aren't an explicit project member.
+  const canManage = canManageProject(myRole) || canManageUsers(currentUser?.role);
 
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -95,7 +94,7 @@ export default function ProjectDetailPage() {
   };
 
   const openAdd = () => {
-    setUserId(availableOrgMembers[0]?.user_id ?? "");
+    setUserId(availableOrgMembers[0]?.id ?? "");
     setRole("member");
     setError("");
     setAddOpen(true);
@@ -278,7 +277,7 @@ export default function ProjectDetailPage() {
               onChange={(e) => setUserId(e.target.value)}
             >
               {availableOrgMembers.map((m) => (
-                <option key={m.user_id} value={m.user_id}>
+                <option key={m.id} value={m.id}>
                   {m.full_name} ({m.email})
                 </option>
               ))}

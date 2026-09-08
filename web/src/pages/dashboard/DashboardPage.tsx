@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FolderKanban, ListChecks, Clock, Users } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
-import { useOrganizationStore } from "../../stores/organization";
+import { useUsersStore } from "../../stores/users";
 import { useProjectStore } from "../../stores/project";
 import { toast } from "../../stores/toast";
 import { tasksApi } from "../../api/tasks";
@@ -16,16 +16,14 @@ import { StatCard } from "../../components/ui/StatCard";
 import { Card } from "../../components/ui/Card";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { DonutChart } from "../../components/ui/DonutChart";
-import { OrgGate } from "../../components/organizations/OrgGate";
 
 const DUE_SOON_WINDOW_DAYS = 3;
 
 export default function DashboardPage() {
   const { t, locale } = useI18n();
   const user = useAuthStore((s) => s.user);
-  const currentOrg = useOrganizationStore((s) => s.currentOrg);
-  const members = useOrganizationStore((s) => s.members);
-  const fetchOrgMembers = useOrganizationStore((s) => s.fetchMembers);
+  const users = useUsersStore((s) => s.users);
+  const fetchUsers = useUsersStore((s) => s.fetchUsers);
   const projects = useProjectStore((s) => s.projects);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
 
@@ -35,13 +33,12 @@ export default function DashboardPage() {
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
-    if (!currentOrg) return;
-    fetchOrgMembers(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
-    fetchProjects(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
-  }, [currentOrg, fetchOrgMembers, fetchProjects, t]);
+    fetchUsers().catch(() => toast.error(t.common.errorGeneric));
+    fetchProjects().catch(() => toast.error(t.common.errorGeneric));
+  }, [fetchUsers, fetchProjects, t]);
 
   useEffect(() => {
-    if (!currentOrg || projects.length === 0) return;
+    if (projects.length === 0) return;
     let cancelled = false;
     Promise.all(projects.map((p) => tasksApi.listByProject(p.id).catch(() => [] as Task[]))).then(
       (lists) => {
@@ -51,11 +48,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [currentOrg, projects]);
-
-  if (!currentOrg) {
-    return <OrgGate />;
-  }
+  }, [projects]);
 
   const tasksLoading = projects.length > 0 && allTasks === null;
   const effectiveTasks = projects.length === 0 ? [] : (allTasks ?? []);
@@ -102,7 +95,7 @@ export default function DashboardPage() {
         />
         <StatCard
           label={t.dashboard.statMembers}
-          value={formatNumber(members.length, locale)}
+          value={formatNumber(users.length, locale)}
           icon={<Users className="h-5 w-5" />}
           tone="moss"
         />

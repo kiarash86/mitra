@@ -7,7 +7,7 @@ import { useAuthStore } from "../../stores/auth";
 import { useProjectStore } from "../../stores/project";
 import { useTaskStore } from "../../stores/task";
 import { toast } from "../../stores/toast";
-import { useOrgMemberDirectory } from "../../hooks/use-org-member-directory";
+import { useUserDirectory } from "../../hooks/use-user-directory";
 import { commentsApi } from "../../api/comments";
 import { TASK_STATUS_ORDER, TASK_PRIORITY_ORDER } from "../../lib/constants";
 import { formatDate, formatRelativeTime } from "../../lib/formatters";
@@ -42,12 +42,11 @@ export default function TaskDetailPage() {
   const unassignTask = useTaskStore((s) => s.unassignTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
 
-  const currentProject = useProjectStore((s) => s.currentProject);
   const fetchProject = useProjectStore((s) => s.fetchProject);
   const projectMembers = useProjectStore((s) => s.members);
   const fetchProjectMembers = useProjectStore((s) => s.fetchMembers);
 
-  const { byUserId } = useOrgMemberDirectory(currentProject?.organization_id);
+  const { byUserId } = useUserDirectory();
   const assignableMembers = projectMembers
     .map((pm) => byUserId[pm.user_id])
     .filter((m): m is NonNullable<typeof m> => !!m);
@@ -289,7 +288,7 @@ export default function TaskDetailPage() {
               >
                 <option value="">{t.tasks.unassigned}</option>
                 {assignableMembers.map((m) => (
-                  <option key={m.user_id} value={m.user_id}>
+                  <option key={m.id} value={m.id}>
                     {m.full_name}
                   </option>
                 ))}

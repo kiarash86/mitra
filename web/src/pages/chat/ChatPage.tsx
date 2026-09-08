@@ -3,7 +3,6 @@ import type { FormEvent } from "react";
 import { Hash, Send, MessagesSquare } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
-import { useOrganizationStore } from "../../stores/organization";
 import { useProjectStore } from "../../stores/project";
 import { toast } from "../../stores/toast";
 import { formatTime } from "../../lib/formatters";
@@ -29,7 +28,6 @@ interface LocalMessage {
 export default function ChatPage() {
   const { t, locale } = useI18n();
   const currentUser = useAuthStore((s) => s.user);
-  const currentOrg = useOrganizationStore((s) => s.currentOrg);
   const projects = useProjectStore((s) => s.projects);
   const projectsLoading = useProjectStore((s) => s.isLoading);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
@@ -39,8 +37,8 @@ export default function ChatPage() {
   const [messagesByChannel, setMessagesByChannel] = useState<Record<string, LocalMessage[]>>({});
 
   useEffect(() => {
-    if (currentOrg) fetchProjects(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
-  }, [currentOrg, fetchProjects, t]);
+    fetchProjects().catch(() => toast.error(t.common.errorGeneric));
+  }, [fetchProjects, t]);
 
   const activeMessages = activeId ? (messagesByChannel[activeId] ?? []) : [];
   const activeProject = projects.find((p) => p.id === activeId);
