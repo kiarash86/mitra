@@ -13,8 +13,6 @@ import (
 )
 
 var (
-	seedOrgName       string
-	seedOrgSlug       string
 	seedOwnerEmail    string
 	seedOwnerName     string
 	seedOwnerPassword string
@@ -22,7 +20,7 @@ var (
 
 var seedCmd = &cobra.Command{
 	Use:   "seed",
-	Short: "Create the first organization and owner account",
+	Short: "Create the owner account",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runSeed()
@@ -42,8 +40,6 @@ func runSeed() error {
 		return fmt.Errorf("couldnt load config: %w", err)
 	}
 
-	orgName := firstNonEmpty(seedOrgName, cfg.OrgName)
-	orgSlug := firstNonEmpty(seedOrgSlug, cfg.OrgSlug)
 	ownerEmail := firstNonEmpty(seedOwnerEmail, cfg.OwnerEmail)
 	ownerName := firstNonEmpty(seedOwnerName, cfg.OwnerName)
 	ownerPassword := firstNonEmpty(seedOwnerPassword, cfg.OwnerPassword)
@@ -73,12 +69,12 @@ func runSeed() error {
 
 	queries := sqlc.New(pool)
 
-	exists, err := queries.AnyOrganizationExists(ctx)
+	exists, err := queries.AnyUserExists(ctx)
 	if err != nil {
-		return fmt.Errorf("couldnt check organization existense: %w", err)
+		return fmt.Errorf("couldnt check user existense: %w", err)
 	}
 	if exists {
-		fmt.Println("there is a organization already. bye! bye!")
+		fmt.Println("there is a user already. bye! bye!")
 		return nil
 	}
 
@@ -91,6 +87,7 @@ func runSeed() error {
 		Email:        ownerEmail,
 		PasswordHash: hashedPassword,
 		FullName:     ownerName,
+		Role:         "owner",
 	})
 	if err != nil {
 		return fmt.Errorf("couldnt create user: %w", err)
@@ -103,29 +100,11 @@ func runSeed() error {
 		return fmt.Errorf("trick to decieve program for must_change_password failed: %w", err)
 	}
 
-	org, err := queries.CreateOrganization(ctx, sqlc.CreateOrganizationParams{
-		Name: orgName,
-		Slug: orgSlug,
-	})
-	if err != nil {
-		return fmt.Errorf("couldnt create organization: %w", err)
-	}
-	if _, err := queries.AddOrganizationMember(ctx, sqlc.AddOrganizationMemberParams{
-		OrganizationID: org.ID,
-		UserID:         user.ID,
-		Role:           "owner",
-	}); err != nil {
-		return fmt.Errorf("couldnt add user to organization: %w", err)
-	}
-
-	fmt.Printf("organization with %q (slug:%s) created succesfully\n", org.Name, org.Slug)
 	fmt.Printf("owner account: %s -> password: %s\n", user.Email, ownerPassword)
 	return nil
 }
 
 func init() {
-	seedCmd.Flags().StringVar(&seedOrgName, "org-name", "", "organization name (defaults to ORG_NAME)")
-	seedCmd.Flags().StringVar(&seedOrgSlug, "org-slug", "", "organization slug (defaults to ORG_SLUG)")
 	seedCmd.Flags().StringVar(&seedOwnerEmail, "owner-email", "", "owner login email (defaults to OWNER_EMAIL)")
 	seedCmd.Flags().StringVar(&seedOwnerName, "owner-name", "", "owner full name (defaults to OWNER_NAME)")
 	seedCmd.Flags().StringVar(&seedOwnerPassword, "owner-password", "", "owner initial password (defaults to OWNER_PASSWORD)")
