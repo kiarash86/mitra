@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, FolderKanban, MessageSquare, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, FolderKanban, MessageSquare, Settings, LogOut } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useUiStore } from "../../stores/ui";
 import { useAuthStore } from "../../stores/auth";
@@ -10,7 +10,7 @@ import { Menu } from "../ui/Menu";
 
 const NAV_ITEMS = [
   { key: "dashboard", to: "/dashboard", icon: LayoutDashboard },
-  { key: "organization", to: "/organizations", icon: Building2 },
+  { key: "team", to: "/team", icon: Users },
   { key: "projects", to: "/projects", icon: FolderKanban },
   { key: "chat", to: "/chat", icon: MessageSquare },
 ] as const;

@@ -3,9 +3,8 @@ import { Outlet, useNavigation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { useI18n } from "../../i18n";
-import { useOrganizationStore } from "../../stores/organization";
+import { useAuthStore } from "../../stores/auth";
 import { toast } from "../../stores/toast";
-import { ORG_SLUG } from "../../lib/constants";
 
 /**
  * Layout route element for every authenticated page: sidebar + header
@@ -17,16 +16,14 @@ export function AppShell() {
   const navigation = useNavigation();
   const isNavigating = navigation.state !== "idle";
 
-  const currentOrg = useOrganizationStore((s) => s.currentOrg);
-  const fetchBySlug = useOrganizationStore((s) => s.fetchBySlug);
+  const hydrateUser = useAuthStore((s) => s.hydrateUser);
 
-  // There's no "list my organizations" endpoint — the app is single-tenant
-  // per deployment, so the one organization is looked up by a known slug
-  // as soon as the authenticated shell mounts (unless already persisted
-  // from a previous session).
+  // The login response doesn't include the user's role, so it's fetched
+  // once as soon as the authenticated shell mounts.
   useEffect(() => {
-    if (!currentOrg) fetchBySlug(ORG_SLUG).catch(() => toast.error(t.common.errorGeneric));
-  }, [currentOrg, fetchBySlug, t]);
+    hydrateUser().catch(() => toast.error(t.common.errorGeneric));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-paper-50">

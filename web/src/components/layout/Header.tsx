@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { PanelLeft, PanelLeftClose, Bell } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useUiStore } from "../../stores/ui";
-import { useOrganizationStore } from "../../stores/organization";
 import { useNotificationStore } from "../../stores/notification";
 import { toast } from "../../stores/toast";
 import { IconButton } from "../ui/IconButton";
@@ -15,7 +14,6 @@ export function Header() {
   const { t, locale } = useI18n();
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
-  const currentOrg = useOrganizationStore((s) => s.currentOrg);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const fetchNotifications = useNotificationStore((s) => s.fetchNotifications);
 
@@ -37,7 +35,6 @@ export function Header() {
           }
           onClick={toggleSidebar}
         />
-        {currentOrg && <span className="text-sm font-medium text-ink-700">{currentOrg.name}</span>}
       </div>
 
       <div className="flex items-center gap-1.5">
