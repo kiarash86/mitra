@@ -39,7 +39,8 @@ COPY . .
 
 COPY --from=frontend-builder /app/web/dist ./web/dist
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/bin/mitra .
+ARG GIT_COMMIT=dev
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -X 'github.com/kiarash86/mitra/cmd.version=${GIT_COMMIT}'" -o /app/bin/mitra .
 
 FROM alpine:3.20
 

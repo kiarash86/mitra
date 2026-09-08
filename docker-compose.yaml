@@ -23,6 +23,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_ORG_SLUG: ${ORG_SLUG}
+        GIT_COMMIT: ${GIT_COMMIT:-dev}
     container_name: mitra-api
     restart: unless-stopped
     depends_on:
