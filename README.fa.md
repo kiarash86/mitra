@@ -17,18 +17,31 @@ Backend: Go (Gin) · sqlc · PostgreSQL — Frontend: React + TypeScript (Vite)
 
 ## فهرست مطالب
 
-- [ساختار سلسله‌مراتبی](#ساختار-سلسله-مراتبی)
-- [پشته‌ی فنی](#پشته-ی-فنی)
-- [ساختار ریپازیتوری](#ساختار-ریپازیتوری)
-- [پیش‌نیازها](#پیش-نیازها)
-- [متغیرهای محیطی](#متغیرهای-محیطی)
-- [راه‌اندازی محلی](#راه-اندازی-محلی)
-- [API (فعلاً پیاده‌سازی‌شده)](#api-فعلا-پیاده-سازی-شده)
-- [نمای کلی فرانت‌اند](#نمای-کلی-فرانت-اند)
-- [نقش‌ها و دسترسی‌ها](#نقش-ها-و-دسترسی-ها)
-- [محدودیت‌های شناخته‌شده (فاز ۱)](#محدودیت-های-شناخته-شده-فاز-۱)
-- [نقشه‌ی راه](#نقشه-ی-راه)
-- [لایسنس](#لایسنس)
+- [Mitra](#mitra)
+  - [فهرست مطالب](#فهرست-مطالب)
+  - [ساختار سلسله‌مراتبی](#ساختار-سلسلهمراتبی)
+  - [پشته‌ی فنی](#پشتهی-فنی)
+  - [ساختار ریپازیتوری](#ساختار-ریپازیتوری)
+  - [پیش‌نیازها](#پیشنیازها)
+  - [متغیرهای محیطی](#متغیرهای-محیطی)
+  - [راه‌اندازی محلی](#راهاندازی-محلی)
+    - [روش الف — Docker (همه‌ی سرویس‌ها)](#روش-الف--docker-همهی-سرویسها)
+    - [روش ب — دستی (Backend)](#روش-ب--دستی-backend)
+      - [فرانت‌اند embed می‌شه](#فرانتاند-embed-میشه)
+    - [دستی (Frontend)](#دستی-frontend)
+  - [API (فعلاً پیاده‌سازی‌شده)](#api-فعلاً-پیادهسازیشده)
+    - [Health](#health)
+    - [Auth](#auth)
+    - [Organizations *(نیازمند Authorization: Bearer)*](#organizations-نیازمند-authorization-bearer)
+    - [Projects](#projects)
+    - [Tasks](#tasks)
+    - [Comments](#comments)
+    - [درخواست‌شده از سمت فرانت‌اند، ولی هنوز پیاده‌سازی نشده روی بک‌اند](#درخواستشده-از-سمت-فرانتاند-ولی-هنوز-پیادهسازی-نشده-روی-بکاند)
+  - [نمای کلی فرانت‌اند](#نمای-کلی-فرانتاند)
+  - [نقش‌ها و دسترسی‌ها](#نقشها-و-دسترسیها)
+  - [محدودیت‌های شناخته‌شده (فاز ۱)](#محدودیتهای-شناختهشده-فاز-۱)
+  - [نقشه‌ی راه](#نقشهی-راه)
+  - [لایسنس](#لایسنس)
 
 ---
 
@@ -74,9 +87,8 @@ Redis و NATS/JetStream فعلاً از استک حذف شده‌اند. جزئ�
 
 ```
 mitra/
-├── cmd/
-│   ├── api/            # نقطه‌ی شروع سرور HTTP (route ها، wiring) — main.go
-│   └── seed/           # اجرای یک‌باره: ساخت سازمان + اکانت owner
+├── main.go             # تک نقطه‌ی ورود — فقط cmd.Execute() صدا می‌زنه
+├── cmd/                # CLI با Cobra: `mitra serve` (سرور API)، `mitra migrate` (up/down/steps/force/version)، `mitra seed`
 ├── internal/
 │   ├── auth/           # login، change-password، صدور/پارس JWT، هش پسورد
 │   ├── organization/   # هندلرهای سازمان + عضو سازمان
@@ -88,12 +100,13 @@ mitra/
 │   ├── config/         # لود env (caarlos0/env + godotenv)
 │   ├── convert/        # هلپرهای مشترک (مثلاً پارس تاریخ با چند فرمت)
 │   └── db/
-│       ├── migrations/ # مایگریشن‌های SQL با golang-migrate (۰۰۱ تا ۰۰۷)
+│       ├── migrations/ # مایگریشن‌های SQL با golang-migrate (۰۰۱ تا ۰۰۷)، داخل باینری embed شده
+│       ├── migrator/    # wrapper روی golang-migrate که هم `mitra serve` (auto-migrate) و هم `mitra migrate` ازش استفاده می‌کنن
 │       ├── queries/    # کوئری‌های SQL دستی برای sqlc
 │       └── sqlc/       # کد Go تایپ‌سیف تولیدشده طبق sqlc.yaml
-├── web/                # فرانت‌اند React + TypeScript (بخش نمای کلی فرانت‌اند)
-├── docker-compose.yaml # postgres + migrate + api + web
-├── Dockerfile          # فقط cmd/api رو بیلد می‌کنه (cmd/seed کانتینریزه نشده)
+├── web/                # فرانت‌اند React + TypeScript (بخش نمای کلی فرانت‌اند) + embed.go که web/dist رو داخل باینری mitra embed می‌کنه
+├── docker-compose.yaml # postgres + api (فرانت‌اند رو build و embed می‌کنه؛ سرویس/پورت جدایی نداره)
+├── Dockerfile          # چند مرحله‌ای: اول web/dist رو build می‌کنه، بعد داخل یک باینری واحد `mitra` embed‌ش می‌کنه (serve/migrate/seed همه توش هستن)
 ├── sqlc.yaml
 ├── MITRA.md            # پروپوزال کامل معماری و roadmap فازبندی‌شده
 ├── README.md / README.fa.md
@@ -105,32 +118,32 @@ mitra/
 ## پیش‌نیازها
 
 - Docker + Docker Compose — برای راه‌اندازی یکجای همه‌چیز، یا فقط برای اجرای PostgreSQL محلی
-- Go 1.27+ — برای راه‌اندازی دستی (بدون Docker) بک‌اند، **و** برای اجرای یک‌باره‌ی مرحله‌ی seed حتی وقتی بقیه‌چیز با Docker بالا میاد (`cmd/seed` داخل ایمیج Docker بیلد نشده)
-- Node.js 20+ — فقط برای راه‌اندازی دستی (بدون Docker) فرانت‌اند
-- [golang-migrate CLI](https://github.com/golang-migrate/migrate#installation) — فقط برای راه‌اندازی دستی بک‌اند
+- Go 1.27+ — فقط برای راه‌اندازی دستی (بدون Docker) بک‌اند لازمه؛ migration و seed هم الان جزو ساب‌کامندهای همون باینری `mitra` هستن، پس چیز اضافه‌ای برای نصب لازم نیست
+- Node.js 20+ — برای توسعه‌ی فرانت‌اند (`npm run dev`) لازمه، و حداقل یک‌بار هم برای هر `go run . serve`/`go build` محلی (بدون Docker) لازمه، چون `web/dist` رو embed می‌کنه (بخش «فرانت‌اند embed می‌شه» رو ببین)
 
 ---
 
 ## متغیرهای محیطی
 
-همه‌ی متغیرها توی `.env` هستن (از روی `.env.example` کپی کن). هر دو باینری `api` و `seed` این فایل رو از طریق `internal/config` می‌خونن.
+همه‌ی متغیرها توی `.env` هستن (از روی `.env.example` کپی کن). هر سه ساب‌کامند `serve`، `migrate` و `seed` این فایل رو از طریق `internal/config` می‌خونن.
 
 | متغیر | استفاده توسط | توضیح |
 |---|---|---|
-| `APP_ENV` | api | `development`، `production` یا `test` — حالت Gin رو تعیین می‌کنه |
-| `APP_PORT` | api | پورتی که API روش گوش می‌ده (پیش‌فرض `8080`) |
-| `DATABASE_URL` | api, seed | کانکشن‌استرینگ کامل Postgres؛ در صورت ست‌شدن اولویت داره |
-| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` / `DB_SSLMODE` | api, docker-compose | برای ساخت کانکشن‌استرینگ / تنظیم کانتینر `postgres` |
-| `JWT_SECRET` | api | **الزامی** — اگه خالی باشه API اصلاً بالا نمی‌آد |
-| `JWT_ACCESS_TOKEN_TTL` | api | طول عمر access token (مثلاً `15m`) |
-| `JWT_REFRESH_TOKEN_TTL` | api | طول عمر refresh token (مثلاً `720h`) — امروز صادر می‌شه ولی هنوز endpoint ‌ی به اسم `/auth/refresh` برای استفاده ازش وجود نداره |
+| `APP_ENV` | serve | `development`، `production` یا `test` — حالت Gin رو تعیین می‌کنه |
+| `APP_PORT` | serve | پورتی که API روش گوش می‌ده (پیش‌فرض `8080`) |
+| `DATABASE_URL` | serve, migrate, seed | کانکشن‌استرینگ کامل Postgres؛ در صورت ست‌شدن اولویت داره |
+| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` / `DB_SSLMODE` | serve, migrate, seed, docker-compose | برای ساخت کانکشن‌استرینگ / تنظیم کانتینر `postgres` |
+| `AUTO_MIGRATE` | serve | پیش‌فرض `true` — یعنی `mitra serve` قبل از قبول‌کردن ریکوئست، خودش migration‌های معلق رو اجرا می‌کنه. برای مدیریت دستی migration ها، بذارش `false` |
+| `JWT_SECRET` | serve | **الزامی** — اگه خالی باشه API اصلاً بالا نمی‌آد |
+| `JWT_ACCESS_TOKEN_TTL` | serve | طول عمر access token (مثلاً `15m`) |
+| `JWT_REFRESH_TOKEN_TTL` | serve | طول عمر refresh token (مثلاً `720h`) — امروز صادر می‌شه ولی هنوز endpoint ‌ی به اسم `/auth/refresh` برای استفاده ازش وجود نداره |
 | `ORG_NAME` | seed | نام نمایشی همون یک سازمانی که در اجرای اول ساخته می‌شه |
 | `ORG_SLUG` | seed, بیلد web | اسلاگ سازمان؛ به‌عنوان `VITE_ORG_SLUG` به بیلد فرانت‌اند هم پاس داده می‌شه |
 | `OWNER_EMAIL` | seed | ایمیل login برای اکانت owner سیدشده |
 | `OWNER_NAME` | seed | نام کامل اکانت owner سیدشده |
 | `OWNER_PASSWORD` | seed | پسورد اولیه‌ی اکانت owner سیدشده — بعد از اولین login عوضش کن |
 
-> اگه `OWNER_EMAIL`، `OWNER_NAME` یا `OWNER_PASSWORD` خالی باشن، `seed` فوراً fail می‌کنه. اگه از قبل سازمانی وجود داشته باشه، فقط یک پیام چاپ می‌کنه و با کد ۰ خارج می‌شه (یعنی اجرای دوباره‌ش بی‌خطره).
+> اگه `OWNER_EMAIL`، `OWNER_NAME` یا `OWNER_PASSWORD` خالی باشن، `mitra seed` فوراً fail می‌کنه. اگه از قبل سازمانی وجود داشته باشه، فقط یک پیام چاپ می‌کنه و با کد ۰ خارج می‌شه (یعنی اجرای دوباره‌ش بی‌خطره).
 
 ---
 
@@ -148,18 +161,17 @@ cp .env.example .env
 docker compose up --build
 ```
 
-این دستور همه‌چیز رو بالا می‌آره: `postgres` → migration‌ها خودکار از طریق سرویس `migrate` اجرا می‌شن → `api` روی `http://localhost:8080` → `web` روی `http://localhost:3000`.
+این دستور همه‌چیز رو بالا می‌آره: `postgres` → خود `api` موقع بالا اومدن migration‌های معلق رو اجرا می‌کنه (به `AUTO_MIGRATE` نگاه کن)، فرانت‌اند رو build می‌کنه، و هم API هم UI رو از `http://localhost:8080` سرو می‌کنه.
 
-> مقدار `VITE_API_URL` که به build سرویس `web` پاس داده می‌شه توی `docker-compose.yaml` پیش‌فرض خالیه، پس فرانت‌اند موقع build روی `http://localhost:8080` fallback می‌کنه. اگه `api` و `web` رو روی هاست‌های جدا دیپلوی می‌کنی، قبل از build مقدار `VITE_API_URL` رو مطابق آدرس واقعی تنظیم کن.
+> فرانت‌اند موقع build داخل باینری `mitra` embed می‌شه (`web/embed.go` رو ببین) و توسط همون پروسه‌ای که API رو سرو می‌کنه، سرو می‌شه — دیگه کانتینر یا پورت جدایی برای فرانت وجود نداره. `web/Dockerfile` و `web/nginx.conf` هنوز موجودن برای حالت نادری که بخوای فرانت رو مستقل هاست کنی (مثلاً پشت CDN)، ولی روند پیش‌فرض Docker بالا ازشون استفاده نمی‌کنه.
 
-**سازمان و اکانت owner اولیه رو seed کن** (یک‌بار، قبل از هر login لازمه — چون هنوز سرویسی برای این کار توی `docker-compose` تعریف نشده، این مرحله رو باید محلی و روی همون Postgres داکرایز‌شده اجرا کنی):
+**سازمان و اکانت owner اولیه رو seed کن** (یک‌بار، قبل از هر login لازمه). چون `seed` فقط یه ساب‌کامند از همون باینری `api`ست، مستقیم روی کانتینر در حال اجرا بزنش — نیازی به نصب Go هم نداری:
 
 ```bash
-export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
-go run ./cmd/seed
+docker compose run --rm api ./mitra seed
 ```
 
-این دستور `ORG_NAME`، `ORG_SLUG`، `OWNER_EMAIL`، `OWNER_NAME` و `OWNER_PASSWORD` رو از `.env` می‌خونه و سازمان به‌همراه owner‌ش رو می‌سازه.
+این دستور `ORG_NAME`، `ORG_SLUG`، `OWNER_EMAIL`، `OWNER_NAME` و `OWNER_PASSWORD` رو از `.env` می‌خونه و سازمان به‌همراه owner‌ش رو می‌سازه. هر کدوم از این مقادیر رو می‌تونی به‌جای env، به‌صورت flag هم پاس بدی (`--org-name`، `--org-slug`، `--owner-email`، `--owner-name`، `--owner-password`) که در صورت دادن، اولویت با flag ـه — برای اسکریپت‌نویسی/CI بدون دست‌زدن به `.env` مفیده. برای پسورد ترجیحاً همون env رو استفاده کن، چون مقدار flag تو تاریخچه‌ی shell و `ps` قابل دیدنه.
 
 ### روش ب — دستی (Backend)
 
@@ -173,17 +185,29 @@ cp .env.example .env
 
 # ۳. migration ها رو اجرا کن
 export DATABASE_URL="postgres://mitra:mitra@localhost:5432/mitra?sslmode=disable"
-migrate -database "$DATABASE_URL" -path internal/db/migrations up
+go run . migrate up
 
 # ۴. سازمان و اکانت owner اولیه رو seed کن (یک‌بار، قبل از هر login لازمه)
-go run ./cmd/seed
+go run . seed
 
-# ۵. سرور رو اجرا کن
-go run ./cmd/api
-# health check: curl http://localhost:8080/health
+# ۵. فرانت‌اند رو build کن — حداقل یه‌بار لازمه، چون `go run . serve`
+# هرچی الان توی web/dist باشه رو embed می‌کنه (پایین‌تر توضیح داده شده)
+cd web && npm install && npm run build && cd ..
+
+# ۶. سرور رو اجرا کن
+go run . serve
+# UI: http://localhost:8080  ·  health check: curl http://localhost:8080/health
 ```
 
+> اجرای `go run . migrate up` در اینجا اختیاریه — چون به‌طور پیش‌فرض خودِ `mitra serve` (مرحله‌ی ۶) موقع بالا اومدن migration های معلق رو اجرا می‌کنه. اگه ترجیح می‌دی migration رو جدا مدیریت کنی، همینو صریح بزن و `AUTO_MIGRATE=false` رو هم ست کن. بقیه‌ی ساب‌کامندهای migrate: `go run . migrate down`، `migrate steps <n>`، `migrate force <version>`، `migrate version`.
+
+#### فرانت‌اند embed می‌شه
+
+`web/embed.go` محتوای `web/dist` رو با `go:embed` داخل باینری `mitra` embed می‌کنه، و `mitra serve` مستقیم سرووش می‌کنه — دقیقاً همین باعث می‌شه `docker compose up` هم API هم UI رو از یک پورت بده. یه پیامد برای توسعه‌ی محلی (بدون Docker) داره: **`web/dist` باید یه build واقعی داشته باشه تا `go build`/`go run` توی این ماژول فایل‌های واقعی UI رو سرو کنه.** چون `web/dist` تو گیت ایگنور شده (فقط یه placeholder به اسم `.gitkeep` تِرک شده)، روی یه clone تازه، پکیج بدون مشکل کامپایل می‌شه، فقط تا وقتی مرحله‌ی ۵ بالا رو نزنی چیز واقعی‌ای برای سرو کردن نداره. هر وقت فرانت رو عوض کردی و خواستی `go run . serve` منعکسش کنه، دوباره `npm run build` رو بزن — اینجا live-reload نداریم، اونی که پایین‌تره (`npm run dev`) برای همون کاره.
+
 ### دستی (Frontend)
+
+برای توسعه‌ی فعال فرانت‌اند، به‌جای build گرفتن بعد از هر تغییر، سرور dev خود Vite رو بزن:
 
 ```bash
 cd web
@@ -191,7 +215,7 @@ npm install
 npm run dev
 ```
 
-به‌طور پیش‌فرض فرانت‌اند با `http://localhost:8080` صحبت می‌کنه. برای آدرس دیگه، `VITE_API_URL` رو توی `web/.env` ست کن، و `VITE_ORG_SLUG` رو مطابق `ORG_SLUG` بک‌اند.
+این کار `/api` رو به `http://localhost:8080` پروکسی می‌کنه (طبق `vite.config.ts`) و hot reload هم داری — دست به `web/dist` یا build embedشده نمی‌زنه. اگه `VITE_ORG_SLUG` پیش‌فرض مناسبت نیست، تو `web/.env` مطابق `ORG_SLUG` بک‌اند تنظیمش کن.
 
 ---
 
@@ -273,7 +297,7 @@ npm run dev
 
 ## نمای کلی فرانت‌اند
 
-اپ React 19 + TypeScript توی `web/`، با Vite بیلد می‌شه و استایلش با Tailwind CSS 4 هست.
+اپ React 19 + TypeScript توی `web/`، با Vite بیلد می‌شه و استایلش با Tailwind CSS 4 هست. تو محیط production، داخل باینری `mitra` embed می‌شه و توسط همون پروسه‌ای که API رو سرو می‌کنه، سرو می‌شه (بخش «فرانت‌اند embed می‌شه» رو ببین) — دیگه سرور/کانتینر جدایی برای فرانت اجرا نمی‌کنی.
 
 - **Routing** (`src/router.tsx`): صفحات auth (`login`، تغییر اجباری پسورد)، داشبورد، لیست/جزئیات پروژه با یک تسک‌بورد، جزئیات تسک، اعضا/تنظیمات سازمان، پروفایل، چت، و اعلان‌ها. `components/guards/RouteGuards.tsx` روی وضعیت auth گیت می‌ذاره؛ `components/organizations/OrgGate.tsx` روی عضویت در سازمان.
 - **State** (`src/stores/`): یک store مجزای Zustand به‌ازای هر دامنه — `auth`، `organization`، `project`، `task`، `notification`، `toast`، `ui`.
@@ -304,7 +328,7 @@ npm run dev
 
 - **هنوز endpoint مربوط به `/auth/refresh` وجود نداره** — سمت فرانت‌اند، axios client از قبل منطق retry برای صدا زدنش روی خطای ۴۰۱ رو داره، ولی بک‌اند این مسیر رو پیاده نکرده؛ یعنی الان با منقضی‌شدن access token، کاربر مستقیم logout می‌شه و باید دوباره login کنه.
 - **بدون ثبت‌نام یا ساخت سازمان به‌صورت خودکار** — فعلاً عمدیه؛ توضیح در بخش [Organizations](#organizations-نیازمند-authorization-bearer).
-- **مرحله‌ی seed کانتینریزه نشده** — `cmd/seed` باید با `go run` اجرا بشه (محلی یا در CI)، حتی توی سناریوی Docker؛ هنوز سرویسی براش توی `docker-compose` تعریف نشده.
+- **مرحله‌ی seed نیاز به اجرای دستی داره** — `mitra seed` باید یک‌بار صریح اجرا بشه (با `docker compose run --rm api ./mitra seed` یا `go run . seed`)؛ خودکار trigger نمی‌شه چون به env varهای org/owner که هر دیپلوی متفاوته وابسته‌ست.
 - **فاصله‌ی فرانت‌اند/بک‌اند** — فرانت از قبل UI، store و API call برای پروفایل کاربر، اعلان‌ها و یک اتصال WebSocket (چت) داره که هیچ‌کدوم هنوز روی بک‌اند وجود ندارن. جدول توی بخش [API](#api-فعلا-پیاده-سازی-شده) رو ببین.
 - **Presence/Realtime/Push notification** هنوز پیاده نشده‌اند (فاز ۲).
 - **بدون Redis/NATS** — برای کنترل هزینه در فاز ۱ حذف شده؛ دلیل و جایگزین موقت درون‌پروسه‌ای در `MITRA.md`.
