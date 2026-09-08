@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -28,32 +29,33 @@ import (
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Run the HTTP API server",
-	Run: func(cmd *cobra.Command, args []string) {
-		runServe()
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runServe()
 	},
 }
 
-func runServe() {
+func runServe() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	if cfg.AutoMigrate {
 		if err := migrator.Up(cfg.DatabaseURL); err != nil {
-			log.Fatalf("couldnt run migrations: %v", err)
+			return fmt.Errorf("couldnt run migrations: %w", err)
 		}
 		log.Println("migrations are up to date")
 	}
 
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("couldnt create db pool : %v", err)
+		return fmt.Errorf("couldnt create db pool: %w", err)
 	}
 	defer pool.Close()
 
 	ping, pingCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer pingCancel()
 	if err := pool.Ping(ping); err != nil {
-		log.Fatalf("couldnt ping db : %v", err)
+		return fmt.Errorf("couldnt ping db: %w", err)
 	}
 	log.Println("connected to db seccesfully")
 
@@ -65,7 +67,7 @@ func runServe() {
 	case "test":
 		gin.SetMode(gin.TestMode)
 	default:
-		log.Fatalf("something is wrong with this AppEnv: %s", cfg.AppEnv)
+		return fmt.Errorf("something is wrong with this AppEnv: %s", cfg.AppEnv)
 	}
 
 	router := gin.New()
@@ -137,25 +139,33 @@ func runServe() {
 		Handler: router,
 	}
 
+	errCh := make(chan error, 1)
 	go func() {
 		log.Printf("api is listening! on port %v  and on mode: %v", cfg.AppPort, cfg.AppEnv)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("something went wrong : %v", err)
+			errCh <- err
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+
+	select {
+	case err := <-errCh:
+		return fmt.Errorf("something went wrong: %w", err)
+	case <-quit:
+	}
+
 	log.Println("shutting down server...")
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("server forced to shutdown: %v", err)
+		return fmt.Errorf("server forced to shutdown: %w", err)
 	}
 
 	log.Println("server exited")
+	return nil
 }
 
 func init() {
