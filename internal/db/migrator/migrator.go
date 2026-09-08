@@ -9,6 +9,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/kiarash86/mitra/internal/db/migrations"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func New(databaseUrl string) (m *migrate.Migrate, closeFn func() error, err error) {
