@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/kiarash86/mitra/internal/organization"
 	"github.com/kiarash86/mitra/internal/project"
 	"github.com/kiarash86/mitra/internal/task"
+	"github.com/kiarash86/mitra/web"
 )
 
 var serveCmd = &cobra.Command{
@@ -32,7 +34,6 @@ var serveCmd = &cobra.Command{
 }
 
 func runServe() {
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -129,6 +130,8 @@ func runServe() {
 	commentGroup.PUT("/:id", commentHandler.Update)
 	commentGroup.DELETE("/:id", commentHandler.Delete)
 
+	registerWebUI(router)
+
 	srv := &http.Server{
 		Addr:    ":" + cfg.AppPort,
 		Handler: router,
@@ -157,4 +160,26 @@ func runServe() {
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+}
+
+func registerWebUI(router *gin.Engine) {
+	fs := http.FileServer(http.FS(web.FS))
+	router.NoRoute(func(ctx *gin.Context) {
+		if strings.HasPrefix(ctx.Request.URL.Path, "/api/") {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+			return
+		}
+		requestPath := strings.TrimPrefix(ctx.Request.URL.Path, "/")
+		f, err := web.FS.Open(requestPath)
+		if err == nil {
+			f.Close()
+			if strings.HasPrefix(requestPath, "assets/") {
+				ctx.Header("Cache-Control", "public, max-age=31536000, immutable")
+			}
+			fs.ServeHTTP(ctx.Writer, ctx.Request)
+			return
+		}
+		ctx.Header("Cache-Control", "no-cache")
+		ctx.FileFromFS("/index.html", http.FS(web.FS))
+	})
 }
