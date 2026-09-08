@@ -8,9 +8,9 @@ interface ProjectState {
   members: ProjectMember[];
   isLoading: boolean;
 
-  fetchProjects: (orgId: string) => Promise<void>;
+  fetchProjects: () => Promise<void>;
   fetchProject: (projectId: string) => Promise<void>;
-  createProject: (orgId: string, name: string, description?: string) => Promise<Project>;
+  createProject: (name: string, description?: string) => Promise<Project>;
   updateProject: (projectId: string, data: { name?: string; description?: string }) => Promise<void>;
   deleteProject: (projectId: string) => Promise<void>;
   fetchMembers: (projectId: string) => Promise<void>;
@@ -24,9 +24,9 @@ export const useProjectStore = create<ProjectState>()((set) => ({
   members: [],
   isLoading: false,
 
-  fetchProjects: async (orgId) => {
+  fetchProjects: async () => {
     set({ isLoading: true });
-    const projects = await projectsApi.listByOrganization(orgId);
+    const projects = await projectsApi.list();
     set({ projects, isLoading: false });
   },
 
@@ -36,8 +36,8 @@ export const useProjectStore = create<ProjectState>()((set) => ({
     set({ currentProject: project, isLoading: false });
   },
 
-  createProject: async (orgId, name, description) => {
-    const project = await projectsApi.create(orgId, { name, description });
+  createProject: async (name, description) => {
+    const project = await projectsApi.create({ name, description });
     set((s) => ({ projects: [...s.projects, project] }));
     return project;
   },

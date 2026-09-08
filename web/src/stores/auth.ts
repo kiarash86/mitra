@@ -13,6 +13,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   updateProfile: (fullName: string) => Promise<void>;
+  hydrateUser: () => Promise<void>;
   logout: () => void;
 }
 
@@ -58,6 +59,13 @@ export const useAuthStore = create<AuthState>()(
 
       updateProfile: async (fullName) => {
         const user = await usersApi.updateProfile({ full_name: fullName });
+        set({ user });
+      },
+
+      // The login response doesn't carry role, so the authenticated shell
+      // hydrates it once from GET /users/me right after sign-in.
+      hydrateUser: async () => {
+        const user = await usersApi.getProfile();
         set({ user });
       },
     }),
