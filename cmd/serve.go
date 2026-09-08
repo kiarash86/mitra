@@ -17,6 +17,7 @@ import (
 
 	"github.com/kiarash86/mitra/internal/auth"
 	"github.com/kiarash86/mitra/internal/comment"
+	"github.com/kiarash86/mitra/internal/config"
 	"github.com/kiarash86/mitra/internal/db/migrator"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
@@ -36,6 +37,11 @@ var serveCmd = &cobra.Command{
 }
 
 func runServe() error {
+	cfg, err := config.LoadServeConfig()
+	if err != nil {
+		return fmt.Errorf("couldnt load config: %w", err)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
