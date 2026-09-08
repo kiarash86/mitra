@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/kiarash86/mitra/internal/config"
 	"github.com/kiarash86/mitra/internal/db/migrator"
 )
 
@@ -14,12 +15,25 @@ var migrateCmd = &cobra.Command{
 	Short: "Manage database migrations",
 }
 
+
+func dbURL() (string, error) {
+	cfg, err := config.LoadDBConfig()
+	if err != nil {
+		return "", fmt.Errorf("couldnt load config: %w", err)
+	}
+	return cfg.DatabaseURL, nil
+}
+
 var migrateUpCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Apply all available migrations",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := migrator.Up(cfg.DatabaseURL); err != nil {
+		url, err := dbURL()
+		if err != nil {
+			return err
+		}
+		if err := migrator.Up(url); err != nil {
 			return fmt.Errorf("migrate up: %w", err)
 		}
 		fmt.Println("migrations applied successfully")
@@ -32,7 +46,11 @@ var migrateDownCmd = &cobra.Command{
 	Short: "Roll back all migrations",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := migrator.Down(cfg.DatabaseURL); err != nil {
+		url, err := dbURL()
+		if err != nil {
+			return err
+		}
+		if err := migrator.Down(url); err != nil {
 			return fmt.Errorf("migrate down: %w", err)
 		}
 		fmt.Println("migrations rolled back successfully")
@@ -49,7 +67,11 @@ var migrateStepsCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("invalid steps count %q: %w", args[0], err)
 		}
-		if err := migrator.Steps(cfg.DatabaseURL, n); err != nil {
+		url, err := dbURL()
+		if err != nil {
+			return err
+		}
+		if err := migrator.Steps(url, n); err != nil {
 			return fmt.Errorf("migrate steps: %w", err)
 		}
 		fmt.Println("migration steps applied successfully")
@@ -66,7 +88,11 @@ var migrateForceCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("invalid version %q: %w", args[0], err)
 		}
-		if err := migrator.Force(cfg.DatabaseURL, v); err != nil {
+		url, err := dbURL()
+		if err != nil {
+			return err
+		}
+		if err := migrator.Force(url, v); err != nil {
 			return fmt.Errorf("migrate force: %w", err)
 		}
 		fmt.Println("migration version forced successfully")
@@ -79,7 +105,11 @@ var migrateVersionCmd = &cobra.Command{
 	Short: "Print the current migration version",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		v, dirty, err := migrator.Version(cfg.DatabaseURL)
+		url, err := dbURL()
+		if err != nil {
+			return err
+		}
+		v, dirty, err := migrator.Version(url)
 		if err != nil {
 			return fmt.Errorf("migrate version: %w", err)
 		}
