@@ -27,3 +27,7 @@ WHERE id = $1
 RETURNING *;
 
 
+-- name: SoftDeleteMessage :exec
+UPDATE messages
+SET deleted_at = now()
+WHERE id = $1;
