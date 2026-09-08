@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,8 +22,9 @@ var (
 var seedCmd = &cobra.Command{
 	Use:   "seed",
 	Short: "Create the first organization and owner account",
-	Run: func(cmd *cobra.Command, args []string) {
-		runSeed()
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runSeed()
 	},
 }
 
@@ -35,8 +35,7 @@ func firstNonEmpty(flagValue, envValue string) string {
 	return envValue
 }
 
-func runSeed() {
-
+func runSeed() error {
 	orgName := firstNonEmpty(seedOrgName, cfg.OrgName)
 	orgSlug := firstNonEmpty(seedOrgSlug, cfg.OrgSlug)
 	ownerEmail := firstNonEmpty(seedOwnerEmail, cfg.OwnerEmail)
@@ -54,7 +53,7 @@ func runSeed() {
 	}
 	for _, rv := range requiredValues {
 		if rv.value == "" {
-			log.Fatalf("missing required value: pass %s or set %s", rv.flagName, rv.envName)
+			return fmt.Errorf("missing required value: pass %s or set %s", rv.flagName, rv.envName)
 		}
 	}
 
@@ -62,7 +61,7 @@ func runSeed() {
 	defer cancel()
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("couldnt connect to db: %v", err)
+		return fmt.Errorf("couldnt connect to db: %w", err)
 	}
 	defer pool.Close()
 
@@ -70,16 +69,16 @@ func runSeed() {
 
 	exists, err := queries.AnyOrganizationExists(ctx)
 	if err != nil {
-		log.Fatalf("couldnt check organization existense: %v", err)
+		return fmt.Errorf("couldnt check organization existense: %w", err)
 	}
 	if exists {
 		fmt.Println("there is a organization already. bye! bye!")
-		return
+		return nil
 	}
 
 	hashedPassword, err := auth.HashPassword(ownerPassword)
 	if err != nil {
-		log.Fatalf("couldnt hash admin password: %v", err)
+		return fmt.Errorf("couldnt hash admin password: %w", err)
 	}
 
 	user, err := queries.CreateUser(ctx, sqlc.CreateUserParams{
@@ -88,15 +87,14 @@ func runSeed() {
 		FullName:     ownerName,
 	})
 	if err != nil {
-		log.Fatalf("couldnt create user: %v", err)
+		return fmt.Errorf("couldnt create user: %w", err)
 	}
 
-	err = queries.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
+	if err := queries.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
 		ID:           user.ID,
 		PasswordHash: hashedPassword,
-	})
-	if err != nil {
-		log.Fatalf("trick to decieve program for must_change_password failed: %v", err)
+	}); err != nil {
+		return fmt.Errorf("trick to decieve program for must_change_password failed: %w", err)
 	}
 
 	org, err := queries.CreateOrganization(ctx, sqlc.CreateOrganizationParams{
@@ -104,23 +102,22 @@ func runSeed() {
 		Slug: orgSlug,
 	})
 	if err != nil {
-		log.Fatalf("couldnt create organization: %v", err)
+		return fmt.Errorf("couldnt create organization: %w", err)
 	}
-	_, err = queries.AddOrganizationMember(ctx, sqlc.AddOrganizationMemberParams{
+	if _, err := queries.AddOrganizationMember(ctx, sqlc.AddOrganizationMemberParams{
 		OrganizationID: org.ID,
 		UserID:         user.ID,
 		Role:           "owner",
-	})
-	if err != nil {
-		log.Fatalf("couldnt add user to organization: %v", err)
+	}); err != nil {
+		return fmt.Errorf("couldnt add user to organization: %w", err)
 	}
 
 	fmt.Printf("organization with %q (slug:%s) created succesfully\n", org.Name, org.Slug)
 	fmt.Printf("owner account: %s -> password: %s\n", user.Email, ownerPassword)
+	return nil
 }
 
 func init() {
-
 	seedCmd.Flags().StringVar(&seedOrgName, "org-name", "", "organization name (defaults to ORG_NAME)")
 	seedCmd.Flags().StringVar(&seedOrgSlug, "org-slug", "", "organization slug (defaults to ORG_SLUG)")
 	seedCmd.Flags().StringVar(&seedOwnerEmail, "owner-email", "", "owner login email (defaults to OWNER_EMAIL)")
