@@ -180,6 +180,6 @@ func registerWebUI(router *gin.Engine) {
 			return
 		}
 		ctx.Header("Cache-Control", "no-cache")
-		ctx.FileFromFS("/index.html", http.FS(web.FS))
+		ctx.FileFromFS("/", http.FS(web.FS))
 	})
 }
