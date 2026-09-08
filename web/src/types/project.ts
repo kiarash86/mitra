@@ -2,7 +2,6 @@ import type { ProjectRoleName } from "./rbac";
 
 export interface Project {
   id: string;
-  organization_id: string;
   name: string;
   description: string | null;
   created_at: string;

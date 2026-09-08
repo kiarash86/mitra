@@ -2,15 +2,11 @@ import client from "./client";
 import type { Project, ProjectMember } from "../types/project";
 
 export const projectsApi = {
-  create: (orgId: string, data: { name: string; description?: string }) =>
-    client
-      .post<Project>(`/v1/organizations/${orgId}/projects`, data)
-      .then((r) => r.data),
+  create: (data: { name: string; description?: string }) =>
+    client.post<Project>("/v1/projects", data).then((r) => r.data),
 
-  listByOrganization: (orgId: string) =>
-    client
-      .get<{ projects: Project[] }>(`/v1/organizations/${orgId}/projects`)
-      .then((r) => r.data.projects),
+  list: () =>
+    client.get<{ projects: Project[] }>("/v1/projects").then((r) => r.data.projects),
 
   getById: (projectId: string) =>
     client.get<Project>(`/v1/projects/${projectId}`).then((r) => r.data),
