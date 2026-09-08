@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kiarash86/mitra/internal/auth"
+	"github.com/kiarash86/mitra/internal/config"
 	sqlc "github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +37,11 @@ func firstNonEmpty(flagValue, envValue string) string {
 }
 
 func runSeed() error {
+	cfg, err := config.LoadSeedConfig()
+	if err != nil {
+		return fmt.Errorf("couldnt load config: %w", err)
+	}
+
 	orgName := firstNonEmpty(seedOrgName, cfg.OrgName)
 	orgSlug := firstNonEmpty(seedOrgSlug, cfg.OrgSlug)
 	ownerEmail := firstNonEmpty(seedOwnerEmail, cfg.OwnerEmail)
