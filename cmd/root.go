@@ -13,7 +13,7 @@ var cfg *config.Config
 var rootCmd = &cobra.Command{
 	Use:   "mitra",
 	Short: "Mitra API server and operational tooling",
-	Run: func(cmd *cobra.Command, args []string) {
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		config, err := config.Load()
 		if err != nil {
 			log.Fatalf("couldnt load config: %v", err)
@@ -22,7 +22,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func Excute() {
+func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
