@@ -166,5 +166,10 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
+	if targetID == uuid.UUID(requesterID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you cant remove yourself"})
+		return
+	}
+
 	
 }
