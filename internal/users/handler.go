@@ -202,3 +202,12 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
+
+func (h *Handler) Me(c *gin.Context) {
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
+}
