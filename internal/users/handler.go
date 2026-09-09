@@ -210,4 +210,14 @@ func (h *Handler) Me(c *gin.Context) {
 		return
 	}
 
+	user, err := h.queries.GetUserByID(c.Request.Context(), uuid.UUID(userID))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get user"})
+		return
+	}
+
 }
