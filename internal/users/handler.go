@@ -2,6 +2,8 @@ package users
 
 import (
 
+	"time"
+
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 
 )
@@ -24,4 +26,13 @@ type createUserRequest struct {
 
 type updateMeRequest struct {
 	FullName string `json:"full_name" binding:"required,min=2,max=255"`
+}
+
+type userResponse struct {
+	ID                 string    `json:"id"`
+	FullName           string    `json:"full_name"`
+	Email              string    `json:"email"`
+	Role               string    `json:"role"`
+	MustChangePassword bool      `json:"must_change_password"`
+	CreatedAt          time.Time `json:"created_at"`
 }
