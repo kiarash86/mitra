@@ -97,5 +97,19 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	
+	requesterRole, err := rbac.GetUserRole(c.Request.Context(), h.queries, uuid.UUID(requesterID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
+		return
+	}
+	if requesterRole != "owner" && requesterRole != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can add users"})
+		return
+	}
+	if req.Role == "owner" && requesterRole != "owner" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can make someone owner"})
+		return
+	}
+
+
 }
