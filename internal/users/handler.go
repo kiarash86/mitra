@@ -245,4 +245,5 @@ func (h *Handler) UpdateMe(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, toUserResponse(user))
 }
