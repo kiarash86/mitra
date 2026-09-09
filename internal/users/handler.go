@@ -1,11 +1,18 @@
 package users
 
 import (
-
+	"errors"
+	"net/http"
 	"time"
 
-	"github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
+	"github.com/kiarash86/mitra/internal/auth"
+	"github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/rbac"
 )
 
 type Handler struct {
@@ -56,3 +63,12 @@ func toUserResponse(u sqlc.User) userResponse {
 	}
 }
 
+func (h *Handler) List(c *gin.Context) {
+	_, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
+
+}
