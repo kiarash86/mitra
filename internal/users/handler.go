@@ -44,3 +44,15 @@ type createUserResponse struct {
 	Role         string `json:"role"`
 	TempPassword string `json:"temp_password"`
 }
+
+func toUserResponse(u sqlc.User) userResponse {
+	return userResponse{
+		ID:                 u.ID.String(),
+		FullName:           u.FullName,
+		Email:              u.Email,
+		Role:               u.Role,
+		MustChangePassword: u.MustChangePassword,
+		CreatedAt:          u.CreatedAt,
+	}
+}
+
