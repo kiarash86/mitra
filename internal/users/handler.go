@@ -36,3 +36,11 @@ type userResponse struct {
 	MustChangePassword bool      `json:"must_change_password"`
 	CreatedAt          time.Time `json:"created_at"`
 }
+
+type createUserResponse struct {
+	UserID       string `json:"user_id"`
+	Email        string `json:"email"`
+	FullName     string `json:"full_name"`
+	Role         string `json:"role"`
+	TempPassword string `json:"temp_password"`
+}
