@@ -199,14 +199,12 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 
 	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(userID))
-	if err != nil
-	 {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
 	if !isAdmin && !isProjectAdminOwner {
-		c.JSON(http.S
-			tatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
 		return
 	}
 
@@ -256,14 +254,12 @@ func (h *Handler) Delete(c *gin.Context) {
 	}
 
 	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(userID))
-	if err != nil
-	 {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
 	if !isAdmin && !isProjectAdminOwner {
-		c.JSON(http.S
-			tatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
 		return
 	}
 
@@ -356,14 +352,12 @@ func (h *Handler) AddMember(c *gin.Context) {
 	}
 
 	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(userID))
-	if err != nil
-	 {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
 	if !isAdmin && !isProjectAdminOwner {
-		c.JSON(http.S
-			tatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
 		return
 	}
 
@@ -420,14 +414,12 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	}
 
 	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, uuid.UUID(requesterID))
-	if err != nil
-	 {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
 	if !isAdmin && !isProjectAdminOwner {
-		c.JSON(http.S
-			tatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
 		return
 	}
 	if targetID == uuid.UUID(requesterID) {
