@@ -230,4 +230,10 @@ func (h *Handler) UpdateMe(c *gin.Context) {
 		return
 	}
 
+	var req updateMeRequest
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 }
