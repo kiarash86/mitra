@@ -133,4 +133,15 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	user, err := h.queries.CreateUser(c.Request.Context(), sqlc.CreateUserParams{
+		Email:        req.Email,
+		PasswordHash: hashedPassword,
+		FullName:     req.FullName,
+		Role:         req.Role,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt create user"})
+		return
+	}
+
 }
