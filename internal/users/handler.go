@@ -83,3 +83,13 @@ func (h *Handler) List(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"users": users})
 }
+
+func (h *Handler) Create(c *gin.Context) {
+	requesterID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized id or something like that"})
+		return
+	}
+
+	
+}
