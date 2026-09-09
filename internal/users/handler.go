@@ -236,4 +236,13 @@ func (h *Handler) UpdateMe(c *gin.Context) {
 		return
 	}
 
+	user, err := h.queries.UpdateUserProfile(c.Request.Context(), sqlc.UpdateUserProfileParams{
+		ID:       uuid.UUID(userID),
+		FullName: req.FullName,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update profile"})
+		return
+	}
+
 }
