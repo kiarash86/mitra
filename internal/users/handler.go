@@ -152,3 +152,13 @@ func (h *Handler) Create(c *gin.Context) {
 		TempPassword: tempPassword,
 	})
 }
+
+func (h *Handler) Delete(c *gin.Context) {
+	targetID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type of id"})
+		return
+	}
+
+
+}
