@@ -181,4 +181,24 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
+	targetUser, err := h.queries.GetUserByID(c.Request.Context(), targetID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get user"})
+		return
+	}
+	if targetUser.Role == "owner" && requesterRole != "owner" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner can remove another owner"})
+		return
+	}
+
+	if err := h.queries.SoftDeleteUser(c.Request.Context(), targetID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt remove user"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
