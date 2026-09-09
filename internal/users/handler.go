@@ -111,5 +111,14 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	_, err = h.queries.GetUserByEmail(c.Request.Context(), req.Email)
+	if err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "user with this email already exists"})
+		return
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this email"})
+		return
+	}
 
 }
