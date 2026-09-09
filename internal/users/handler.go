@@ -144,4 +144,11 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusCreated, createUserResponse{
+		UserID:       user.ID.String(),
+		Email:        user.Email,
+		FullName:     user.FullName,
+		Role:         user.Role,
+		TempPassword: tempPassword,
+	})
 }
