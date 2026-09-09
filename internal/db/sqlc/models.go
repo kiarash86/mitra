@@ -21,6 +21,16 @@ type Comment struct {
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type Message struct {
+	ID        uuid.UUID          `json:"id"`
+	ProjectID uuid.UUID          `json:"project_id"`
+	SenderID  uuid.UUID          `json:"sender_id"`
+	Body      string             `json:"body"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
 type Organization struct {
 	ID        uuid.UUID          `json:"id"`
 	Name      string             `json:"name"`
