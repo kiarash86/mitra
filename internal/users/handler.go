@@ -76,4 +76,10 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
+	users := make([]userResponse, 0, len(list))
+	for _, u := range list {
+		users = append(users, toUserResponse(u))
+	}
+
+	c.JSON(http.StatusOK, gin.H{"users": users})
 }
