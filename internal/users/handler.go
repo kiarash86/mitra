@@ -70,5 +70,10 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
+	list, err := h.queries.ListUsers(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list users"})
+		return
+	}
 
 }
