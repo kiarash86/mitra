@@ -121,4 +121,16 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	tempPassword, err := auth.GenerateTempPassword()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt generate password"})
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(tempPassword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong with hashing"})
+		return
+	}
+
 }
