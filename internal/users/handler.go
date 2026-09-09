@@ -22,3 +22,6 @@ type createUserRequest struct {
 	Role     string `json:"role" binding:"required,oneof=owner admin member viewer"`
 }
 
+type updateMeRequest struct {
+	FullName string `json:"full_name" binding:"required,min=2,max=255"`
+}
