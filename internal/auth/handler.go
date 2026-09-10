@@ -37,6 +37,8 @@ type authResponse struct {
 	User         userResponse `json:"user"`
 }
 
+
+
 func NewAuthHandler(queries *sqlc.Queries, tokens *TokenManager) *AuthHandler {
 	return &AuthHandler{
 		queries: queries,
@@ -111,14 +113,14 @@ func (ah *AuthHandler) ChangePassword(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.UUID, fullName, email string, mustChangePassword bool) {
-	accessToken, err := h.tokens.GenerateAccessToken(userID)
+func (ah *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.UUID, fullName, email string, mustChangePassword bool) {
+	accessToken, err := ah.tokens.GenerateAccessToken(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue access token"})
 		return
 	}
 
-	refreshToken, err := h.tokens.GenerateRefreshToken(userID)
+	refreshToken, err := ah.tokens.GenerateRefreshToken(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue refresh token"})
 		return
@@ -134,4 +136,8 @@ func (h *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid.
 			MustChangePassword: mustChangePassword,
 		},
 	})
+}
+
+func (ah *AuthHandler) Refresh(c *gin.Context) {
+
 }
