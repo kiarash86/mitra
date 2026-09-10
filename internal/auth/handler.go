@@ -24,6 +24,10 @@ type changePasswordRequest struct {
 	NewPassword     string `json:"new_password" binding:"required,min=8"`
 }
 
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
 type userResponse struct {
 	ID                 string `json:"id"`
 	FullName           string `json:"full_name"`
@@ -36,8 +40,6 @@ type authResponse struct {
 	RefreshToken string       `json:"refresh_token"`
 	User         userResponse `json:"user"`
 }
-
-
 
 func NewAuthHandler(queries *sqlc.Queries, tokens *TokenManager) *AuthHandler {
 	return &AuthHandler{
