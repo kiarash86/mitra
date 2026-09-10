@@ -17,8 +17,13 @@ type Client struct {
 }
 
 func NewClient(hub *Hub, conn *websocket.Conn, userID, projectID uuid.UUID) *Client {
-	// TODO: construct Client with buffered send channel
-	return nil
+	return &Client{
+		hub:       hub,  // همون Hub که از بیرون پاس داده شده
+		conn:      conn, // همون websocket.Conn که از بیرون پاس داده شده
+		send:      make(chan []byte, 256),
+		userID:    userID,
+		projectID: projectID,
+	}
 }
 
 // ReadPump reads inbound JSON messages from the browser, persists them via queries,
