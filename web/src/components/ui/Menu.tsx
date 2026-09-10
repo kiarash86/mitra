@@ -39,7 +39,7 @@ export function Menu({ trigger, items, align = "end" }: MenuProps) {
   // nearest scroll/overflow ancestor), so an overflow-hidden Card can
   // no longer clip the menu. flip/shift keep it on-screen near
   // viewport edges, and autoUpdate keeps it aligned on scroll/resize.
-  const { refs, floatingStyles, context } = useFloating({
+  const { refs, floatingStyles, context, isPositioned } = useFloating({
     open,
     onOpenChange: setOpen,
     placement: align === "end" ? "bottom-end" : "bottom-start",
@@ -87,8 +87,14 @@ export function Menu({ trigger, items, align = "end" }: MenuProps) {
           <FloatingFocusManager context={context} modal={false} initialFocus={-1}>
             <div
               ref={refs.setFloating}
-              style={floatingStyles}
-              className="z-50 min-w-[180px] animate-fade-up overflow-y-auto rounded-lg border border-paper-200 bg-white py-1.5 shadow-lg"
+              style={{
+                ...floatingStyles,
+                visibility: isPositioned ? "visible" : "hidden",
+              }}
+              className={cn(
+                "z-50 min-w-[180px] overflow-y-auto rounded-lg border border-paper-200 bg-white py-1.5 shadow-lg",
+                isPositioned && "animate-fade-up",
+              )}
               {...getFloatingProps()}
             >
               {items.map((item, i) => (
