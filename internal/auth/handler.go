@@ -15,12 +15,6 @@ type AuthHandler struct {
 	tokens  *TokenManager
 }
 
-// type registerRequest struct {
-// 	FullName string `json:"full_name" binding:"required,min=2,max=255"`
-// 	Email    string `json:"email" binding:"required,email"`
-// 	Password string `json:"password" binding:"required,min=8"`
-// }
-
 type loginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
@@ -49,45 +43,6 @@ func NewAuthHandler(queries *sqlc.Queries, tokens *TokenManager) *AuthHandler {
 		tokens:  tokens,
 	}
 }
-
-// func (ah *AuthHandler) Register(c *gin.Context) {
-
-// 	var req registerRequest
-// 	err := c.ShouldBindBodyWithJSON(&req)
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-// 		return
-// 	}
-// 	_, err = ah.queries.GetUserByEmail(c, req.Email)
-// 	if err == nil {
-// 		c.JSON(http.StatusConflict, gin.H{"error": "user with this email already exists"})
-// 		return
-// 	}
-
-// 	if !errors.Is(err, pgx.ErrNoRows) {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check this user"})
-// 		return
-// 	}
-
-// 	pass, err := HashPassword(req.Password)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong with hashing"})
-// 		return
-// 	}
-
-// 	user, err := ah.queries.CreateUser(c.Request.Context(), sqlc.CreateUserParams{
-// 		Email:        req.Email,
-// 		PasswordHash: pass,
-// 		FullName:     req.FullName,
-// 	})
-
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong with creating user"})
-// 		return
-// 	}
-
-// 	ah.respondWithTokens(c, http.StatusCreated, user.ID, user.FullName, user.Email)
-// }
 
 func (ah *AuthHandler) Login(c *gin.Context) {
 	var req loginRequest
