@@ -99,6 +99,7 @@ func runServe() error {
 	api := router.Group("/api/v1")
 	authGroup := api.Group("/auth")
 	authGroup.POST("/login", authHandler.Login)
+	authGroup.POST("/refresh", authHandler.Refresh)
 
 	protected := api.Group("")
 	protected.Use(middleware.RequireAuth(tokens))
