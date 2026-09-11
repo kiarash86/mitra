@@ -141,5 +141,10 @@ func (ah *AuthHandler) respondWithTokens(c *gin.Context, status int, userID uuid
 }
 
 func (ah *AuthHandler) Refresh(c *gin.Context) {
-
+	var req refreshRequest
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+		return
+	}
 }
