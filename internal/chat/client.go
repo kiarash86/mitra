@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
@@ -39,6 +41,11 @@ func (c *Client) ReadPump(queries *sqlc.Queries) {
 		err := c.conn.ReadJSON(&inbmsg)
 		if err != nil {
 			break
+		}
+
+		body := strings.TrimSpace(inbmsg.Body)
+		if body == "" {
+			continue
 		}
 
 	}
