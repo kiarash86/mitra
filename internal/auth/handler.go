@@ -163,4 +163,6 @@ func (ah *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
+	ah.respondWithTokens(c, http.StatusOK, user.ID, user.FullName, user.Email, user.MustChangePassword)
+
 }
