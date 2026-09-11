@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"context"
+	"log"
 	"strings"
 
 	"github.com/google/uuid"
@@ -45,6 +47,16 @@ func (c *Client) ReadPump(queries *sqlc.Queries) {
 
 		body := strings.TrimSpace(inbmsg.Body)
 		if body == "" {
+			continue
+		}
+
+		msg, err = queries.CreateMessage(context.Background(), sqlc.CreateMessageParams{
+			ProjectID: c.projectID,
+			SenderID:  c.userID,
+			Body:      body,
+		})
+		if err != nil {
+			log.Println("failed to save message:", err)
 			continue
 		}
 
