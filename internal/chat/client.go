@@ -35,8 +35,8 @@ func NewClient(hub *Hub, conn *websocket.Conn, userID, projectID uuid.UUID) *Cli
 // exits (and unregisters the client) when the connection closes or errors.
 func (c *Client) ReadPump(queries *sqlc.Queries) {
 	defer func() {
-		c.hub.rooms[c.projectID][c] = false
-
+		c.hub.Unregister(c)
+		c.conn.Close()
 	}()
 	for {
 		var inbmsg InboundMessage
