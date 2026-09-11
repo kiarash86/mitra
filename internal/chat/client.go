@@ -50,7 +50,7 @@ func (c *Client) ReadPump(queries *sqlc.Queries) {
 			continue
 		}
 
-		msg, err = queries.CreateMessage(context.Background(), sqlc.CreateMessageParams{
+		msg, err := queries.CreateMessage(context.Background(), sqlc.CreateMessageParams{
 			ProjectID: c.projectID,
 			SenderID:  c.userID,
 			Body:      body,
@@ -59,6 +59,26 @@ func (c *Client) ReadPump(queries *sqlc.Queries) {
 			log.Println("failed to save message:", err)
 			continue
 		}
+
+		usr, err := queries.GetUserByID(context.Background(), msg.SenderID)
+		if err != nil {
+			log.Println("failed to fetch sender:", err)
+			continue
+		}
+
+		event := OutboundEvent{
+			Type: "message.created",
+			Payload: MessagePayload{
+				ID:         msg.ID,
+				ProjectID:  msg.ProjectID,
+				SenderID:   msg.SenderID,
+				SenderName: usr.FullName,
+				Body:       msg.Body,
+				CreatedAt:  msg.CreatedAt,
+			},
+		}
+
+		c.hub.Broadcast(c.projectID, event)
 
 	}
 }
