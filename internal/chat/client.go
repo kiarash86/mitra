@@ -30,10 +30,18 @@ func NewClient(hub *Hub, conn *websocket.Conn, userID, projectID uuid.UUID) *Cli
 // and hands them to the hub for broadcast. Must run in its own goroutine;
 // exits (and unregisters the client) when the connection closes or errors.
 func (c *Client) ReadPump(queries *sqlc.Queries) {
-	// TODO: defer c.hub.Unregister(c); defer c.conn.Close()
-	// TODO: loop c.conn.ReadJSON(&InboundMessage{})
-	// TODO: queries.CreateMessage(...) to persist
-	// TODO: c.hub.Broadcast(c.projectID, OutboundEvent{...})
+	defer func() {
+		c.hub.rooms[c.projectID][c] = false
+
+	}()
+	for {
+		var inbmsg InboundMessage
+		err := c.conn.ReadJSON(&inbmsg)
+		if err != nil {
+			break
+		}
+
+	}
 }
 
 // WritePump drains the client's send channel and writes each message out to the
