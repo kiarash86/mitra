@@ -182,7 +182,8 @@ ActivityLog (append-only، شبه event-sourcing)
 ## ۸. فازبندی پروژه (Roadmap)
 
 ### فاز ۱ — MVP هسته‌ای
-- [ ] Auth (ورود، بدون ثبت‌نام خودکار — تک‌مستأجری)
+- [x] Auth (ورود، بدون ثبت‌نام خودکار — تک‌مستأجری)
+- [x] Refresh token (stateless — بدون جدول/revocation، فقط صدور access token جدید از refresh token معتبر)
 - [ ] مدیریت کاربرها (بدون سطح Organization)
 - [ ] مدیریت پروژه (CRUD)
 - [ ] مدیریت تسک (ایجاد، تخصیص، وضعیت)
@@ -198,6 +199,7 @@ ActivityLog (append-only، شبه event-sourcing)
 
 ### فاز ۳ — دسترسی پیشرفته و گزارش‌گیری
 - [ ] تکمیل RBAC (override سطح پروژه)
+- [ ] Refresh token stateful (جدول `refresh_tokens`، rotation واقعی، logout سمت سرور، revoke همه‌ی سشن‌ها روی تغییر پسورد، reuse detection)
 - [ ] گزارش فعالیت مبتنی بر ActivityLog
 - [ ] فیلتر و جستجوی پیشرفته
 
@@ -227,6 +229,22 @@ ActivityLog (append-only، شبه event-sourcing)
 | فایل/پیوست | S3-compatible Object Storage |
 | Observability | OpenTelemetry + Prometheus/Grafana |
 | شروع پروژه | فاز ۱ (MVP) با تمرکز روی Task/Project (پروژه‌محور، بدون Team) |
+
+---
+
+## ۱۰. ایده‌های در حال بررسی (هنوز تصمیم نهایی نیست)
+
+> این بخش برخلاف بخش ۸ و ۹، تصمیم قطعی نیست — فقط ایده‌هایی که مطرح شدن و باید در موردشون مشورت بشه قبل از اینکه وارد فازبندی رسمی بشن.
+
+### Hard delete / Right-to-erasure برای کاربران
+فعلاً کاربران فقط soft-delete می‌شن (`deleted_at`) و برای همیشه همون‌جوری می‌مونن. ایده‌ای که مطرح شد یه فلوی دومرحله‌ای روی همین مکانیزم اضافه بشه، نه جایگزینش:
+
+1. **درخواست حذف → soft delete فوری:** `deleted_at` ست می‌شه، دسترسی/لاگین/سشن‌های کاربر فوراً قطع می‌شه، یه رکورد توی جدول جدید `deletion_requests(user_id, requested_at, scheduled_purge_at, status, legal_hold)` ثبت می‌شه.
+2. **دوره‌ی مهلت (۱۴ تا ۳۰ روز):** برای امکان restore/پشیمونی کاربر؛ هیچی physically پاک نمی‌شه.
+3. **جاب پاک‌سازی زمان‌بندی‌شده:** بعد از پایان مهلت، فیلدهای PII کاربر (`full_name`, `email`, `password_hash`, `avatar_url`) **anonymize** می‌شن (نه DELETE واقعی از جدول `users`) — چون `tasks.created_by` و `comments.author_id` با `ON DELETE RESTRICT` بهش وصلن و حذف واقعی ردیف یا fail می‌کنه یا با CASCADE تاریخچه/تسک‌ها رو نابود می‌کنه. خود تسک‌ها/کامنت‌ها/`ActivityLog` دست‌نخورده می‌مونن، فقط دیگه به یه اسم واقعی وصل نیستن.
+4. باید idempotent و batch-based باشه (برای retry امن)، و به `legal_hold` احترام بذاره (کاربرهایی که درگیر پرونده‌ی حقوقی/مالی‌ان رو موقتاً از پاک‌سازی معاف کنه).
+
+**چرا هنوز قطعی نیست:** نیاز به مشورت داره (احتمالاً بار حقوقی/کسب‌وکار داره، نه فقط فنی). اگه تصمیم نهایی مثبت شد، جای طبیعیش فاز ۳ یا ۴ (کنار تکمیل RBAC و گزارش‌گیری) خواهد بود.
 
 ---
 
