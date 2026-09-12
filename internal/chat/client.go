@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"strings"
 
@@ -78,7 +79,13 @@ func (c *Client) ReadPump(queries *sqlc.Queries) {
 			},
 		}
 
-		c.hub.Broadcast(c.projectID, event)
+		data, err := json.Marshal(event)
+		if err != nil {
+			log.Println("failed to marshal event:", err)
+			continue
+		}
+
+		c.hub.Broadcast(c.projectID, data)
 
 	}
 }
