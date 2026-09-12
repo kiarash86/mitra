@@ -26,3 +26,7 @@ type MessagePayload struct {
 	Body       string    `json:"body"`
 	CreatedAt  time.Time `json:"created_at"`
 }
+
+type DeletedMessagePayload struct {
+	ID uuid.UUID `json:"id"`
+}
