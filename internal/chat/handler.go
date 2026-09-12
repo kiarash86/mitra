@@ -137,7 +137,7 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 
 	h.hub.Broadcast(message.ProjectID, []byte(message.Body))
 
-	// TODO: broadcast the edit to the room via h.hub, c.JSON(...)
+	c.JSON(http.StatusOK, gin.H{"msg": message})
 }
 
 // DeleteMessage handles DELETE /api/v1/messages/:id
