@@ -75,7 +75,7 @@ func (h *Hub) Register(client *Client) {
 
 // Unregister removes a client from its project room and closes its send channel.
 func (h *Hub) Unregister(client *Client) {
-	// TODO: send client on h.unregister channel (or lock + delete directly)
+	h.unregister <- client
 }
 
 // Broadcast fans a message out to every connected client in the given project room.
