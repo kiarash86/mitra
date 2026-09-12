@@ -169,7 +169,17 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 		return
 	}
-	// TODO: h.queries.GetMessageByID(...) to check ownership
+
+	msg, err := h.queries.GetMessageByID(c.Request.Context(), messageID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "message not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
+		return
+	}
+
 	// TODO: rbac.IsProjectOwnerOrAdmin fallback if not the sender
 	// TODO: h.queries.SoftDeleteMessage(...)
 	// TODO: broadcast the deletion to the room via h.hub, c.JSON(...)
