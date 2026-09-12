@@ -99,6 +99,13 @@ func (c *Client) WritePump() {
 	}()
 
 	for {
+		data, ok := <-c.send
+		if !ok {
+			return
+		}
 
+		if err := c.conn.WriteMessage(websocket.TextMessage, data); err != nil {
+			return
+		}
 	}
 }
