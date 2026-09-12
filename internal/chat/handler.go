@@ -2,12 +2,14 @@ package chat
 
 import (
 	"net/http"
-	"uuid"
+
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/rbac"
 )
 
 // Handler exposes the REST endpoints for chat message history.
@@ -34,6 +36,16 @@ func (h *Handler) ListMessages(c *gin.Context) {
 	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
+	isMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, projectID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "..."})
+		return
+	}
+	if !isMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "..."})
 		return
 	}
 
