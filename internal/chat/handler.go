@@ -1,11 +1,13 @@
 package chat
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/gin-gonic/gin"
 
@@ -110,7 +112,15 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
-	// TODO: h.queries.GetMessageByID(...) to check ownership
+	msg, err := h.queries.GetMessageByID(c.Request.Context(), messageID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
+		return
+	}
 	// TODO: h.queries.UpdateMessage(...)
 	// TODO: broadcast the edit to the room via h.hub, c.JSON(...)
 }
