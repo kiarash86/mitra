@@ -198,14 +198,8 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 	}
 
 	event := OutboundEvent{
-		Type: "message.deleted",
-		Payload: MessagePayload{
-			ID:        message.ID,
-			ProjectID: message.ProjectID,
-			SenderID:  message.SenderID,
-			Body:      message.Body,
-			CreatedAt: message.CreatedAt,
-		},
+		Type:    "message.deleted",
+		Payload: DeletedMessagePayload{ID: message.ID},
 	}
 
 	if data, err := json.Marshal(event); err == nil {
