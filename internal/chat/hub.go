@@ -80,5 +80,8 @@ func (h *Hub) Unregister(client *Client) {
 
 // Broadcast fans a message out to every connected client in the given project room.
 func (h *Hub) Broadcast(projectID uuid.UUID, data []byte) {
-	// TODO: push event onto h.broadcast (or iterate room directly under lock)
+	h.broadcast <- roomMessage{
+		projectID: projectID,
+		data:      data,
+	}
 }
