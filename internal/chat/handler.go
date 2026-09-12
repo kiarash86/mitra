@@ -180,7 +180,7 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	if message.ID != userID {
+	if message.SenderID != userID {
 		isAdmin, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, message.ProjectID, userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
