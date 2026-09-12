@@ -124,7 +124,7 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		return
 	}
 
-	if msg.ID != userID {
+	if msg.SenderID != userID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "you can only edit your own messages"})
 		return
 	}
