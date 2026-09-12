@@ -192,7 +192,7 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		}
 	}
 
-	if err := h.queries.SoftDeleteMessage(c.Request.Context(), msg.ID); err != nil {
+	if err := h.queries.SoftDeleteMessage(c.Request.Context(), message.ID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt delete message"})
 		return
 	}
