@@ -32,8 +32,8 @@ type UpdateMessageRequest struct {
 	Body string `json:"body" binding:"required"`
 }
 
-func NewHandler(queries *sqlc.Queries, hub *Hub) *Handler {
-	return &Handler{queries: queries, hub: hub}
+func NewHandler(queries *sqlc.Queries, hub *Hub, tokens *auth.TokenManager) *Handler {
+	return &Handler{queries: queries, hub: hub, tokens: tokens}
 }
 
 var upgrader = websocket.Upgrader{
