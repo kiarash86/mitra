@@ -47,6 +47,7 @@ func (h *Hub) Run() {
 
 			if _, ok := h.rooms[id]; ok {
 				delete(h.rooms[id], client)
+				close(client.send)
 
 				if len(h.rooms[id]) == 0 {
 					delete(h.rooms, id)
@@ -56,7 +57,12 @@ func (h *Hub) Run() {
 		case msg := <-h.broadcast:
 			Id := msg.projectID
 			for c := range h.rooms[Id] {
-				c.send <- msg.data
+				select {
+				case c.send <- msg.data:
+				default:
+					close(c.send)
+					delete(h.rooms[Id], c)
+				}
 			}
 		}
 	}
