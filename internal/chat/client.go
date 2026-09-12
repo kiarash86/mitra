@@ -87,7 +87,11 @@ func (c *Client) ReadPump(queries *sqlc.Queries) {
 // browser's WebSocket connection. Must run in its own goroutine; exits when
 // the send channel is closed (by Hub.Unregister) or a write fails.
 func (c *Client) WritePump() {
-	// TODO: defer c.conn.Close()
-	// TODO: loop over c.send, c.conn.WriteMessage(websocket.TextMessage, msg)
-	// TODO: periodic ping/pong to keep connection alive (time.Ticker)
+	defer func() {
+		c.conn.Close()
+	}()
+
+	for {
+
+	}
 }
