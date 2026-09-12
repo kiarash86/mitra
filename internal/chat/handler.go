@@ -1,6 +1,9 @@
 package chat
 
 import (
+	"net/http"
+	"uuid"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/kiarash86/mitra/internal/db/sqlc"
@@ -21,12 +24,12 @@ func NewHandler(queries *sqlc.Queries, hub *Hub) *Handler {
 // Query params: before (RFC3339 timestamp, optional), limit (optional, default/max enforced server-side).
 // Requires the caller to be a project member (rbac.IsProjectMember), same as comment.Handler.ListByTask.
 func (h *Handler) ListMessages(c *gin.Context) {
-	// TODO: parse project id from c.Param("id")
-	// TODO: parse "before" / "limit" query params
-	// TODO: get current user id via middleware.CurrentUserID
-	// TODO: rbac.IsProjectMember check
-	// TODO: h.queries.ListMessagesByProject(...)
-	// TODO: map rows to response DTO, c.JSON(http.StatusOK, ...)
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
 }
 
 // UpdateMessage handles PATCH /api/v1/messages/:id
