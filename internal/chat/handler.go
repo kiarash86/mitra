@@ -2,6 +2,8 @@ package chat
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -41,12 +43,33 @@ func (h *Handler) ListMessages(c *gin.Context) {
 
 	isMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, projectID, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "..."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check project membership"})
 		return
 	}
 	if !isMember {
-		c.JSON(http.StatusForbidden, gin.H{"error": "..."})
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
 		return
+	}
+
+	limitStr := c.DefaultQuery("limit", "50")
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 50
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	beforeStr := c.Query("before")
+
+	var before time.Time
+	if beforeStr != "" {
+		before, err = time.Parse(time.RFC3339, beforeStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid before timestamp"})
+			return
+		}
 	}
 
 }
