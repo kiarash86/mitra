@@ -163,7 +163,12 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid message id"})
 		return
 	}
-	// TODO: get current user id
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
 	// TODO: h.queries.GetMessageByID(...) to check ownership
 	// TODO: rbac.IsProjectOwnerOrAdmin fallback if not the sender
 	// TODO: h.queries.SoftDeleteMessage(...)
