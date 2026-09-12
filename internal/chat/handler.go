@@ -3,15 +3,18 @@ package chat
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/kiarash86/mitra/internal/auth"
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 	"github.com/kiarash86/mitra/internal/middleware"
 	"github.com/kiarash86/mitra/internal/rbac"
@@ -22,6 +25,7 @@ import (
 type Handler struct {
 	queries *sqlc.Queries
 	hub     *Hub
+	tokens  *auth.TokenManager
 }
 
 type UpdateMessageRequest struct {
@@ -30,6 +34,12 @@ type UpdateMessageRequest struct {
 
 func NewHandler(queries *sqlc.Queries, hub *Hub) *Handler {
 	return &Handler{queries: queries, hub: hub}
+}
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // TODO: restrict this to known origins in production
+	},
 }
 
 // ListMessages handles GET /api/v1/projects/:id/messages
@@ -214,10 +224,44 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 // Auth note: WebSocket requests can't send an Authorization header, so the access token
 // must be read from a query param (?token=...) instead of middleware.RequireAuth.
 func (h *Handler) ServeWS(c *gin.Context) {
-	// TODO: parse project id from c.Param("id")
-	// TODO: read token from c.Query("token"), validate via auth.TokenManager
-	// TODO: rbac.IsProjectMember check before upgrading
-	// TODO: upgrader.Upgrade(c.Writer, c.Request, nil)
-	// TODO: construct *Client, h.hub.Register(client)
-	// TODO: go client.ReadPump(h.queries), go client.WritePump()
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+		return
+	}
+
+	claims, err := h.tokens.ParseAccessToken(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+	userID := claims.UserID
+
+	isMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, projectID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't check project membership"})
+		return
+	}
+	if !isMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return
+	}
+
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Println("websocket upgrade failed:", err)
+		return
+	}
+
+	client := NewClient(h.hub, conn, userID, projectID)
+	h.hub.Register(client)
+
+	go client.WritePump()
+	client.ReadPump(h.queries)
 }
