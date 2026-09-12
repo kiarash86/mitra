@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -107,35 +108,49 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		return
 	}
 
-	if messageID != userID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you can only edit your own messages"})
-		return
-	}
-
 	var req UpdateMessageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
+
 	msg, err := h.queries.GetMessageByID(c.Request.Context(), messageID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "message not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
-		return
-	}
-	message, err := h.queries.UpdateMessage(c.Request.Context(), sqlc.UpdateMessageParams{
-		ID:   msg.ID,
-		Body: msg.Body,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update message"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
 		return
 	}
 
-	h.hub.Broadcast(message.ProjectID, []byte(message.Body))
+	if msg.ID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you can only edit your own messages"})
+		return
+	}
+
+	message, err := h.queries.UpdateMessage(c.Request.Context(), sqlc.UpdateMessageParams{
+		ID:   msg.ID,
+		Body: req.Body,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't update message"})
+		return
+	}
+
+	event := OutboundEvent{
+		Type: "message.updated",
+		Payload: MessagePayload{
+			ID:        message.ID,
+			ProjectID: message.ProjectID,
+			SenderID:  message.SenderID,
+			Body:      message.Body,
+			CreatedAt: message.CreatedAt,
+		},
+	}
+	if data, err := json.Marshal(event); err == nil {
+		h.hub.Broadcast(message.ProjectID, data)
+	}
 
 	c.JSON(http.StatusOK, gin.H{"msg": message})
 }
