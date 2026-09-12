@@ -72,6 +72,18 @@ func (h *Handler) ListMessages(c *gin.Context) {
 		}
 	}
 
+	messages, err := h.queries.ListMessagesByProject(c.Request.Context(), sqlc.ListMessagesByProjectParams{
+		ProjectID: projectID,
+		Column2:   before,
+		Limit:     int32(limit),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list messages"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"msg": messages})
+
 }
 
 // UpdateMessage handles PATCH /api/v1/messages/:id
