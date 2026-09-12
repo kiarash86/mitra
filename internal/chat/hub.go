@@ -43,6 +43,15 @@ func (h *Hub) Run() {
 			}
 
 		case client := <-h.unregister:
+			id := client.projectID
+
+			if _, ok := h.rooms[id]; ok {
+				delete(h.rooms[id], client)
+
+				if len(h.rooms[id]) == 0 {
+					delete(h.rooms, id)
+				}
+			}
 
 		case msg := <-h.broadcast:
 
