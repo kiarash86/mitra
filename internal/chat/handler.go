@@ -89,7 +89,7 @@ func (h *Handler) ListMessages(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"msg": messages})
+	c.JSON(http.StatusOK, gin.H{"messages": messages})
 
 }
 
@@ -152,7 +152,7 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		h.hub.Broadcast(message.ProjectID, data)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"msg": message})
+	c.JSON(http.StatusOK, gin.H{"message": message})
 }
 
 // DeleteMessage handles DELETE /api/v1/messages/:id
@@ -170,7 +170,7 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	msg, err := h.queries.GetMessageByID(c.Request.Context(), messageID)
+	message, err := h.queries.GetMessageByID(c.Request.Context(), messageID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "message not found"})
@@ -180,8 +180,8 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	if msg.ID != userID {
-		isAdmin, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, msg.ProjectID, userID)
+	if message.ID != userID {
+		isAdmin, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, message.ProjectID, userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
 			return
@@ -197,7 +197,22 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	// TODO: broadcast the deletion to the room via h.hub, c.JSON(...)
+	event := OutboundEvent{
+		Type: "message.updated",
+		Payload: MessagePayload{
+			ID:        message.ID,
+			ProjectID: message.ProjectID,
+			SenderID:  message.SenderID,
+			Body:      message.Body,
+			CreatedAt: message.CreatedAt,
+		},
+	}
+
+	if data, err := json.Marshal(event); err == nil {
+		h.hub.Broadcast(message.ProjectID, data)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": message})
 }
 
 // ServeWS handles GET /ws/projects/:id/chat — upgrades the HTTP connection to a WebSocket
