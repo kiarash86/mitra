@@ -135,6 +135,8 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		return
 	}
 
+	h.hub.Broadcast(message.ProjectID, []byte(message.Body))
+
 	// TODO: broadcast the edit to the room via h.hub, c.JSON(...)
 }
 
