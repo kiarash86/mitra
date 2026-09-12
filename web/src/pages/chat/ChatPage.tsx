@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Hash, Send, MessagesSquare } from "lucide-react";
 import { useI18n } from "../../i18n";
@@ -13,19 +13,20 @@ import { Avatar } from "../../components/ui/Avatar";
 import { Textarea } from "../../components/ui/Textarea";
 import { IconButton } from "../../components/ui/IconButton";
 import { Skeleton } from "../../components/ui/Skeleton";
+import { useWebSocket } from "../../hooks/use-websocket";
+import { messagesApi } from "../../api/messages";
+import { messageFromHistoryRow } from "../../types/chat";
+import type { Message, ChatEvent } from "../../types/chat";
 
-interface LocalMessage {
-  id: string;
-  body: string;
-  senderName: string;
-  sentAt: string;
+// Builds the WebSocket URL for a project's chat room. Mirrors how api/client.ts
+// resolves the API origin, but swaps http(s) for ws(s) since the browser's
+// native WebSocket API needs the ws:// scheme explicitly.
+function buildWsUrl(path: string): string {
+  const apiOrigin = import.meta.env.VITE_API_URL || window.location.origin;
+  const wsOrigin = apiOrigin.replace(/^http/, "ws");
+  return `${wsOrigin}${path}`;
 }
 
-// No chat backend exists yet (see MITRA.md roadmap — chat is a later phase).
-// This page renders the real interaction design against real project names
-// as "channels", with an in-memory, per-session message list: nothing here
-// is persisted or sent to a server. useWebSocket (hooks/use-websocket.ts) is
-// ready to wire in once a live chat endpoint exists.
 export default function ChatPage() {
   const { t, locale } = useI18n();
   const currentUser = useAuthStore((s) => s.user);
@@ -36,7 +37,9 @@ export default function ChatPage() {
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
-  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, LocalMessage[]>>({});
+  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, Message[]>>({});
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (currentOrg) fetchProjects(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
@@ -45,24 +48,90 @@ export default function ChatPage() {
   const activeMessages = activeId ? (messagesByChannel[activeId] ?? []) : [];
   const activeProject = projects.find((p) => p.id === activeId);
 
+  // Handles every event the server pushes over the socket for the active room:
+  // new messages get appended, edits patch the matching message in place, and
+  // deletes remove it from the list entirely.
+  const handleEvent = (raw: unknown) => {
+    const event = raw as ChatEvent;
+    if (!activeId) return;
+
+    if (event.type === "message.created") {
+      setMessagesByChannel((prev) => ({
+        ...prev,
+        [activeId]: [...(prev[activeId] ?? []), event.payload],
+      }));
+    } else if (event.type === "message.updated") {
+      setMessagesByChannel((prev) => ({
+        ...prev,
+        [activeId]: (prev[activeId] ?? []).map((m) => (m.id === event.payload.id ? event.payload : m)),
+      }));
+    } else if (event.type === "message.deleted") {
+      setMessagesByChannel((prev) => ({
+        ...prev,
+        [activeId]: (prev[activeId] ?? []).filter((m) => m.id !== event.payload.id),
+      }));
+    }
+  };
+
+  const { connect, disconnect, send, status } = useWebSocket({
+    url: activeId ? buildWsUrl(`/ws/projects/${activeId}/chat`) : "",
+    onMessage: handleEvent,
+  });
+
+  // (Re)connects the socket whenever the active project changes, and tears
+  // down the previous connection first so a stale room doesn't keep streaming.
+  useEffect(() => {
+    if (!activeId) return;
+    connect();
+    return () => disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId]);
+
+  // Loads message history for a channel the first time it's opened.
+  useEffect(() => {
+    if (!activeId || messagesByChannel[activeId]) return;
+    setHistoryLoading(true);
+    messagesApi
+      .listByProject(activeId)
+      .then((rows) => {
+        // Backend returns newest-first; the thread reads oldest-to-newest.
+        const ordered = rows.map(messageFromHistoryRow).reverse();
+        setMessagesByChannel((prev) => ({ ...prev, [activeId]: ordered }));
+      })
+      .catch(() => toast.error(t.common.errorGeneric))
+      .finally(() => setHistoryLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ block: "end" });
+  }, [activeMessages.length]);
+
   const handleSend = (e: FormEvent) => {
     e.preventDefault();
-    if (!activeId || !draft.trim()) return;
-    const message: LocalMessage = {
-      id: `${Date.now()}`,
-      body: draft.trim(),
-      senderName: currentUser?.full_name ?? "?",
-      sentAt: new Date().toISOString(),
-    };
-    setMessagesByChannel((prev) => ({ ...prev, [activeId]: [...(prev[activeId] ?? []), message] }));
+    if (!activeId || !draft.trim() || status !== "open") return;
+    send({ body: draft.trim() });
     setDraft("");
   };
+
+  const statusTone =
+    status === "open"
+      ? "bg-green-100 text-green-700"
+      : status === "connecting"
+        ? "bg-saffron-100 text-saffron-700"
+        : "bg-ink-100 text-ink-500";
+  const statusLabel =
+    status === "open" ? t.chat.connected : status === "connecting" ? t.chat.connecting : t.chat.offline;
 
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
         <h1 className="text-2xl font-bold text-ink-900">{t.chat.title}</h1>
-        <Badge tone="bg-saffron-100 text-saffron-700">{t.chat.previewBadge}</Badge>
+        {activeId && (
+          <Badge tone={statusTone} dotClassName={status === "open" ? "bg-green-500" : undefined}>
+            {statusLabel}
+          </Badge>
+        )}
       </div>
 
       <div className="flex h-[75vh] overflow-hidden rounded-lg border border-paper-200 bg-white shadow-soft">
@@ -111,18 +180,28 @@ export default function ChatPage() {
               </div>
 
               <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-                {activeMessages.map((message) => (
-                  <div key={message.id} className="flex gap-3">
-                    <Avatar name={message.senderName} size="sm" />
-                    <div className="min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-medium text-ink-800">{message.senderName}</span>
-                        <span className="text-xs text-ink-400">{formatTime(message.sentAt, locale)}</span>
-                      </div>
-                      <p className="mt-0.5 whitespace-pre-wrap text-sm text-ink-600">{message.body}</p>
-                    </div>
+                {historyLoading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-10 w-2/3 rounded-md" />
+                    <Skeleton className="h-10 w-1/2 rounded-md" />
                   </div>
-                ))}
+                ) : (
+                  activeMessages.map((message) => (
+                    <div key={message.id} className="flex gap-3">
+                      <Avatar name={message.sender_name} size="sm" />
+                      <div className="min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-medium text-ink-800">
+                            {message.sender_id === currentUser?.id ? currentUser.full_name : message.sender_name}
+                          </span>
+                          <span className="text-xs text-ink-400">{formatTime(message.created_at, locale)}</span>
+                        </div>
+                        <p className="mt-0.5 whitespace-pre-wrap text-sm text-ink-600">{message.body}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={scrollRef} />
               </div>
 
               <form onSubmit={handleSend} className="flex items-end gap-2 border-t border-paper-200 p-3">
@@ -145,7 +224,7 @@ export default function ChatPage() {
                   label={t.chat.send}
                   icon={<Send className="h-4 w-4" />}
                   variant="solid"
-                  disabled={!draft.trim()}
+                  disabled={!draft.trim() || status !== "open"}
                 />
               </form>
             </>
