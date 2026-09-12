@@ -70,15 +70,18 @@ func (h *Hub) Run() {
 
 // Register adds a client to its project room.
 func (h *Hub) Register(client *Client) {
-	// TODO: send client on h.register channel (or lock + add directly)
+	h.register <- client
 }
 
 // Unregister removes a client from its project room and closes its send channel.
 func (h *Hub) Unregister(client *Client) {
-	// TODO: send client on h.unregister channel (or lock + delete directly)
+	h.unregister <- client
 }
 
 // Broadcast fans a message out to every connected client in the given project room.
 func (h *Hub) Broadcast(projectID uuid.UUID, data []byte) {
-	// TODO: push event onto h.broadcast (or iterate room directly under lock)
+	h.broadcast <- roomMessage{
+		projectID: projectID,
+		data:      data,
+	}
 }
