@@ -121,7 +121,15 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
 		return
 	}
-	// TODO: h.queries.UpdateMessage(...)
+	message, err := h.queries.UpdateMessage(c.Request.Context(), sqlc.UpdateMessageParams{
+		ID:   msg.ID,
+		Body: msg.Body,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt update message"})
+		return
+	}
+
 	// TODO: broadcast the edit to the room via h.hub, c.JSON(...)
 }
 
