@@ -21,6 +21,10 @@ type Handler struct {
 	hub     *Hub
 }
 
+type UpdateMessageRequest struct {
+	Body string `json:"body" binding:"required"`
+}
+
 func NewHandler(queries *sqlc.Queries, hub *Hub) *Handler {
 	return &Handler{queries: queries, hub: hub}
 }
@@ -94,10 +98,16 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid message id"})
 		return
 	}
-	// TODO: bind request body { body string }
+
 	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
+	var req UpdateMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
 	// TODO: h.queries.GetMessageByID(...) to check ownership
