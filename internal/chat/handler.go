@@ -107,6 +107,11 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		return
 	}
 
+	if messageID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you can only edit your own messages"})
+		return
+	}
+
 	var req UpdateMessageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
