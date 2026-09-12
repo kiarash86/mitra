@@ -89,13 +89,17 @@ func (h *Handler) ListMessages(c *gin.Context) {
 // UpdateMessage handles PATCH /api/v1/messages/:id
 // Only the original sender may edit their own message (check message.SenderID == current user).
 func (h *Handler) UpdateMessage(c *gin.Context) {
-	MessageID, err := uuid.Parse(c.Param("id"))
+	messageID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid message id"})
 		return
 	}
 	// TODO: bind request body { body string }
-	// TODO: get current user id
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
 	// TODO: h.queries.GetMessageByID(...) to check ownership
 	// TODO: h.queries.UpdateMessage(...)
 	// TODO: broadcast the edit to the room via h.hub, c.JSON(...)
