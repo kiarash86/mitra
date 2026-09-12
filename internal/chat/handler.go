@@ -180,7 +180,16 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		return
 	}
 
-	// TODO: rbac.IsProjectOwnerOrAdmin fallback if not the sender
+	if msg.ID != userID {
+		isAdmin, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, msg.ProjectID, userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
+		}
+		if !isAdmin {
+			c.JSON(http.StatusForbidden, gin.H{"error": "you can only edit your own messages"})
+		}
+	}
+	// اگه به اینجا رسیدیم، یا فرستنده بوده، یا admin بوده — پس مجازیم ادامه بدیم
 	// TODO: h.queries.SoftDeleteMessage(...)
 	// TODO: broadcast the deletion to the room via h.hub, c.JSON(...)
 }
