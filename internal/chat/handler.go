@@ -158,7 +158,11 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 // DeleteMessage handles DELETE /api/v1/messages/:id
 // Soft-delete only; sender or project owner/admin may delete.
 func (h *Handler) DeleteMessage(c *gin.Context) {
-	// TODO: parse message id from c.Param("id")
+	messageID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid message id"})
+		return
+	}
 	// TODO: get current user id
 	// TODO: h.queries.GetMessageByID(...) to check ownership
 	// TODO: rbac.IsProjectOwnerOrAdmin fallback if not the sender
