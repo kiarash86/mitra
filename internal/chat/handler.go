@@ -198,7 +198,7 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 	}
 
 	event := OutboundEvent{
-		Type: "message.updated",
+		Type: "message.deleted",
 		Payload: MessagePayload{
 			ID:        message.ID,
 			ProjectID: message.ProjectID,
