@@ -31,7 +31,16 @@ func NewHub() *Hub {
 // Run starts the hub's event loop. Intended to be launched once via `go hub.Run()`
 // at application startup (cmd/api/main.go).
 func (h *Hub) Run() {
-	// TODO: select loop over register/unregister/broadcast channels
+	for {
+		select {
+		case client := <-h.register:
+
+		case client := <-h.unregister:
+
+		case msg := <-h.broadcast:
+
+		}
+	}
 }
 
 // Register adds a client to its project room.
