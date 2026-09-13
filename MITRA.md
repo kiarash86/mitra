@@ -41,15 +41,15 @@
 
 ## ۲. Frontend — Mobile (Flutter)
 
-| ماژول | توضیح |
-|---|---|
-| Auth Module | ورود، مدیریت سشن، refresh token |
-| Users Module | مدیریت کاربرها (بدون سطح Organization — تک‌مستأجری) |
-| Project & Task Module | پروژه‌ها، تسک‌ها، وضعیت‌ها، تخصیص |
-| Chat Module | چت داخلی (متصل به WebSocket) |
-| Notification Module | اعلان‌های Push و درون‌برنامه‌ای |
-| Reporting Module | گزارش فعالیت و داشبورد |
-| Permission Layer | کنترل دسترسی در UI بر اساس نقش و scope |
+| ماژول                 | توضیح                                              |
+| --------------------- | -------------------------------------------------- |
+| Auth Module           | ورود، مدیریت سشن، refresh token                    |
+| Users Module          | مدیریت کاربرها (بدون سطح Organization — تک‌مستأجری) |
+| Project & Task Module | پروژه‌ها، تسک‌ها، وضعیت‌ها، تخصیص                     |
+| Chat Module           | چت داخلی (متصل به WebSocket)                       |
+| Notification Module   | اعلان‌های Push و درون‌برنامه‌ای                       |
+| Reporting Module      | گزارش فعالیت و داشبورد                             |
+| Permission Layer      | کنترل دسترسی در UI بر اساس نقش و scope             |
 
 **پشته‌ی فنی:**
 - State Management: Riverpod
@@ -73,14 +73,14 @@
 
 ## ۴. بک‌اند (Go / Gin) — پشته‌ی فنی نهایی
 
-| حوزه | تصمیم | دلیل |
-|---|---|---|
-| فریم‌ورک | **Go + Gin** | Concurrency و throughput بالا؛ اولویت اول پروژه performance است |
-| Data Access | **sqlc** | SQL دستی، کد Go تایپ‌سیف در build-time، بدون overhead و N+1 پنهان ORM |
-| Migration | **golang-migrate / Atlas / using docker(curent) not sure which way**  | مدیریت schema مستقل از sqlc |
-| صف پیام | ~~NATS + JetStream~~ → **حذف شد (فاز ۱)** | هزینه‌ی زیرساخت؛ جایگزین موقت: in-process fan-out (پایین را ببینید) |
-| Realtime | **gorilla/websocket** | کنترل کامل روی connection lifecycle، بدون overhead فریم‌ورک آماده |
-| RBAC | **پیاده‌سازی دستی، scope-aware** | نقش‌ها روی دو سطح تعریف می‌شوند: نقش سراسری کاربر (`users.role`) / Project — تا یک کاربر بتواند Admin یک پروژه و Member پروژه‌ی دیگر باشد، یا permission سطح پروژه override شود. سطح Organization (که در نسخه‌ی اول این پروپوزال بود) بعداً حذف شد — به بازبینی بالا نگاه کنید |
+| حوزه        | تصمیم                                                                | دلیل                                                                                                                                                                                                                                                                      |
+| ----------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| فریم‌ورک     | **Go + Gin**                                                         | Concurrency و throughput بالا؛ اولویت اول پروژه performance است                                                                                                                                                                                                           |
+| Data Access | **sqlc**                                                             | SQL دستی، کد Go تایپ‌سیف در build-time، بدون overhead و N+1 پنهان ORM                                                                                                                                                                                                      |
+| Migration   | **golang-migrate / Atlas / using docker(curent) not sure which way** | مدیریت schema مستقل از sqlc                                                                                                                                                                                                                                               |
+| صف پیام     | ~~NATS + JetStream~~ → **حذف شد (فاز ۱)**                            | هزینه‌ی زیرساخت؛ جایگزین موقت: in-process fan-out (پایین را ببینید)                                                                                                                                                                                                        |
+| Realtime    | **gorilla/websocket**                                                | کنترل کامل روی connection lifecycle، بدون overhead فریم‌ورک آماده                                                                                                                                                                                                          |
+| RBAC        | **پیاده‌سازی دستی، scope-aware**                                      | نقش‌ها روی دو سطح تعریف می‌شوند: نقش سراسری کاربر (`users.role`) / Project — تا یک کاربر بتواند Admin یک پروژه و Member پروژه‌ی دیگر باشد، یا permission سطح پروژه override شود. سطح Organization (که در نسخه‌ی اول این پروپوزال بود) بعداً حذف شد — به بازبینی بالا نگاه کنید |
 
 ### زیرساخت
 - **دیتابیس اصلی:** PostgreSQL
@@ -91,13 +91,13 @@
 ### حذف Redis و NATS از فاز ۱ (کنترل هزینه)
 هر دو سرویس نگه‌داشته نمی‌شوند تا هزینه‌ی زیرساخت روی MVP اضافه نشود. نقش قبلی هرکدام:
 
-| نقش قبلی | سرویس | جایگزین موقت در فاز ۱ | محدودیت |
-|---|---|---|---|
-| Presence (Online/Offline) | Redis | in-memory map داخل پروسه‌ی Go | فقط تک-instance؛ با ریستارت پاک می‌شود |
-| Session/Cache | Redis | — (اصلاً لازم نبود؛ Auth از اول JWT stateless است) | — |
-| Broadcast چت/Realtime | NATS | Hub داخل پروسه (Go channel fan-out) به‌جای pub/sub بیرونی | فقط تک-instance؛ مقیاس افقی بک‌اند را نمی‌دهد |
-| صف Push Notification | NATS | صدا زدن مستقیم/sync سرویس FCM از همان هندلر | بدون retry/buffer؛ اگر FCM کند شود روی request تاثیر می‌گذارد |
-| Persistence/Replay اعلان حیاتی | NATS JetStream | حذف شده در فاز ۱ | اعلان‌های از‌دست‌رفته در زمان آفلاین بودن کلاینت replay نمی‌شوند |
+| نقش قبلی                       | سرویس          | جایگزین موقت در فاز ۱                                    | محدودیت                                                      |
+| ------------------------------ | -------------- | -------------------------------------------------------- | ------------------------------------------------------------ |
+| Presence (Online/Offline)      | Redis          | in-memory map داخل پروسه‌ی Go                             | فقط تک-instance؛ با ریستارت پاک می‌شود                        |
+| Session/Cache                  | Redis          | — (اصلاً لازم نبود؛ Auth از اول JWT stateless است)        | —                                                            |
+| Broadcast چت/Realtime          | NATS           | Hub داخل پروسه (Go channel fan-out) به‌جای pub/sub بیرونی | فقط تک-instance؛ مقیاس افقی بک‌اند را نمی‌دهد                  |
+| صف Push Notification           | NATS           | صدا زدن مستقیم/sync سرویس FCM از همان هندلر              | بدون retry/buffer؛ اگر FCM کند شود روی request تاثیر می‌گذارد |
+| Persistence/Replay اعلان حیاتی | NATS JetStream | حذف شده در فاز ۱                                         | اعلان‌های از‌دست‌رفته در زمان آفلاین بودن کلاینت replay نمی‌شوند |
 
 **معیار بازگشت:** وقتی بک‌اند بیش از یک instance شد (نیاز به presence/broadcast مشترک بین instance ها)، یا صف پیام واقعاً زیر بار قرار گرفت، این دو باید برگردند.
 
@@ -213,22 +213,22 @@ ActivityLog (append-only، شبه event-sourcing)
 
 ## ۹. جمع‌بندی تصمیمات نهایی
 
-| حوزه | تصمیم نهایی |
-|---|---|
-| Mobile | Flutter (Android + iOS) |
-| Web | React |
-| Desktop | React + Tauri (کدبیس مشترک با وب) |
-| Backend | Go + Gin |
-| Data Access | sqlc |
-| Migration | golang-migrate / Atlas |
-| Realtime | gorilla/websocket + in-process hub (بدون NATS، فاز ۱) |
-| صف پیام | حذف‌شده در فاز ۱ (کنترل هزینه) — کاندید بازگشت: NATS/JetStream |
-| RBAC | پیاده‌سازی دستی، scope-aware (نقش سراسری کاربر / project — بدون سطح Organization) |
-| Database | PostgreSQL |
-| Cache/Presence | حذف‌شده در فاز ۱ (کنترل هزینه) — in-memory داخل پروسه؛ کاندید بازگشت: Redis |
-| فایل/پیوست | S3-compatible Object Storage |
-| Observability | OpenTelemetry + Prometheus/Grafana |
-| شروع پروژه | فاز ۱ (MVP) با تمرکز روی Task/Project (پروژه‌محور، بدون Team) |
+| حوزه           | تصمیم نهایی                                                                      |
+| -------------- | -------------------------------------------------------------------------------- |
+| Mobile         | Flutter (Android + iOS)                                                          |
+| Web            | React                                                                            |
+| Desktop        | React + Tauri (کدبیس مشترک با وب)                                                |
+| Backend        | Go + Gin                                                                         |
+| Data Access    | sqlc                                                                             |
+| Migration      | golang-migrate / Atlas                                                           |
+| Realtime       | gorilla/websocket + in-process hub (بدون NATS، فاز ۱)                            |
+| صف پیام        | حذف‌شده در فاز ۱ (کنترل هزینه) — کاندید بازگشت: NATS/JetStream                    |
+| RBAC           | پیاده‌سازی دستی، scope-aware (نقش سراسری کاربر / project — بدون سطح Organization) |
+| Database       | PostgreSQL                                                                       |
+| Cache/Presence | حذف‌شده در فاز ۱ (کنترل هزینه) — in-memory داخل پروسه؛ کاندید بازگشت: Redis       |
+| فایل/پیوست     | S3-compatible Object Storage                                                     |
+| Observability  | OpenTelemetry + Prometheus/Grafana                                               |
+| شروع پروژه     | فاز ۱ (MVP) با تمرکز روی Task/Project (پروژه‌محور، بدون Team)                     |
 
 ---
 
@@ -243,7 +243,9 @@ ActivityLog (append-only، شبه event-sourcing)
 2. **دوره‌ی مهلت (۱۴ تا ۳۰ روز):** برای امکان restore/پشیمونی کاربر؛ هیچی physically پاک نمی‌شه.
 3. **جاب پاک‌سازی زمان‌بندی‌شده:** بعد از پایان مهلت، فیلدهای PII کاربر (`full_name`, `email`, `password_hash`, `avatar_url`) **anonymize** می‌شن (نه DELETE واقعی از جدول `users`) — چون `tasks.created_by` و `comments.author_id` با `ON DELETE RESTRICT` بهش وصلن و حذف واقعی ردیف یا fail می‌کنه یا با CASCADE تاریخچه/تسک‌ها رو نابود می‌کنه. خود تسک‌ها/کامنت‌ها/`ActivityLog` دست‌نخورده می‌مونن، فقط دیگه به یه اسم واقعی وصل نیستن.
 4. باید idempotent و batch-based باشه (برای retry امن)، و به `legal_hold` احترام بذاره (کاربرهایی که درگیر پرونده‌ی حقوقی/مالی‌ان رو موقتاً از پاک‌سازی معاف کنه).
-
+5. چت باید به صورت یه فلک cobra اجرا بشه 
+یعنی اگه خواستن فعالش کنن اگه نخواستن از فعالی درش بیارن
+بعد باید برای هرپروژه دکمه وجود داشتن چت هم بزارن
 **چرا هنوز قطعی نیست:** نیاز به مشورت داره (احتمالاً بار حقوقی/کسب‌وکار داره، نه فقط فنی). اگه تصمیم نهایی مثبت شد، جای طبیعیش فاز ۳ یا ۴ (کنار تکمیل RBAC و گزارش‌گیری) خواهد بود.
 
 ---
