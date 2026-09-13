@@ -15,9 +15,9 @@ FROM messages m
 JOIN users u ON u.id = m.sender_id
 WHERE m.project_id = $1
     AND m.deleted_at IS NULL
-    AND ($2::timestamptz IS NULL OR m.created_at < $2)
+    AND (sqlc.narg(before)::timestamptz IS NULL OR m.created_at < sqlc.narg(before))
 ORDER BY m.created_at DESC
-LIMIT $3;
+LIMIT $2;
 
 
 -- name: UpdateMessage :one
