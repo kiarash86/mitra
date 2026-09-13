@@ -66,15 +66,15 @@ FROM messages m
 JOIN users u ON u.id = m.sender_id
 WHERE m.project_id = $1
     AND m.deleted_at IS NULL
-    AND ($2::timestamptz IS NULL OR m.created_at < $2)
+    AND ($3::timestamptz IS NULL OR m.created_at < $3)
 ORDER BY m.created_at DESC
-LIMIT $3
+LIMIT $2
 `
 
 type ListMessagesByProjectParams struct {
-	ProjectID uuid.UUID `json:"project_id"`
-	Column2   time.Time `json:"column_2"`
-	Limit     int32     `json:"limit"`
+	ProjectID uuid.UUID          `json:"project_id"`
+	Limit     int32              `json:"limit"`
+	Before    pgtype.Timestamptz `json:"before"`
 }
 
 type ListMessagesByProjectRow struct {
@@ -90,7 +90,7 @@ type ListMessagesByProjectRow struct {
 }
 
 func (q *Queries) ListMessagesByProject(ctx context.Context, arg ListMessagesByProjectParams) ([]ListMessagesByProjectRow, error) {
-	rows, err := q.db.Query(ctx, listMessagesByProject, arg.ProjectID, arg.Column2, arg.Limit)
+	rows, err := q.db.Query(ctx, listMessagesByProject, arg.ProjectID, arg.Limit, arg.Before)
 	if err != nil {
 		return nil, err
 	}
