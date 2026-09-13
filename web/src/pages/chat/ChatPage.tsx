@@ -246,19 +246,19 @@ export default function ChatPage() {
                     const isEditing = editingId === message.id;
 
                     return (
-                      <div key={message.id} className={cn("flex gap-3", isOwn && "flex-row-reverse")}>
-                        <Avatar name={message.sender_name} size="sm" />
-                        <div className={cn("min-w-0 max-w-[75%]", isOwn && "flex flex-col items-end")}>
-                          <div className={cn("flex items-baseline gap-2", isOwn && "flex-row-reverse")}>
-                            <span className="text-sm font-medium text-ink-800">
-                              {isOwn ? currentUser?.full_name : message.sender_name}
-                            </span>
-                            {role && <RoleBadge role={role} />}
-                            <span className="text-xs text-ink-400">{formatTime(message.created_at, locale)}</span>
-                          </div>
+                      <div key={message.id} className={cn("flex items-end gap-2.5", isOwn && "flex-row-reverse")}>
+                        <Avatar name={message.sender_name} size="sm" className="mb-0.5 shrink-0" />
 
+                        <div
+                          className={cn(
+                            "group relative max-w-[70%] rounded-2xl px-3.5 py-2.5 shadow-sm",
+                            isOwn
+                              ? "rounded-tl-md bg-saffron-500 text-white"
+                              : "rounded-tr-md border border-paper-200 bg-white text-ink-800",
+                          )}
+                        >
                           {isEditing ? (
-                            <div className="mt-1 w-full min-w-[240px]">
+                            <div className="min-w-[220px]">
                               <Textarea
                                 autoFocus
                                 rows={2}
@@ -272,59 +272,76 @@ export default function ChatPage() {
                                     cancelEdit();
                                   }
                                 }}
+                                className="bg-white text-ink-800"
                               />
                               <div className="mt-1.5 flex justify-end gap-2">
-                                <Button variant="secondary" onClick={cancelEdit}>
+                                <Button size="sm" variant="secondary" onClick={cancelEdit}>
                                   {t.common.cancel}
                                 </Button>
-                                <Button variant="primary" onClick={() => saveEdit(message.id)}>
+                                <Button size="sm" variant="primary" onClick={() => saveEdit(message.id)}>
                                   {t.common.save}
                                 </Button>
                               </div>
                             </div>
                           ) : (
-                            <div
-                              className={cn(
-                                "group mt-0.5 flex items-start gap-1.5",
-                                isOwn && "flex-row-reverse",
-                              )}
-                            >
-                              <p
-                                className={cn(
-                                  "whitespace-pre-wrap rounded-lg px-3 py-2 text-sm",
-                                  isOwn ? "bg-saffron-100 text-saffron-900" : "bg-paper-100 text-ink-700",
+                            <>
+                              <div className="mb-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                                <span className={cn("text-xs font-semibold", isOwn ? "text-white" : "text-ink-800")}>
+                                  {isOwn ? currentUser?.full_name : message.sender_name}
+                                </span>
+                                {role && (
+                                  <RoleBadge
+                                    role={role}
+                                    className={isOwn ? "bg-white/20 text-white" : undefined}
+                                  />
                                 )}
-                              >
-                                {message.body}
-                              </p>
+                                <span className={cn("text-[11px]", isOwn ? "text-white/70" : "text-ink-400")}>
+                                  {formatTime(message.created_at, locale)}
+                                </span>
+                              </div>
+
+                              <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.body}</p>
+
                               {(canEdit || canDelete) && (
-                                <Menu
-                                  align={isOwn ? "start" : "end"}
-                                  trigger={
-                                    <button
-                                      aria-label={t.common.edit}
-                                      className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-ink-400 opacity-0 transition-opacity hover:bg-ink-100 hover:text-ink-700 group-hover:opacity-100"
-                                    >
-                                      <Ellipsis className="h-3.5 w-3.5" />
-                                    </button>
-                                  }
-                                  items={[
-                                    ...(canEdit
-                                      ? [{ label: t.common.edit, onClick: () => startEdit(message) }]
-                                      : []),
-                                    ...(canDelete
-                                      ? [
-                                          {
-                                            label: t.common.remove,
-                                            danger: true,
-                                            onClick: () => setDeleteTarget(message),
-                                          },
-                                        ]
-                                      : []),
-                                  ]}
-                                />
+                                <div
+                                  className={cn(
+                                    "absolute top-1.5 opacity-0 transition-opacity group-hover:opacity-100",
+                                    isOwn ? "left-1.5" : "right-1.5",
+                                  )}
+                                >
+                                  <Menu
+                                    align={isOwn ? "start" : "end"}
+                                    trigger={
+                                      <button
+                                        aria-label={t.common.edit}
+                                        className={cn(
+                                          "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
+                                          isOwn
+                                            ? "text-white/80 hover:bg-white/20 hover:text-white"
+                                            : "text-ink-400 hover:bg-paper-100 hover:text-ink-700",
+                                        )}
+                                      >
+                                        <Ellipsis className="h-3.5 w-3.5" />
+                                      </button>
+                                    }
+                                    items={[
+                                      ...(canEdit
+                                        ? [{ label: t.common.edit, onClick: () => startEdit(message) }]
+                                        : []),
+                                      ...(canDelete
+                                        ? [
+                                            {
+                                              label: t.common.remove,
+                                              danger: true,
+                                              onClick: () => setDeleteTarget(message),
+                                            },
+                                          ]
+                                        : []),
+                                    ]}
+                                  />
+                                </div>
                               )}
-                            </div>
+                            </>
                           )}
                         </div>
                       </div>
