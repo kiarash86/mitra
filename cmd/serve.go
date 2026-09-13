@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kiarash86/mitra/internal/auth"
+	"github.com/kiarash86/mitra/internal/chat"
 	"github.com/kiarash86/mitra/internal/comment"
 	"github.com/kiarash86/mitra/internal/config"
 	"github.com/kiarash86/mitra/internal/db/migrator"
@@ -96,6 +97,10 @@ func runServe() error {
 	commentHandler := comment.NewHandler(queries)
 	usersHandler := users.NewHandler(queries)
 
+	hub := chat.NewHub()
+	go hub.Run()
+	chatHandler := chat.NewHandler(queries, hub, tokens)
+
 	api := router.Group("/api/v1")
 	authGroup := api.Group("/auth")
 	authGroup.POST("/login", authHandler.Login)
@@ -124,6 +129,7 @@ func runServe() error {
 	projectGroup.DELETE("/:id/members/:user_id", projectHandler.RemoveMember)
 	projectGroup.POST("/:id/tasks", taskHandler.Create)
 	projectGroup.GET("/:id/tasks", taskHandler.ListByProject)
+	projectGroup.GET("/:id/messages", chatHandler.ListMessages)
 
 	taskGroup := protected.Group("/tasks")
 	taskGroup.GET("/assigned-to-me", taskHandler.ListAssignedToMe)
@@ -139,6 +145,15 @@ func runServe() error {
 	commentGroup := protected.Group("/comments")
 	commentGroup.PUT("/:id", commentHandler.Update)
 	commentGroup.DELETE("/:id", commentHandler.Delete)
+
+	messageGroup := protected.Group("/messages")
+	messageGroup.PUT("/:id", chatHandler.UpdateMessage)
+	messageGroup.DELETE("/:id", chatHandler.DeleteMessage)
+
+	// WebSocket route: NOT under `protected` — it authenticates itself via
+	// a ?token= query param inside ServeWS, since browsers can't set custom
+	// headers on a WebSocket handshake.
+	router.GET("/ws/projects/:id/chat", chatHandler.ServeWS)
 
 	registerWebUI(router)
 

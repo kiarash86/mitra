@@ -16,16 +16,19 @@ type Querier interface {
 	AnyUserExists(ctx context.Context) (bool, error)
 	AssignTaskToUser(ctx context.Context, arg AssignTaskToUserParams) (Task, error)
 	CreateComment(ctx context.Context, arg CreateCommentParams) (Comment, error)
+	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetCommentByID(ctx context.Context, id uuid.UUID) (Comment, error)
+	GetMessageByID(ctx context.Context, id uuid.UUID) (Message, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectMemberRole(ctx context.Context, arg GetProjectMemberRoleParams) (string, error)
 	GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	ListCommentsByTask(ctx context.Context, taskID uuid.UUID) ([]ListCommentsByTaskRow, error)
+	ListMessagesByProject(ctx context.Context, arg ListMessagesByProjectParams) ([]ListMessagesByProjectRow, error)
 	ListProjectMembers(ctx context.Context, projectID uuid.UUID) ([]ListProjectMembersRow, error)
 	ListProjects(ctx context.Context) ([]Project, error)
 	ListTasksAssignedToUser(ctx context.Context, assignedToUserID pgtype.UUID) ([]Task, error)
@@ -33,11 +36,13 @@ type Querier interface {
 	ListUsers(ctx context.Context) ([]User, error)
 	RemoveProjectMember(ctx context.Context, arg RemoveProjectMemberParams) error
 	SoftDeleteComment(ctx context.Context, id uuid.UUID) error
+	SoftDeleteMessage(ctx context.Context, id uuid.UUID) error
 	SoftDeleteProject(ctx context.Context, id uuid.UUID) error
 	SoftDeleteTask(ctx context.Context, id uuid.UUID) error
 	SoftDeleteUser(ctx context.Context, id uuid.UUID) error
 	UnassignTask(ctx context.Context, id uuid.UUID) (Task, error)
 	UpdateComment(ctx context.Context, arg UpdateCommentParams) (Comment, error)
+	UpdateMessage(ctx context.Context, arg UpdateMessageParams) (Message, error)
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error)
 	UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error)
 	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (Task, error)

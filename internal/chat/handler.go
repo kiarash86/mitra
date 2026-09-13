@@ -1,0 +1,269 @@
+package chat
+
+import (
+	"encoding/json"
+	"errors"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/kiarash86/mitra/internal/auth"
+	"github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/kiarash86/mitra/internal/middleware"
+	"github.com/kiarash86/mitra/internal/rbac"
+)
+
+// Handler exposes the REST endpoints for chat message history.
+// Real-time delivery/broadcast is handled separately by Hub/Client (see hub.go, client.go).
+type Handler struct {
+	queries *sqlc.Queries
+	hub     *Hub
+	tokens  *auth.TokenManager
+}
+
+type UpdateMessageRequest struct {
+	Body string `json:"body" binding:"required"`
+}
+
+func NewHandler(queries *sqlc.Queries, hub *Hub, tokens *auth.TokenManager) *Handler {
+	return &Handler{queries: queries, hub: hub, tokens: tokens}
+}
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // TODO: restrict this to known origins in production
+	},
+}
+
+// ListMessages handles GET /api/v1/projects/:id/messages
+// Query params: before (RFC3339 timestamp, optional), limit (optional, default/max enforced server-side).
+// Requires the caller to be a project member (rbac.IsProjectMember), same as comment.Handler.ListByTask.
+func (h *Handler) ListMessages(c *gin.Context) {
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
+	isMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, projectID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check project membership"})
+		return
+	}
+	if !isMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return
+	}
+
+	limitStr := c.DefaultQuery("limit", "50")
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 50
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	beforeStr := c.Query("before")
+
+	var before pgtype.Timestamptz
+	if beforeStr != "" {
+		parsed, err := time.Parse(time.RFC3339, beforeStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid before timestamp"})
+			return
+		}
+		before = pgtype.Timestamptz{Time: parsed, Valid: true}
+	}
+
+	messages, err := h.queries.ListMessagesByProject(c.Request.Context(), sqlc.ListMessagesByProjectParams{
+		ProjectID: projectID,
+		Before:    before,
+		Limit:     int32(limit),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list messages"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"messages": messages})
+
+}
+
+// UpdateMessage handles PATCH /api/v1/messages/:id
+// Only the original sender may edit their own message (check message.SenderID == current user).
+func (h *Handler) UpdateMessage(c *gin.Context) {
+	messageID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid message id"})
+		return
+	}
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
+	var req UpdateMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	msg, err := h.queries.GetMessageByID(c.Request.Context(), messageID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "message not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
+		return
+	}
+
+	if msg.SenderID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you can only edit your own messages"})
+		return
+	}
+
+	message, err := h.queries.UpdateMessage(c.Request.Context(), sqlc.UpdateMessageParams{
+		ID:   msg.ID,
+		Body: req.Body,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't update message"})
+		return
+	}
+
+	event := OutboundEvent{
+		Type: "message.updated",
+		Payload: MessagePayload{
+			ID:        message.ID,
+			ProjectID: message.ProjectID,
+			SenderID:  message.SenderID,
+			Body:      message.Body,
+			CreatedAt: message.CreatedAt,
+		},
+	}
+	if data, err := json.Marshal(event); err == nil {
+		h.hub.Broadcast(message.ProjectID, data)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": message})
+}
+
+// DeleteMessage handles DELETE /api/v1/messages/:id
+// Soft-delete only; sender or project owner/admin may delete.
+func (h *Handler) DeleteMessage(c *gin.Context) {
+	messageID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid message id"})
+		return
+	}
+
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
+		return
+	}
+
+	message, err := h.queries.GetMessageByID(c.Request.Context(), messageID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "message not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
+		return
+	}
+
+	if message.SenderID != userID {
+		isAdmin, err := rbac.IsProjectOwnerOrAdmin(c.Request.Context(), h.queries, message.ProjectID, userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
+			return
+		}
+		if !isAdmin {
+			c.JSON(http.StatusForbidden, gin.H{"error": "you can only edit your own messages"})
+			return
+		}
+	}
+
+	if err := h.queries.SoftDeleteMessage(c.Request.Context(), message.ID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt delete message"})
+		return
+	}
+
+	event := OutboundEvent{
+		Type:    "message.deleted",
+		Payload: DeletedMessagePayload{ID: message.ID},
+	}
+
+	if data, err := json.Marshal(event); err == nil {
+		h.hub.Broadcast(message.ProjectID, data)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": message})
+}
+
+// ServeWS handles GET /ws/projects/:id/chat — upgrades the HTTP connection to a WebSocket
+// and registers the client with the Hub for that project's room.
+// Auth note: WebSocket requests can't send an Authorization header, so the access token
+// must be read from a query param (?token=...) instead of middleware.RequireAuth.
+func (h *Handler) ServeWS(c *gin.Context) {
+	projectID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid project id"})
+		return
+	}
+
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
+		return
+	}
+
+	claims, err := h.tokens.ParseAccessToken(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+	userID := claims.UserID
+
+	isMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, projectID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't check project membership"})
+		return
+	}
+	if !isMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return
+	}
+
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Println("websocket upgrade failed:", err)
+		return
+	}
+
+	client := NewClient(h.hub, conn, userID, projectID)
+	h.hub.Register(client)
+
+	go client.WritePump()
+	client.ReadPump(h.queries)
+}
