@@ -31,6 +31,7 @@ type Querier interface {
 	ListMessagesByProject(ctx context.Context, arg ListMessagesByProjectParams) ([]ListMessagesByProjectRow, error)
 	ListProjectMembers(ctx context.Context, projectID uuid.UUID) ([]ListProjectMembersRow, error)
 	ListProjects(ctx context.Context) ([]Project, error)
+	ListProjectsForUser(ctx context.Context, userID uuid.UUID) ([]Project, error)
 	ListTasksAssignedToUser(ctx context.Context, assignedToUserID pgtype.UUID) ([]Task, error)
 	ListTasksByProject(ctx context.Context, projectID uuid.UUID) ([]Task, error)
 	ListUsers(ctx context.Context) ([]User, error)

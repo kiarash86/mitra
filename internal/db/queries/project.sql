@@ -21,6 +21,13 @@ SELECT * FROM projects
 ORDER BY created_at DESC;
 
 
+-- name: ListProjectsForUser :many
+SELECT p.* FROM projects p
+JOIN project_members pm ON pm.project_id = p.id
+WHERE pm.user_id = $1
+ORDER BY p.created_at DESC;
+
+
 -- name: SoftDeleteProject :exec
 UPDATE projects
 SET deleted_at = now()

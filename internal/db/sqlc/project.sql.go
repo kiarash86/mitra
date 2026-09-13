@@ -88,6 +88,40 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 	return items, nil
 }
 
+const listProjectsForUser = `-- name: ListProjectsForUser :many
+SELECT p.id, p.name, p.description, p.created_at, p.updated_at, p.deleted_at FROM projects p
+JOIN project_members pm ON pm.project_id = p.id
+WHERE pm.user_id = $1
+ORDER BY p.created_at DESC
+`
+
+func (q *Queries) ListProjectsForUser(ctx context.Context, userID uuid.UUID) ([]Project, error) {
+	rows, err := q.db.Query(ctx, listProjectsForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Project{}
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const softDeleteProject = `-- name: SoftDeleteProject :exec
 UPDATE projects
 SET deleted_at = now()
