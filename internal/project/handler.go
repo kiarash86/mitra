@@ -111,13 +111,23 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) List(c *gin.Context) {
-	_, ok := middleware.CurrentUserID(c)
+	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
 	}
+	isAdmin, err := rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check permissions"})
+		return
+	}
 
-	list, err := h.queries.ListProjects(c.Request.Context())
+	var list []sqlc.Project
+	if isAdmin {
+		list, err = h.queries.ListProjects(c.Request.Context())
+	} else {
+		list, err = h.queries.ListProjectsForUser(c.Request.Context(), userID)
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list projects"})
 		return
