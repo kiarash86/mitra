@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/gin-gonic/gin"
 
@@ -80,18 +81,19 @@ func (h *Handler) ListMessages(c *gin.Context) {
 
 	beforeStr := c.Query("before")
 
-	var before time.Time
+	var before pgtype.Timestamptz
 	if beforeStr != "" {
-		before, err = time.Parse(time.RFC3339, beforeStr)
+		parsed, err := time.Parse(time.RFC3339, beforeStr)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid before timestamp"})
 			return
 		}
+		before = pgtype.Timestamptz{Time: parsed, Valid: true}
 	}
 
 	messages, err := h.queries.ListMessagesByProject(c.Request.Context(), sqlc.ListMessagesByProjectParams{
 		ProjectID: projectID,
-		Column2:   before,
+		Before:    before,
 		Limit:     int32(limit),
 	})
 	if err != nil {
