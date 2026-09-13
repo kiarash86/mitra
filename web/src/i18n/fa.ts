@@ -198,6 +198,8 @@ export const fa: Dictionary = {
     connected: "متصل",
     connecting: "در حال اتصال…",
     offline: "قطع شده",
+    deleteMessageTitle: "حذف پیام",
+    deleteMessageDescription: "این پیام برای همیشه حذف شود؟",
   },
   notifications: {
     title: "اعلان‌ها",

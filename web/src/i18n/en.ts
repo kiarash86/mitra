@@ -198,6 +198,8 @@ export const en: Dictionary = {
     connected: "Connected",
     connecting: "Connecting…",
     offline: "Offline",
+    deleteMessageTitle: "Delete message",
+    deleteMessageDescription: "Delete this message permanently?",
   },
   notifications: {
     title: "Notifications",

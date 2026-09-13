@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { Hash, Send, MessagesSquare } from "lucide-react";
+import { Hash, Send, MessagesSquare, Ellipsis } from "lucide-react";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
 import { useOrganizationStore } from "../../stores/organization";
@@ -8,11 +8,14 @@ import { useProjectStore } from "../../stores/project";
 import { toast } from "../../stores/toast";
 import { formatTime } from "../../lib/formatters";
 import { cn } from "../../lib/cn";
-import { Badge } from "../../components/ui/Badge";
+import { Badge, RoleBadge } from "../../components/ui/Badge";
 import { Avatar } from "../../components/ui/Avatar";
 import { Textarea } from "../../components/ui/Textarea";
 import { IconButton } from "../../components/ui/IconButton";
 import { Skeleton } from "../../components/ui/Skeleton";
+import { Menu } from "../../components/ui/Menu";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { Button } from "../../components/ui/Button";
 import { useWebSocket } from "../../hooks/use-websocket";
 import { messagesApi } from "../../api/messages";
 import { messageFromHistoryRow } from "../../types/chat";
@@ -34,16 +37,32 @@ export default function ChatPage() {
   const projects = useProjectStore((s) => s.projects);
   const projectsLoading = useProjectStore((s) => s.isLoading);
   const fetchProjects = useProjectStore((s) => s.fetchProjects);
+  const members = useProjectStore((s) => s.members);
+  const fetchMembers = useProjectStore((s) => s.fetchMembers);
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [messagesByChannel, setMessagesByChannel] = useState<Record<string, Message[]>>({});
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Message | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (currentOrg) fetchProjects(currentOrg.id).catch(() => toast.error(t.common.errorGeneric));
   }, [currentOrg, fetchProjects, t]);
+
+  // Project membership drives the role tag shown next to each sender, and
+  // (together with sender identity) who gets an edit/delete menu on a message.
+  useEffect(() => {
+    if (activeId) fetchMembers(activeId).catch(() => toast.error(t.common.errorGeneric));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId]);
+
+  const roleByUserId = Object.fromEntries(members.map((m) => [m.user_id, m.role]));
+  const myRole = currentUser ? roleByUserId[currentUser.id] : undefined;
+  const canModerate = myRole === "owner" || myRole === "admin";
 
   const activeMessages = activeId ? (messagesByChannel[activeId] ?? []) : [];
   const activeProject = projects.find((p) => p.id === activeId);
@@ -112,6 +131,39 @@ export default function ChatPage() {
     if (!activeId || !draft.trim() || status !== "open") return;
     send({ body: draft.trim() });
     setDraft("");
+  };
+
+  const startEdit = (message: Message) => {
+    setEditingId(message.id);
+    setEditDraft(message.body);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditDraft("");
+  };
+
+  const saveEdit = async (messageId: string) => {
+    const body = editDraft.trim();
+    if (!body) return;
+    try {
+      await messagesApi.update(messageId, { body });
+      // The updated message itself arrives back over the socket
+      // (message.updated), so we only need to close the editor here.
+      cancelEdit();
+    } catch {
+      toast.error(t.common.errorGeneric);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await messagesApi.delete(deleteTarget.id);
+      // The removal itself arrives back over the socket (message.deleted).
+    } catch {
+      toast.error(t.common.errorGeneric);
+    }
   };
 
   const statusTone =
@@ -186,20 +238,98 @@ export default function ChatPage() {
                     <Skeleton className="h-10 w-1/2 rounded-md" />
                   </div>
                 ) : (
-                  activeMessages.map((message) => (
-                    <div key={message.id} className="flex gap-3">
-                      <Avatar name={message.sender_name} size="sm" />
-                      <div className="min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-sm font-medium text-ink-800">
-                            {message.sender_id === currentUser?.id ? currentUser.full_name : message.sender_name}
-                          </span>
-                          <span className="text-xs text-ink-400">{formatTime(message.created_at, locale)}</span>
+                  activeMessages.map((message) => {
+                    const isOwn = message.sender_id === currentUser?.id;
+                    const role = roleByUserId[message.sender_id];
+                    const canEdit = isOwn;
+                    const canDelete = isOwn || canModerate;
+                    const isEditing = editingId === message.id;
+
+                    return (
+                      <div key={message.id} className={cn("flex gap-3", isOwn && "flex-row-reverse")}>
+                        <Avatar name={message.sender_name} size="sm" />
+                        <div className={cn("min-w-0 max-w-[75%]", isOwn && "flex flex-col items-end")}>
+                          <div className={cn("flex items-baseline gap-2", isOwn && "flex-row-reverse")}>
+                            <span className="text-sm font-medium text-ink-800">
+                              {isOwn ? currentUser?.full_name : message.sender_name}
+                            </span>
+                            {role && <RoleBadge role={role} />}
+                            <span className="text-xs text-ink-400">{formatTime(message.created_at, locale)}</span>
+                          </div>
+
+                          {isEditing ? (
+                            <div className="mt-1 w-full min-w-[240px]">
+                              <Textarea
+                                autoFocus
+                                rows={2}
+                                value={editDraft}
+                                onChange={(e) => setEditDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    saveEdit(message.id);
+                                  } else if (e.key === "Escape") {
+                                    cancelEdit();
+                                  }
+                                }}
+                              />
+                              <div className="mt-1.5 flex justify-end gap-2">
+                                <Button variant="secondary" onClick={cancelEdit}>
+                                  {t.common.cancel}
+                                </Button>
+                                <Button variant="primary" onClick={() => saveEdit(message.id)}>
+                                  {t.common.save}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              className={cn(
+                                "group mt-0.5 flex items-start gap-1.5",
+                                isOwn && "flex-row-reverse",
+                              )}
+                            >
+                              <p
+                                className={cn(
+                                  "whitespace-pre-wrap rounded-lg px-3 py-2 text-sm",
+                                  isOwn ? "bg-saffron-100 text-saffron-900" : "bg-paper-100 text-ink-700",
+                                )}
+                              >
+                                {message.body}
+                              </p>
+                              {(canEdit || canDelete) && (
+                                <Menu
+                                  align={isOwn ? "start" : "end"}
+                                  trigger={
+                                    <button
+                                      aria-label={t.common.edit}
+                                      className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-ink-400 opacity-0 transition-opacity hover:bg-ink-100 hover:text-ink-700 group-hover:opacity-100"
+                                    >
+                                      <Ellipsis className="h-3.5 w-3.5" />
+                                    </button>
+                                  }
+                                  items={[
+                                    ...(canEdit
+                                      ? [{ label: t.common.edit, onClick: () => startEdit(message) }]
+                                      : []),
+                                    ...(canDelete
+                                      ? [
+                                          {
+                                            label: t.common.remove,
+                                            danger: true,
+                                            onClick: () => setDeleteTarget(message),
+                                          },
+                                        ]
+                                      : []),
+                                  ]}
+                                />
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <p className="mt-0.5 whitespace-pre-wrap text-sm text-ink-600">{message.body}</p>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
                 <div ref={scrollRef} />
               </div>
@@ -231,6 +361,14 @@ export default function ChatPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title={t.chat.deleteMessageTitle}
+        description={t.chat.deleteMessageDescription}
+      />
     </div>
   );
 }

@@ -197,6 +197,8 @@ export interface Dictionary {
     connected: string;
     connecting: string;
     offline: string;
+    deleteMessageTitle: string;
+    deleteMessageDescription: string;
   };
   notifications: {
     title: string;
