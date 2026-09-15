@@ -74,6 +74,30 @@ var allowedTaskPriorities = map[string]bool{
 	"urgent": true,
 }
 
+func (h *Handler) requireProjectMember(c *gin.Context, projectID, userID uuid.UUID) (sqlc.Project, bool) {
+	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return sqlc.Project{}, false
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return sqlc.Project{}, false
+	}
+
+	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return sqlc.Project{}, false
+	}
+	if !isMemberOfProject {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return sqlc.Project{}, false
+	}
+
+	return project, true
+}
+
 func taskToResponse(task sqlc.Task) taskResponse {
 	return taskResponse{
 		ID:               task.ID.String(),
@@ -122,23 +146,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-
-	projectMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
-		return
-	}
-	if !projectMember {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+	if _, ok := h.requireProjectMember(c, projectID, userID); !ok {
 		return
 	}
 
@@ -172,23 +180,7 @@ func (h *Handler) ListByProject(c *gin.Context) {
 		return
 	}
 
-	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-
-	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
-		return
-	}
-	if !isMemberOfProject {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+	if _, ok := h.requireProjectMember(c, projectID, userID); !ok {
 		return
 	}
 
@@ -248,23 +240,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-
-	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
-		return
-	}
-	if !isMemberOfProject {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+	if _, ok := h.requireProjectMember(c, task.ProjectID, userID); !ok {
 		return
 	}
 
@@ -313,23 +289,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-
-	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
-		return
-	}
-	if !isMemberOfProject {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+	if _, ok := h.requireProjectMember(c, task.ProjectID, userID); !ok {
 		return
 	}
 
@@ -382,23 +342,7 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-
-	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
-		return
-	}
-	if !isMemberOfProject {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+	if _, ok := h.requireProjectMember(c, task.ProjectID, userID); !ok {
 		return
 	}
 
@@ -513,23 +457,7 @@ func (h *Handler) Unassign(c *gin.Context) {
 		return
 	}
 
-	project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
-		return
-	}
-
-	isMemberOfProject, err := rbac.IsProjectMember(c.Request.Context(), h.queries, project.ID, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
-		return
-	}
-	if !isMemberOfProject {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+	if _, ok := h.requireProjectMember(c, task.ProjectID, userID); !ok {
 		return
 	}
 
