@@ -42,7 +42,7 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 
 const getMessageByID = `-- name: GetMessageByID :one
 SELECT id, project_id, sender_id, body, created_at, updated_at, deleted_at FROM messages
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetMessageByID(ctx context.Context, id uuid.UUID) (Message, error) {

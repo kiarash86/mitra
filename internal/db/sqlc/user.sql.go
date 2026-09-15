@@ -59,7 +59,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, full_name, email, password_hash, must_change_password, role, created_at, updated_at, deleted_at FROM  users 
-WHERE email=$1
+WHERE email=$1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -81,7 +81,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT id, full_name, email, password_hash, must_change_password, role, created_at, updated_at, deleted_at FROM  users 
-WHERE id=$1
+WHERE id=$1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {

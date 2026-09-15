@@ -16,12 +16,12 @@ ORDER BY created_at ASC;
 
 -- name: GetUserByEmail :one
 SELECT * FROM  users 
-WHERE email=$1 ;
+WHERE email=$1 AND deleted_at IS NULL;
 
 
 -- name: GetUserByID :one
 SELECT * FROM  users 
-WHERE id=$1 ;
+WHERE id=$1 AND deleted_at IS NULL;
 
 
 -- name: UpdateUserProfile :one

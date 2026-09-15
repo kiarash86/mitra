@@ -39,7 +39,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 
 const getProjectByID = `-- name: GetProjectByID :one
 SELECT id, name, description, created_at, updated_at, deleted_at FROM projects 
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error) {
@@ -58,6 +58,7 @@ func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, er
 
 const listProjects = `-- name: ListProjects :many
 SELECT id, name, description, created_at, updated_at, deleted_at FROM projects 
+WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 `
 
@@ -91,7 +92,7 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 const listProjectsForUser = `-- name: ListProjectsForUser :many
 SELECT p.id, p.name, p.description, p.created_at, p.updated_at, p.deleted_at FROM projects p
 JOIN project_members pm ON pm.project_id = p.id
-WHERE pm.user_id = $1
+WHERE pm.user_id = $1 AND p.deleted_at IS NULL
 ORDER BY p.created_at DESC
 `
 

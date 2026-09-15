@@ -88,7 +88,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 
 const getTaskByID = `-- name: GetTaskByID :one
 SELECT id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error) {
@@ -113,7 +113,7 @@ func (q *Queries) GetTaskByID(ctx context.Context, id uuid.UUID) (Task, error) {
 
 const listTasksAssignedToUser = `-- name: ListTasksAssignedToUser :many
 SELECT id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
-WHERE assigned_to_user_id = $1
+WHERE assigned_to_user_id = $1 AND deleted_at IS NULL
 ORDER BY due_date ASC NULLS LAST
 `
 
@@ -152,7 +152,7 @@ func (q *Queries) ListTasksAssignedToUser(ctx context.Context, assignedToUserID 
 
 const listTasksByProject = `-- name: ListTasksByProject :many
 SELECT id, project_id, title, description, status, priority, assigned_to_user_id, due_date, created_by, created_at, updated_at, deleted_at FROM tasks
-WHERE project_id = $1
+WHERE project_id = $1 AND deleted_at IS NULL
 ORDER BY created_at DESC
 `
 

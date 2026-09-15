@@ -38,8 +38,9 @@ func (q *Queries) AddProjectMember(ctx context.Context, arg AddProjectMemberPara
 }
 
 const getProjectMemberRole = `-- name: GetProjectMemberRole :one
-SELECT role FROM project_members
-WHERE project_id = $1 AND  user_id = $2
+SELECT pm.role FROM project_members pm
+JOIN users u ON u.id = pm.user_id
+WHERE pm.project_id = $1 AND pm.user_id = $2 AND u.deleted_at IS NULL
 `
 
 type GetProjectMemberRoleParams struct {
@@ -58,7 +59,7 @@ const listProjectMembers = `-- name: ListProjectMembers :many
 SELECT pm.id, pm.project_id, pm.user_id, pm.role, pm.created_at, u.email, u.full_name
 FROM project_members pm
 JOIN users u ON u.id = pm.user_id
-WHERE pm.project_id = $1
+WHERE pm.project_id = $1 AND u.deleted_at IS NULL
 `
 
 type ListProjectMembersRow struct {

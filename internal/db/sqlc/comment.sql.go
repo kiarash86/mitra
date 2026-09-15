@@ -42,7 +42,7 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (C
 
 const getCommentByID = `-- name: GetCommentByID :one
 SELECT id, task_id, author_id, body, created_at, updated_at, deleted_at FROM comments
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetCommentByID(ctx context.Context, id uuid.UUID) (Comment, error) {
@@ -64,7 +64,7 @@ const listCommentsByTask = `-- name: ListCommentsByTask :many
 SELECT c.id, c.task_id, c.author_id, c.body, c.created_at, c.updated_at, c.deleted_at , u.full_name , u.email
 FROM comments c
 JOIN users u ON u.id = c.author_id
-WHERE c.task_id= $1
+WHERE c.task_id= $1 AND c.deleted_at IS NULL
 ORDER BY c.created_at ASC
 `
 
