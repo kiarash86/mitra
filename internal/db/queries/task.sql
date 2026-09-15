@@ -5,16 +5,16 @@ RETURNING *;
 
 -- name: GetTaskByID :one
 SELECT * FROM tasks
-WHERE id = $1;
+WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: ListTasksByProject :many
 SELECT * FROM tasks
-WHERE project_id = $1
+WHERE project_id = $1 AND deleted_at IS NULL
 ORDER BY created_at DESC;
 
 -- name: ListTasksAssignedToUser :many
 SELECT * FROM tasks
-WHERE assigned_to_user_id = $1
+WHERE assigned_to_user_id = $1 AND deleted_at IS NULL
 ORDER BY due_date ASC NULLS LAST;
 
 -- name: UpdateTask :one
