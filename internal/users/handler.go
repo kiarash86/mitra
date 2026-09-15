@@ -63,6 +63,11 @@ func toUserResponse(u sqlc.User) userResponse {
 	}
 }
 
+
+func isOwnerOrAdminRole(role string) bool {
+	return role == "owner" || role == "admin"
+}
+
 func (h *Handler) List(c *gin.Context) {
 	_, ok := middleware.CurrentUserID(c)
 	if !ok {
@@ -102,7 +107,7 @@ func (h *Handler) Create(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
-	if requesterRole != "owner" && requesterRole != "admin" {
+	if !isOwnerOrAdminRole(requesterRole) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can add users"})
 		return
 	}
@@ -176,7 +181,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your role"})
 		return
 	}
-	if requesterRole != "owner" && requesterRole != "admin" {
+	if !isOwnerOrAdminRole(requesterRole) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only an owner or admin can remove users"})
 		return
 	}
