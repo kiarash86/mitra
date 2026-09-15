@@ -6,7 +6,7 @@ RETURNING *;
 
 -- name: GetMessageByID :one
 SELECT * FROM messages
-WHERE id = $1;
+WHERE id = $1 AND deleted_at IS NULL;
 
 
 -- name: ListMessagesByProject :many
