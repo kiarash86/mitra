@@ -4,15 +4,16 @@ VALUES ($1  , $2  , $3 )
 RETURNING *;
 
 -- name: GetProjectMemberRole :one
-SELECT role FROM project_members
-WHERE project_id = $1 AND  user_id = $2;
+SELECT pm.role FROM project_members pm
+JOIN users u ON u.id = pm.user_id
+WHERE pm.project_id = $1 AND pm.user_id = $2 AND u.deleted_at IS NULL;
 
 
 -- name: ListProjectMembers :many
 SELECT pm.*, u.email, u.full_name
 FROM project_members pm
 JOIN users u ON u.id = pm.user_id
-WHERE pm.project_id = $1;
+WHERE pm.project_id = $1 AND u.deleted_at IS NULL;
 
 
 -- name: RemoveProjectMember :exec
