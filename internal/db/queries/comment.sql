@@ -6,14 +6,14 @@ RETURNING *;
 
 -- name: GetCommentByID :one
 SELECT * FROM comments
-WHERE id = $1;
+WHERE id = $1 AND deleted_at IS NULL;
 
 
 -- name: ListCommentsByTask :many
 SELECT c.* , u.full_name , u.email
 FROM comments c
 JOIN users u ON u.id = c.author_id
-WHERE c.task_id= $1
+WHERE c.task_id= $1 AND c.deleted_at IS NULL
 ORDER BY c.created_at ASC;
 
 
