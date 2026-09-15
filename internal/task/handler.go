@@ -15,10 +15,10 @@ import (
 )
 
 type Handler struct {
-	queries *sqlc.Queries
+	queries sqlc.Querier
 }
 
-func NewHandler(queries *sqlc.Queries) *Handler {
+func NewHandler(queries sqlc.Querier) *Handler {
 	return &Handler{
 		queries: queries,
 	}
@@ -206,7 +206,11 @@ func (h *Handler) ListAssignedToMe(c *gin.Context) {
 		return
 	}
 
-	list, _ := h.queries.ListTasksAssignedToUser(c.Request.Context(), convert.UUIDToPgtypeUUID(userID))
+	list, err := h.queries.ListTasksAssignedToUser(c.Request.Context(), convert.UUIDToPgtypeUUID(userID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list tasks"})
+		return
+	}
 	tasks := make([]taskResponse, 0, len(list))
 
 	for _, taskk := range list {
