@@ -16,10 +16,10 @@ import (
 )
 
 type Handler struct {
-	queries *sqlc.Queries
+	queries sqlc.Querier
 }
 
-func NewHandler(queries *sqlc.Queries) *Handler {
+func NewHandler(queries sqlc.Querier) *Handler {
 	return &Handler{
 		queries: queries,
 	}
@@ -238,6 +238,15 @@ func (h *Handler) UpdateMe(c *gin.Context) {
 	var req updateMeRequest
 	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if _, err := h.queries.GetUserByID(c.Request.Context(), uuid.UUID(userID)); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get user"})
 		return
 	}
 
