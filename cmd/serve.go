@@ -97,9 +97,13 @@ func runServe() error {
 	commentHandler := comment.NewHandler(queries)
 	usersHandler := users.NewHandler(queries)
 
-	hub := chat.NewHub()
-	go hub.Run()
-	chatHandler := chat.NewHandler(queries, hub, tokens)
+
+	var chatHandler *chat.Handler
+	if cfg.EnableChat {
+		hub := chat.NewHub()
+		go hub.Run()
+		chatHandler = chat.NewHandler(queries, hub, tokens)
+	}
 
 	api := router.Group("/api/v1")
 	authGroup := api.Group("/auth")
@@ -108,6 +112,10 @@ func runServe() error {
 
 	protected := api.Group("")
 	protected.Use(middleware.RequireAuth(tokens))
+
+	protected.GET("/config", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"chat_enabled": cfg.EnableChat})
+	})
 
 	protected.POST("/auth/change-password", authHandler.ChangePassword)
 
@@ -129,7 +137,9 @@ func runServe() error {
 	projectGroup.DELETE("/:id/members/:user_id", projectHandler.RemoveMember)
 	projectGroup.POST("/:id/tasks", taskHandler.Create)
 	projectGroup.GET("/:id/tasks", taskHandler.ListByProject)
-	projectGroup.GET("/:id/messages", chatHandler.ListMessages)
+	if cfg.EnableChat {
+		projectGroup.GET("/:id/messages", chatHandler.ListMessages)
+	}
 
 	taskGroup := protected.Group("/tasks")
 	taskGroup.GET("/assigned-to-me", taskHandler.ListAssignedToMe)
@@ -146,14 +156,16 @@ func runServe() error {
 	commentGroup.PUT("/:id", commentHandler.Update)
 	commentGroup.DELETE("/:id", commentHandler.Delete)
 
-	messageGroup := protected.Group("/messages")
-	messageGroup.PUT("/:id", chatHandler.UpdateMessage)
-	messageGroup.DELETE("/:id", chatHandler.DeleteMessage)
+	if cfg.EnableChat {
+		messageGroup := protected.Group("/messages")
+		messageGroup.PUT("/:id", chatHandler.UpdateMessage)
+		messageGroup.DELETE("/:id", chatHandler.DeleteMessage)
 
-	// WebSocket route: NOT under `protected` — it authenticates itself via
-	// a ?token= query param inside ServeWS, since browsers can't set custom
-	// headers on a WebSocket handshake.
-	router.GET("/ws/projects/:id/chat", chatHandler.ServeWS)
+		// WebSocket route: NOT under `protected` — it authenticates itself via
+		// a ?token= query param inside ServeWS, since browsers can't set custom
+		// headers on a WebSocket handshake.
+		router.GET("/ws/projects/:id/chat", chatHandler.ServeWS)
+	}
 
 	registerWebUI(router)
 
