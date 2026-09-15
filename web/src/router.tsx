@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import type { ComponentType } from "react";
-import { AuthGuard, GuestGuard, ForcePasswordChangeGuard } from "./components/guards/RouteGuards";
+import { AuthGuard, GuestGuard, ForcePasswordChangeGuard, ChatEnabledGuard } from "./components/guards/RouteGuards";
 import { AppShell } from "./components/layout/AppShell";
 
 // Each page is loaded on demand instead of being bundled into the main
@@ -36,7 +36,10 @@ export const router = createBrowserRouter([
           { path: "projects/:projectId", ...page(() => import("./pages/projects/ProjectDetailPage")) },
           { path: "projects/:projectId/board", ...page(() => import("./pages/tasks/TaskBoardPage")) },
           { path: "tasks/:taskId", ...page(() => import("./pages/tasks/TaskDetailPage")) },
-          { path: "chat", ...page(() => import("./pages/chat/ChatPage")) },
+          {
+            element: <ChatEnabledGuard />,
+            children: [{ path: "chat", ...page(() => import("./pages/chat/ChatPage")) }],
+          },
           { path: "notifications", ...page(() => import("./pages/notifications/NotificationsPage")) },
           { path: "settings", ...page(() => import("./pages/settings/ProfilePage")) },
         ],

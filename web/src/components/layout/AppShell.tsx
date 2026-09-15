@@ -4,6 +4,7 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { useI18n } from "../../i18n";
 import { useAuthStore } from "../../stores/auth";
+import { useAppConfigStore } from "../../stores/appConfig";
 import { toast } from "../../stores/toast";
 
 /**
@@ -17,11 +18,14 @@ export function AppShell() {
   const isNavigating = navigation.state !== "idle";
 
   const hydrateUser = useAuthStore((s) => s.hydrateUser);
+  const hydrateConfig = useAppConfigStore((s) => s.hydrateConfig);
 
   // The login response doesn't include the user's role, so it's fetched
-  // once as soon as the authenticated shell mounts.
+  // once as soon as the authenticated shell mounts. Runtime feature flags
+  // (e.g. is chat enabled) are fetched the same way.
   useEffect(() => {
     hydrateUser().catch(() => toast.error(t.common.errorGeneric));
+    hydrateConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

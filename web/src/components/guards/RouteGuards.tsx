@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../../hooks/use-auth";
+import { useAppConfigStore } from "../../stores/appConfig";
 import { Spinner } from "../ui/Spinner";
 
 function GuardSpinner() {
@@ -51,6 +52,25 @@ export function ForcePasswordChangeGuard() {
   if (isLoading) return <GuardSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!user?.must_change_password) return <Navigate to="/dashboard" replace />;
+
+  return <Outlet />;
+}
+
+/**
+ * Guards /chat: only reachable when the server has chat enabled (see
+ * GET /api/v1/config — ENABLE_CHAT). Stops a stale bookmark or typed URL
+ * from landing on a page whose backend routes don't exist right now.
+ *
+ * Waits for the config to actually arrive before deciding — otherwise
+ * ChatPage would mount on the initial (unknown) value and start opening
+ * WebSockets against routes that may not be registered.
+ */
+export function ChatEnabledGuard() {
+  const chatEnabled = useAppConfigStore((s) => s.chatEnabled);
+  const isLoaded = useAppConfigStore((s) => s.isLoaded);
+
+  if (!isLoaded) return <GuardSpinner />;
+  if (!chatEnabled) return <Navigate to="/dashboard" replace />;
 
   return <Outlet />;
 }

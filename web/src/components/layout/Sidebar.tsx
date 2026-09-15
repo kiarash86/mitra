@@ -3,6 +3,7 @@ import { LayoutDashboard, Users, FolderKanban, MessageSquare, Settings, LogOut }
 import { useI18n } from "../../i18n";
 import { useUiStore } from "../../stores/ui";
 import { useAuthStore } from "../../stores/auth";
+import { useAppConfigStore } from "../../stores/appConfig";
 import { cn } from "../../lib/cn";
 import { Logo, SunMark } from "../ui/Logo";
 import { Avatar } from "../ui/Avatar";
@@ -20,7 +21,17 @@ export function Sidebar() {
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const chatEnabled = useAppConfigStore((s) => s.chatEnabled);
+  const configLoaded = useAppConfigStore((s) => s.isLoaded);
   const navigate = useNavigate();
+
+  // Chat stays out of the nav until the server's config actually arrives.
+  // Rendering it optimistically would make the link appear and then vanish
+  // on servers with chat disabled — and a click landed in that gap would
+  // bounce the user straight back out of /chat.
+  const navItems = NAV_ITEMS.filter(
+    (item) => item.key !== "chat" || (configLoaded && chatEnabled)
+  );
 
   return (
     <aside
@@ -39,7 +50,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {NAV_ITEMS.map(({ key, to, icon: Icon }) => (
+        {navItems.map(({ key, to, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
