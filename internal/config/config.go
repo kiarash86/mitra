@@ -36,6 +36,7 @@ type ServeConfig struct {
 	AppPort string `env:"APP_PORT" envDefault:"8080"`
 
 	AutoMigrate bool `env:"AUTO_MIGRATE" envDefault:"true"`
+	EnableChat  bool `env:"ENABLE_CHAT" envDefault:"true"`
 
 	JWTSecret          string        `env:"JWT_SECRET,required"`
 	JWTAccessTokenTTL  time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
