@@ -11,7 +11,7 @@ import (
 )
 
 type AuthHandler struct {
-	queries *sqlc.Queries
+	queries sqlc.Querier
 	tokens  *TokenManager
 }
 
@@ -41,7 +41,7 @@ type authResponse struct {
 	User         userResponse `json:"user"`
 }
 
-func NewAuthHandler(queries *sqlc.Queries, tokens *TokenManager) *AuthHandler {
+func NewAuthHandler(queries sqlc.Querier, tokens *TokenManager) *AuthHandler {
 	return &AuthHandler{
 		queries: queries,
 		tokens:  tokens,
@@ -52,12 +52,16 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 	var req loginRequest
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	user, err := ah.queries.GetUserByEmail(c, req.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid pass or email"})
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email or password"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt load user"})
 		return
 	}
 
