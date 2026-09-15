@@ -45,11 +45,14 @@ func (h *Hub) Run() {
 		case client := <-h.unregister:
 			id := client.projectID
 
-			if _, ok := h.rooms[id]; ok {
-				delete(h.rooms[id], client)
-				close(client.send)
+			if room, ok := h.rooms[id]; ok {
 
-				if len(h.rooms[id]) == 0 {
+				if _, present := room[client]; present {
+					delete(room, client)
+					close(client.send)
+				}
+
+				if len(room) == 0 {
 					delete(h.rooms, id)
 				}
 			}
@@ -60,8 +63,9 @@ func (h *Hub) Run() {
 				select {
 				case c.send <- msg.data:
 				default:
-					close(c.send)
+
 					delete(h.rooms[Id], c)
+					close(c.send)
 				}
 			}
 		}
