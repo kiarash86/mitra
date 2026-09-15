@@ -16,10 +16,10 @@ import (
 )
 
 type Handler struct {
-	queries *sqlc.Queries
+	queries sqlc.Querier
 }
 
-func NewHandler(queries *sqlc.Queries) *Handler {
+func NewHandler(queries sqlc.Querier) *Handler {
 	return &Handler{
 		queries: queries,
 	}
@@ -37,7 +37,7 @@ type updateProjectRequest struct {
 
 type addProjectMemberRequest struct {
 	UserID string `json:"user_id" binding:"required,uuid"`
-	Role   string `json:"role" binding:"required,min=2,max=50"`
+	Role   string `json:"role" binding:"required,oneof=owner admin member viewer"`
 }
 type projectResponse struct {
 	ID          string    `json:"id"`
@@ -251,6 +251,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
@@ -305,6 +306,10 @@ func (h *Handler) ListMembers(c *gin.Context) {
 	}
 
 	list, err := h.queries.ListProjectMembers(c.Request.Context(), projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt list project members"})
+		return
+	}
 
 	projectMembers := make([]projectMemberResponse, 0, len(list))
 	for _, member := range list {
