@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -12,7 +11,6 @@ import (
 	"github.com/kiarash86/mitra/internal/db/sqlc"
 )
 
-// Client wraps a single WebSocket connection belonging to one user inside one project room.
 type Client struct {
 	hub       *Hub
 	conn      *websocket.Conn
@@ -23,18 +21,15 @@ type Client struct {
 
 func NewClient(hub *Hub, conn *websocket.Conn, userID, projectID uuid.UUID) *Client {
 	return &Client{
-		hub:       hub,  // همون Hub که از بیرون پاس داده شده
-		conn:      conn, // همون websocket.Conn که از بیرون پاس داده شده
+		hub:       hub,
+		conn:      conn,
 		send:      make(chan []byte, 256),
 		userID:    userID,
 		projectID: projectID,
 	}
 }
 
-// ReadPump reads inbound JSON messages from the browser, persists them via queries,
-// and hands them to the hub for broadcast. Must run in its own goroutine;
-// exits (and unregisters the client) when the connection closes or errors.
-func (c *Client) ReadPump(queries *sqlc.Queries) {
+func (c *Client) ReadPump(queries sqlc.Querier) {
 	defer func() {
 		c.hub.Unregister(c)
 		c.conn.Close()
@@ -46,8 +41,8 @@ func (c *Client) ReadPump(queries *sqlc.Queries) {
 			break
 		}
 
-		body := strings.TrimSpace(inbmsg.Body)
-		if body == "" {
+		body, err := SanitizeMessageBody(inbmsg.Body)
+		if err != nil {
 			continue
 		}
 
@@ -90,9 +85,6 @@ func (c *Client) ReadPump(queries *sqlc.Queries) {
 	}
 }
 
-// WritePump drains the client's send channel and writes each message out to the
-// browser's WebSocket connection. Must run in its own goroutine; exits when
-// the send channel is closed (by Hub.Unregister) or a write fails.
 func (c *Client) WritePump() {
 	defer func() {
 		c.conn.Close()
