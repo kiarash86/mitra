@@ -65,3 +65,18 @@ func IsProjectOwnerOrAdmin(ctx context.Context, queries sqlc.Querier, projectID,
 	}
 	return false, nil
 }
+
+func CanWriteProject(ctx context.Context, queries sqlc.Querier, projectID, userID uuid.UUID) (bool, error) {
+	role, err := queries.GetProjectMemberRole(ctx, sqlc.GetProjectMemberRoleParams{
+		ProjectID: projectID,
+		UserID:    userID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return role == "owner" || role == "admin" || role == "member", nil
+}
