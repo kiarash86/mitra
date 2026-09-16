@@ -21,10 +21,8 @@ import (
 	"github.com/kiarash86/mitra/internal/rbac"
 )
 
-// Handler exposes the REST endpoints for chat message history.
-// Real-time delivery/broadcast is handled separately by Hub/Client (see hub.go, client.go).
 type Handler struct {
-	queries *sqlc.Queries
+	queries sqlc.Querier
 	hub     *Hub
 	tokens  *auth.TokenManager
 }
@@ -33,7 +31,7 @@ type UpdateMessageRequest struct {
 	Body string `json:"body" binding:"required"`
 }
 
-func NewHandler(queries *sqlc.Queries, hub *Hub, tokens *auth.TokenManager) *Handler {
+func NewHandler(queries sqlc.Querier, hub *Hub, tokens *auth.TokenManager) *Handler {
 	return &Handler{queries: queries, hub: hub, tokens: tokens}
 }
 
@@ -43,9 +41,6 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// ListMessages handles GET /api/v1/projects/:id/messages
-// Query params: before (RFC3339 timestamp, optional), limit (optional, default/max enforced server-side).
-// Requires the caller to be a project member (rbac.IsProjectMember), same as comment.Handler.ListByTask.
 func (h *Handler) ListMessages(c *gin.Context) {
 	projectID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -105,8 +100,6 @@ func (h *Handler) ListMessages(c *gin.Context) {
 
 }
 
-// UpdateMessage handles PATCH /api/v1/messages/:id
-// Only the original sender may edit their own message (check message.SenderID == current user).
 func (h *Handler) UpdateMessage(c *gin.Context) {
 	messageID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -126,6 +119,12 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		return
 	}
 
+	body, err := SanitizeMessageBody(req.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	msg, err := h.queries.GetMessageByID(c.Request.Context(), messageID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -141,9 +140,19 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		return
 	}
 
+	isMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, msg.ProjectID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check project membership"})
+		return
+	}
+	if !isMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		return
+	}
+
 	message, err := h.queries.UpdateMessage(c.Request.Context(), sqlc.UpdateMessageParams{
 		ID:   msg.ID,
-		Body: req.Body,
+		Body: body,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't update message"})
@@ -167,8 +176,6 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": message})
 }
 
-// DeleteMessage handles DELETE /api/v1/messages/:id
-// Soft-delete only; sender or project owner/admin may delete.
 func (h *Handler) DeleteMessage(c *gin.Context) {
 	messageID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -221,10 +228,6 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": message})
 }
 
-// ServeWS handles GET /ws/projects/:id/chat — upgrades the HTTP connection to a WebSocket
-// and registers the client with the Hub for that project's room.
-// Auth note: WebSocket requests can't send an Authorization header, so the access token
-// must be read from a query param (?token=...) instead of middleware.RequireAuth.
 func (h *Handler) ServeWS(c *gin.Context) {
 	projectID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
