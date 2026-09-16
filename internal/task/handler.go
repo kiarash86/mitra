@@ -98,6 +98,30 @@ func (h *Handler) requireProjectMember(c *gin.Context, projectID, userID uuid.UU
 	return project, true
 }
 
+func (h *Handler) requireProjectWriteAccess(c *gin.Context, projectID, userID uuid.UUID) (sqlc.Project, bool) {
+	project, err := h.queries.GetProjectByID(c.Request.Context(), projectID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+			return sqlc.Project{}, false
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return sqlc.Project{}, false
+	}
+
+	canWrite, err := rbac.CanWriteProject(c.Request.Context(), h.queries, project.ID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return sqlc.Project{}, false
+	}
+	if !canWrite {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you dont have permission to modify this project"})
+		return sqlc.Project{}, false
+	}
+
+	return project, true
+}
+
 func taskToResponse(task sqlc.Task) taskResponse {
 	return taskResponse{
 		ID:               task.ID.String(),
@@ -146,7 +170,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	if _, ok := h.requireProjectMember(c, projectID, userID); !ok {
+	if _, ok := h.requireProjectWriteAccess(c, projectID, userID); !ok {
 		return
 	}
 
@@ -293,7 +317,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	if _, ok := h.requireProjectMember(c, task.ProjectID, userID); !ok {
+	if _, ok := h.requireProjectWriteAccess(c, task.ProjectID, userID); !ok {
 		return
 	}
 
@@ -346,7 +370,7 @@ func (h *Handler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	if _, ok := h.requireProjectMember(c, task.ProjectID, userID); !ok {
+	if _, ok := h.requireProjectWriteAccess(c, task.ProjectID, userID); !ok {
 		return
 	}
 
@@ -461,7 +485,7 @@ func (h *Handler) Unassign(c *gin.Context) {
 		return
 	}
 
-	if _, ok := h.requireProjectMember(c, task.ProjectID, userID); !ok {
+	if _, ok := h.requireProjectWriteAccess(c, task.ProjectID, userID); !ok {
 		return
 	}
 
