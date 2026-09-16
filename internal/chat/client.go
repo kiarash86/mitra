@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/kiarash86/mitra/internal/db/sqlc"
+	"github.com/kiarash86/mitra/internal/rbac"
 )
 
 type Client struct {
@@ -43,6 +44,16 @@ func (c *Client) ReadPump(queries sqlc.Querier) {
 
 		body, err := SanitizeMessageBody(inbmsg.Body)
 		if err != nil {
+			continue
+		}
+
+		canWrite, err := rbac.CanWriteProject(context.Background(), queries, c.projectID, c.userID)
+		if err != nil {
+			log.Println("failed to check write permission:", err)
+			continue
+		}
+		if !canWrite {
+			log.Println("rejected message from user without write permission:", c.userID)
 			continue
 		}
 
