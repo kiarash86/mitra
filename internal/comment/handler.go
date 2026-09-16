@@ -68,6 +68,30 @@ func (h *Handler) requireTaskProjectMember(c *gin.Context, taskID, userID uuid.U
 	return task, true
 }
 
+func (h *Handler) requireTaskProjectWriteAccess(c *gin.Context, taskID, userID uuid.UUID) (sqlc.Task, bool) {
+	task, err := h.queries.GetTaskByID(c.Request.Context(), taskID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+			return sqlc.Task{}, false
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
+		return sqlc.Task{}, false
+	}
+
+	canWrite, err := rbac.CanWriteProject(c.Request.Context(), h.queries, task.ProjectID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check project role"})
+		return sqlc.Task{}, false
+	}
+	if !canWrite {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you dont have permission to modify this task's project"})
+		return sqlc.Task{}, false
+	}
+
+	return task, true
+}
+
 func (h *Handler) Create(c *gin.Context) {
 	taskID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -87,7 +111,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	if _, ok := h.requireTaskProjectMember(c, taskID, userID); !ok {
+	if _, ok := h.requireTaskProjectWriteAccess(c, taskID, userID); !ok {
 		return
 	}
 
@@ -186,7 +210,7 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "author can edit it!!! not you"})
 		return
 	}
-	if _, ok := h.requireTaskProjectMember(c, comment.TaskID, userID); !ok {
+	if _, ok := h.requireTaskProjectWriteAccess(c, comment.TaskID, userID); !ok {
 		return
 	}
 
@@ -265,6 +289,10 @@ func (h *Handler) Delete(c *gin.Context) {
 				c.JSON(http.StatusForbidden, gin.H{"error": "not enough permission for deleting comment"})
 				return
 			}
+		}
+	} else {
+		if _, ok := h.requireTaskProjectWriteAccess(c, comment.TaskID, userID); !ok {
+			return
 		}
 	}
 
