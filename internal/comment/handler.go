@@ -14,10 +14,10 @@ import (
 )
 
 type Handler struct {
-	queries *sqlc.Queries
+	queries sqlc.Querier
 }
 
-func NewHandler(queries *sqlc.Queries) *Handler {
+func NewHandler(queries sqlc.Querier) *Handler {
 	return &Handler{queries: queries}
 }
 
@@ -43,7 +43,6 @@ type commentWithAuthorResponse struct {
 	AuthorFullName string `json:"author_full_name"`
 	AuthorEmail    string `json:"author_email"`
 }
-
 
 func (h *Handler) requireTaskProjectMember(c *gin.Context, taskID, userID uuid.UUID) (sqlc.Task, bool) {
 	task, err := h.queries.GetTaskByID(c.Request.Context(), taskID)
@@ -187,6 +186,9 @@ func (h *Handler) Update(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "author can edit it!!! not you"})
 		return
 	}
+	if _, ok := h.requireTaskProjectMember(c, comment.TaskID, userID); !ok {
+		return
+	}
 
 	updatedComment, err := h.queries.UpdateComment(c.Request.Context(), sqlc.UpdateCommentParams{
 		ID:   commentID,
@@ -232,11 +234,19 @@ func (h *Handler) Delete(c *gin.Context) {
 	if comment.AuthorID != userID {
 		task, err := h.queries.GetTaskByID(c.Request.Context(), comment.TaskID)
 		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get task"})
 			return
 		}
 		project, err := h.queries.GetProjectByID(c.Request.Context(), task.ProjectID)
 		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+				return
+			}
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
 			return
 		}
