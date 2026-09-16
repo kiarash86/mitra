@@ -25,6 +25,17 @@ func NewHandler(queries sqlc.Querier) *Handler {
 	}
 }
 
+func (h *Handler) canViewProject(c *gin.Context, projectID, userID uuid.UUID) (bool, error) {
+	isMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, projectID, userID)
+	if err != nil {
+		return false, err
+	}
+	if isMember {
+		return true, nil
+	}
+	return rbac.IsOwnerOrAdmin(c.Request.Context(), h.queries, userID)
+}
+
 type createProjectRequest struct {
 	Name        string `json:"name" binding:"required,min=2,max=255"`
 	Description string `json:"description" binding:"max=10000"`
@@ -154,7 +165,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	_, ok := middleware.CurrentUserID(c)
+	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization"})
 		return
@@ -166,6 +177,14 @@ func (h *Handler) GetByID(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
+
+	if ok, err := h.canViewProject(c, projectID, userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
+	} else if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
 		return
 	}
 
@@ -289,7 +308,7 @@ func (h *Handler) ListMembers(c *gin.Context) {
 		return
 	}
 
-	_, ok := middleware.CurrentUserID(c)
+	userID, ok := middleware.CurrentUserID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid Authorization"})
 		return
@@ -302,6 +321,14 @@ func (h *Handler) ListMembers(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt get project"})
+		return
+	}
+
+	if ok, err := h.canViewProject(c, projectID, userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check your project role"})
+		return
+	} else if !ok {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
 		return
 	}
 
@@ -373,6 +400,25 @@ func (h *Handler) AddMember(c *gin.Context) {
 	}
 	if !isAdmin && !isProjectAdminOwner {
 		c.JSON(http.StatusForbidden, gin.H{"error": "only a project owner/admin or a global owner/admin can do this"})
+		return
+	}
+
+	if _, err := h.queries.GetUserByID(c.Request.Context(), targetID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check user"})
+		return
+	}
+
+	alreadyMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, projectID, targetID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldnt check existing membership"})
+		return
+	}
+	if alreadyMember {
+		c.JSON(http.StatusConflict, gin.H{"error": "user is already a member of this project"})
 		return
 	}
 
