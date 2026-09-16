@@ -140,13 +140,13 @@ func (h *Handler) UpdateMessage(c *gin.Context) {
 		return
 	}
 
-	isMember, err := rbac.IsProjectMember(c.Request.Context(), h.queries, msg.ProjectID, userID)
+	isMember, err := rbac.CanWriteProject(c.Request.Context(), h.queries, msg.ProjectID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to check project membership"})
 		return
 	}
 	if !isMember {
-		c.JSON(http.StatusForbidden, gin.H{"error": "you are not a member of this project"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "you dont have permission to modify this project"})
 		return
 	}
 
@@ -207,6 +207,16 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		}
 		if !isAdmin {
 			c.JSON(http.StatusForbidden, gin.H{"error": "you can only edit your own messages"})
+			return
+		}
+	} else {
+		canWrite, err := rbac.CanWriteProject(c.Request.Context(), h.queries, message.ProjectID, userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't get message"})
+			return
+		}
+		if !canWrite {
+			c.JSON(http.StatusForbidden, gin.H{"error": "you dont have permission to modify this project"})
 			return
 		}
 	}
