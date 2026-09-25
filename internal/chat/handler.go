@@ -235,7 +235,7 @@ func (h *Handler) DeleteMessage(c *gin.Context) {
 		h.hub.Broadcast(message.ProjectID, data)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": message})
+	c.Status(http.StatusNoContent)
 }
 
 func (h *Handler) ServeWS(c *gin.Context) {
